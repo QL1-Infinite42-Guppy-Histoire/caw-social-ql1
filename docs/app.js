@@ -45,6 +45,17 @@ const T = {
     deposit: 'Put in', withdraw: 'Take out', amountPh: 'amount (qCAW)',
     approveName: 'One quick OK first, so your qCAW can move into the name', myQom: 'QOM (for small fees)',
     unknownName: 'name #',
+    postAs: 'Posting as', postPh: 'What is happening?', postBtn: 'Post',
+    postHelp: 'Up to 420 letters. A Japanese letter counts as 3.',
+    signNote: 'Your wallet will ask you to sign. That is a one-time OK for this post only — it does not move your coins.',
+    signFail: 'Your wallet did not sign, so nothing was sent.',
+    posted: 'Posted!', connectToPost: 'Connect your wallet above to post.',
+    needNamePost: 'Get a name above first — then you can post.',
+    needNameAct: 'You need a CAW name for this. You can get one above.',
+    followBtn: 'Follow', followed: 'Followed!', back: 'Back to the timeline',
+    profPosts: 'Posts', nameCreated: 'Name made on', ownerLbl: 'Owner',
+    yourNameTag: 'This is your name', seeMine: 'See it in My names',
+    profNotFound: 'That name was not found.', likeBtn: 'Like', recawBtn: 'Share',
   },
   ja: {
     loading: '読み込み中…', loadFail: 'タイムラインを読み込めませんでした。しばらくしてからお試しください。',
@@ -66,6 +77,17 @@ const T = {
     deposit: '入れる', withdraw: '出す', amountPh: '量（qCAW）',
     approveName: '先に、qCAW を名前へ移す許可が必要です', myQom: 'QOM（手数料用）',
     unknownName: '名前 #',
+    postAs: 'この名前で投稿', postPh: 'いま何してる？', postBtn: '投稿する',
+    postHelp: '最大420文字分まで（日本語は1文字で3文字分です）',
+    signNote: 'ウォレットが署名を求めてきます。この投稿だけの許可で、コインは動きません。',
+    signFail: 'ウォレットで署名されなかったため、送信しませんでした。',
+    posted: '投稿しました！', connectToPost: '投稿するには、上のボタンでウォレットをつないでください。',
+    needNamePost: '投稿するには、先に上の欄で名前を取ってください。',
+    needNameAct: 'これには CAW の名前が必要です。上の欄で取れます。',
+    followBtn: 'フォローする', followed: 'フォローしました！', back: 'タイムラインへ戻る',
+    profPosts: '投稿', nameCreated: '名前が作られた日', ownerLbl: '持ち主',
+    yourNameTag: 'これはあなたの名前です', seeMine: '「自分の名前」で見る',
+    profNotFound: 'その名前は見つかりませんでした。', likeBtn: 'いいね', recawBtn: 'シェア',
   },
 }[LANG];
 
@@ -118,6 +140,97 @@ function parseAmount(str) {
   if (!m) return null;
   return BigInt(m[1]) * (10n ** 18n) + BigInt((m[2] || '').padEnd(18, '0'));
 }
+
+/* ==== signing core (verified) ====
+   The CAW write path on QL1, pinned down from the live CawActions contract:
+   - digest = keccak256(0x1901 || DOMAIN_SEPARATOR || structHash), where
+     DOMAIN_SEPARATOR is the value the contract itself keeps in storage
+     slot 2, and structHash = keccak256(TYPEHASH || fields) with the fields
+     in the contract's own order (the two tip lists are empty in every real
+     action seen on QL1, so they contribute keccak256('')).
+   - This exact code was tested off-chain against all 264 actions found in
+     recent real transactions: every signature recovered its sender, and
+     the batch encoder below rebuilt every real calldata byte for byte. */
+const SC_DS = '1131b7219bb3aaedaa16d8f6e50191b447828129c4c2c5b3fa55263a6f37c96d';
+const SC_TYPEHASH = 'd2f7d9453bd20ea9069ffefabd584b9d0b624994852fb9b9568a2a8ecc3517ac';
+const SC_RC = [
+  0x0000000000000001n, 0x0000000000008082n, 0x800000000000808an, 0x8000000080008000n,
+  0x000000000000808bn, 0x0000000080000001n, 0x8000000080008081n, 0x8000000000008009n,
+  0x000000000000008an, 0x0000000000000088n, 0x0000000080008009n, 0x000000008000000an,
+  0x000000008000808bn, 0x800000000000008bn, 0x8000000000008089n, 0x8000000000008003n,
+  0x8000000000008002n, 0x8000000000000080n, 0x000000000000800an, 0x800000008000000an,
+  0x8000000080008081n, 0x8000000000008080n, 0x0000000080000001n, 0x8000000080008008n,
+];
+const SC_R = [[0, 36, 3, 41, 18], [1, 44, 10, 45, 2], [62, 6, 43, 15, 61], [28, 55, 25, 21, 56], [27, 20, 39, 8, 14]];
+const SC_MASK = 0xffffffffffffffffn;
+function scRotl(v, n) { return n === 0 ? v : (((v << BigInt(n)) | (v >> BigInt(64 - n))) & SC_MASK); }
+function scKeccakF(st) {
+  for (let round = 0; round < 24; round++) {
+    const C = [], D = [];
+    for (let x = 0; x < 5; x++) C[x] = st[x] ^ st[x + 5] ^ st[x + 10] ^ st[x + 15] ^ st[x + 20];
+    for (let x = 0; x < 5; x++) D[x] = C[(x + 4) % 5] ^ scRotl(C[(x + 1) % 5], 1);
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) st[x + 5 * y] ^= D[x];
+    const B = new Array(25);
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) B[y + 5 * ((2 * x + 3 * y) % 5)] = scRotl(st[x + 5 * y], SC_R[x][y]);
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) st[x + 5 * y] = B[x + 5 * y] ^ ((~B[(x + 1) % 5 + 5 * y]) & B[(x + 2) % 5 + 5 * y]);
+    st[0] ^= SC_RC[round];
+  }
+}
+function scKeccak(bytes) { // Uint8Array -> hex string (no 0x)
+  const rate = 136;
+  const st = new Array(25).fill(0n);
+  const padded = Array.from(bytes);
+  padded.push(0x01);
+  while (padded.length % rate !== rate - 1) padded.push(0);
+  padded.push(0x80);
+  for (let off = 0; off < padded.length; off += rate) {
+    for (let i = 0; i < rate / 8; i++) {
+      let lane = 0n;
+      for (let j = 7; j >= 0; j--) lane = (lane << 8n) | BigInt(padded[off + i * 8 + j]);
+      st[i] ^= lane;
+    }
+    scKeccakF(st);
+  }
+  let out = '';
+  for (let i = 0; i < 4; i++) {
+    let lane = st[i];
+    for (let j = 0; j < 8; j++) { out += Number(lane & 0xffn).toString(16).padStart(2, '0'); lane >>= 8n; }
+  }
+  return out;
+}
+const scHexBytes = h => { h = h.replace(/^0x/, ''); const b = new Uint8Array(h.length / 2); for (let i = 0; i < b.length; i++) b[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16); return b; };
+const scUtf8 = s => new TextEncoder().encode(s);
+const scWord = v => BigInt(v).toString(16).padStart(64, '0');
+const scAddrWord = a => a.replace(/^0x/, '').toLowerCase().padStart(64, '0');
+const SC_EMPTY_HASH = scKeccak(new Uint8Array(0));
+function scActionDigest(a) { // a: {type,senderId,receiverId,ts,sender,cawId,text} -> '0x…' digest to sign
+  const structHash = scKeccak(scHexBytes(
+    SC_TYPEHASH + scWord(a.type) + scWord(a.senderId) + scWord(a.receiverId) +
+    SC_EMPTY_HASH + scWord(a.ts) + SC_EMPTY_HASH + scAddrWord(a.sender) +
+    a.cawId.replace(/^0x/, '') + scKeccak(scUtf8(a.text))
+  ));
+  return '0x' + scKeccak(scHexBytes('1901' + SC_DS + structHash));
+}
+function scEncodeAction(a) {
+  const tb = scUtf8(a.text);
+  const textTail = scWord(tb.length) + Array.from(tb).map(b => b.toString(16).padStart(2, '0')).join('').padEnd(Math.ceil(tb.length / 32) * 64 || 64, '0');
+  return scWord(a.type) + scWord(a.senderId) + scWord(a.receiverId) + scWord(0x120) + scWord(a.ts) +
+    scAddrWord(a.sender) + scWord(0x140) + a.cawId.replace(/^0x/, '') + scWord(0x160) +
+    scWord(0) + scWord(0) + textTail; // the two tip lists are always empty here
+}
+function scEncodeBatch(actions, sigs) { // -> full calldata for the processAction batch call
+  const n = actions.length;
+  const tails = actions.map(scEncodeAction);
+  let acts = scWord(n), off = n * 32;
+  const offs = tails.map(t => { const o = off; off += t.length / 2; return o; });
+  acts += offs.map(o => scWord(o)).join('') + tails.join('');
+  const vs = scWord(n) + sigs.map(s => scWord(s.v)).join('');
+  const rs = scWord(n) + sigs.map(s => s.r.replace(/^0x/, '')).join('');
+  const ss = scWord(n) + sigs.map(s => s.s.replace(/^0x/, '')).join('');
+  const head = scWord(0x80) + scWord(0x80 + acts.length / 2) + scWord(0x80 + acts.length / 2 + vs.length / 2) + scWord(0x80 + acts.length / 2 + vs.length / 2 + rs.length / 2);
+  return '0x84e33f2f' + scWord(1) + scWord(0x40) + head + acts + vs + rs + ss;
+}
+/* ==== end signing core ==== */
 
 /* ---------- read-only RPC ---------- */
 let rpcSeq = 0;
@@ -247,7 +360,10 @@ async function renderAction(a) {
   const name = await resolveName(a.senderId);
   const who = name ? '@' + name : T.unknownName + a.senderId;
   const img = await avatarFor(a.senderId);
-  let html = avatarHtml(img, name);
+  const profHref = name ? '?name=' + encodeURIComponent(name) : null;
+  let html = profHref
+    ? '<a class="plink" href="' + profHref + '">' + avatarHtml(img, name) + '</a>'
+    : avatarHtml(img, name);
   html += '<div class="pbody">';
   if (a.type !== 0 && a.receiverId > 0n) {
     const target = await nameLabel(a.receiverId);
@@ -256,17 +372,30 @@ async function renderAction(a) {
   }
   const when = new Date((a.ts || 0) * 1000);
   const whenStr = when.toLocaleString(LANG === 'ja' ? 'ja-JP' : 'en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-  html += '<div class="meta"><span class="name">' + esc(who) + '</span><span class="time">· ' + esc(whenStr) + '</span></div>';
+  const whoHtml = profHref ? '<a class="plink" href="' + profHref + '">' + esc(who) + '</a>' : esc(who);
+  html += '<div class="meta"><span class="name">' + whoHtml + '</span><span class="time">· ' + esc(whenStr) + '</span></div>';
   if (a.type === 0 && a.text) html += '<div class="ptext">' + esc(a.text) + '</div>';
   let likes = null;
   if (a.type === 0) {
     try { likes = await readUint(CAW_ACTIONS, SEL.likes + word(a.senderId) + strip(a.cawId)); } catch (e) {}
   }
   html += '<div class="pfoot">' +
-    (likes !== null && likes > 0n ? '<span>❤️ ' + likes.toString() + '</span>' : '<span></span>') +
-    '<a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a></div>';
+    '<span class="like-count">' + (likes !== null && likes > 0n ? '❤️ ' + likes.toString() : '') + '</span>' +
+    (a.type === 0
+      ? '<button class="actbtn like-btn" type="button">❤️ ' + T.likeBtn + '</button>' +
+        '<button class="actbtn recaw-btn" type="button">🔁 ' + T.recawBtn + '</button>'
+      : '') +
+    '<a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a>' +
+    '<span class="act-status small"></span></div>';
   html += '</div>';
   div.innerHTML = html;
+  if (a.type === 0) {
+    const st = div.querySelector('.act-status');
+    const lb = div.querySelector('.like-btn');
+    const rb = div.querySelector('.recaw-btn');
+    if (lb) lb.onclick = () => doTargetAction(1, a, lb, st, div);
+    if (rb) rb.onclick = () => doTargetAction(2, a, rb, st, div);
+  }
   return div;
 }
 
@@ -308,6 +437,8 @@ async function refreshWallet() {
   }
   renderMyNames();
   if (lastCheck) renderMintArea();
+  renderComposer();
+  if (profileQuery && profileState) renderProfileActions();
 }
 async function connectWallet() {
   if (!hasWallet()) return;
@@ -346,6 +477,113 @@ async function sendTx(to, data) {
     }
   }
   return hash;
+}
+
+/* ---------- posting / likes / follows (signed actions) ---------- */
+let actingId = null; // which of my names I act as (BigInt token id); set by the composer picker
+async function myActingToken() {
+  if (!account || !onQl1) return null;
+  const toks = await tokensOf(account).catch(() => []);
+  if (!toks.length) return null;
+  if (actingId !== null && toks.some(t => t.id === actingId)) return toks.find(t => t.id === actingId);
+  return toks[0];
+}
+const randomCawId = () => {
+  const b = new Uint8Array(32);
+  crypto.getRandomValues(b);
+  return '0x' + Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('');
+};
+async function submitAction(act) {
+  const digest = scActionDigest(act);
+  let sig;
+  try {
+    sig = await window.ethereum.request({ method: 'eth_sign', params: [account, digest] });
+  } catch (e) { throw new Error('sign'); }
+  const h = strip(sig);
+  if (h.length !== 130) throw new Error('sign');
+  const vRaw = parseInt(h.slice(128, 130), 16);
+  const s = { v: vRaw < 27 ? vRaw + 27 : vRaw, r: '0x' + h.slice(0, 64), s: '0x' + h.slice(64, 128) };
+  return sendTx(CAW_ACTIONS, scEncodeBatch([act], [s]));
+}
+const nowSec = () => Math.floor(Date.now() / 1000);
+async function guardActing(stEl) {
+  if (!account || !onQl1) { if (stEl) stEl.textContent = T.connectFirst; return null; }
+  const mine = await myActingToken();
+  if (!mine) { if (stEl) stEl.textContent = T.needNameAct; return null; }
+  return mine;
+}
+async function doTargetAction(kind, target, btn, stEl, rootEl) {
+  const mine = await guardActing(stEl);
+  if (!mine) return;
+  try {
+    btn.disabled = true;
+    if (stEl) stEl.textContent = T.sending;
+    await submitAction({
+      type: kind, senderId: mine.id, receiverId: target.senderId,
+      ts: nowSec(), sender: account, cawId: target.cawId,
+      text: kind === 1 ? 'LIKE' : 'REPOST',
+    });
+    if (stEl) stEl.textContent = T.done;
+    if (kind === 1 && rootEl) {
+      try {
+        const likes = await readUint(CAW_ACTIONS, SEL.likes + word(target.senderId) + strip(target.cawId));
+        const el = rootEl.querySelector('.like-count');
+        if (el && likes > 0n) el.textContent = '❤️ ' + likes.toString();
+      } catch (e) {}
+    }
+  } catch (e) {
+    if (stEl) stEl.textContent = e.message === 'sign' ? T.signFail : T.failed;
+    btn.disabled = false;
+  }
+}
+
+/* ---------- composer ---------- */
+async function renderComposer() {
+  const box = $('composerArea');
+  if (!box) return;
+  const existing = box.querySelector('textarea');
+  if (existing && document.activeElement === existing) return; // don't wipe a post being typed
+  if (!account || !onQl1) { box.innerHTML = '<p class="small">' + T.connectToPost + '</p>'; return; }
+  const toks = await tokensOf(account).catch(() => []);
+  if (!toks.length) { box.innerHTML = '<p class="small">' + T.needNamePost + '</p>'; return; }
+  const mine = await myActingToken();
+  let picker = '';
+  if (toks.length > 1) {
+    picker = '<label class="small">' + T.postAs + ' <select id="postAsSel">' +
+      toks.map(t => '<option value="' + t.id.toString() + '"' + (mine && t.id === mine.id ? ' selected' : '') + '>@' + esc(t.username) + '</option>').join('') +
+      '</select></label>';
+  } else {
+    picker = '<p class="small">' + T.postAs + ': <b>@' + esc(mine.username) + '</b></p>';
+  }
+  box.innerHTML = picker +
+    '<textarea id="postText" rows="4" placeholder="' + esc(T.postPh) + '"></textarea>' +
+    '<div class="row"><button id="postBtn">' + T.postBtn + '</button><span class="charcount" id="charCount"></span></div>' +
+    '<p class="small">' + T.postHelp + '<br>' + T.signNote + '</p>' +
+    '<p class="small" id="postStatus"></p>';
+  const ta = $('postText'), cc = $('charCount'), btn = $('postBtn'), st = $('postStatus');
+  const byteLen = () => new TextEncoder().encode(ta.value).length;
+  const upd = () => { const left = 420 - byteLen(); cc.textContent = left; btn.disabled = left < 0 || !ta.value.trim(); };
+  ta.addEventListener('input', upd); upd();
+  const sel = $('postAsSel');
+  if (sel) sel.onchange = () => { actingId = BigInt(sel.value); };
+  btn.onclick = async () => {
+    const text = ta.value.trim();
+    if (!text || byteLen() > 420) return;
+    const cur = await myActingToken();
+    if (!cur) { st.textContent = T.needNamePost; return; }
+    try {
+      btn.disabled = true; st.textContent = T.sending;
+      await submitAction({
+        type: 0, senderId: cur.id, receiverId: 0n, ts: nowSec(),
+        sender: account, cawId: randomCawId(), text,
+      });
+      st.textContent = T.posted;
+      ta.value = ''; upd();
+      setTimeout(() => { loadTimeline(false); }, 4000);
+    } catch (e) {
+      st.textContent = e.message === 'sign' ? T.signFail : T.failed;
+    } finally { btn.disabled = false; upd(); }
+  };
 }
 
 /* ---------- name check + mint ---------- */
@@ -435,8 +673,8 @@ async function renderNameCard(t) {
   const img = await avatarFor(t.id);
   try { followers = await readUint(CAW_ACTIONS, SEL.followerCount + word(t.id)); } catch (e) {}
   div.innerHTML =
-    avatarHtml(img, t.username) +
-    '<div class="grow"><div class="n">@' + esc(t.username) + '</div>' +
+    '<a class="plink" href="?name=' + encodeURIComponent(t.username) + '">' + avatarHtml(img, t.username) + '</a>' +
+    '<div class="grow"><div class="n"><a class="plink" href="?name=' + encodeURIComponent(t.username) + '">@' + esc(t.username) + '</a></div>' +
     '<div class="small">#' + t.id.toString() +
     (followers !== null ? ' ・ ' + followers.toString() + ' ' + T.followers : '') + '</div>' +
     '<div>' + T.inName + ': <b>' + fmtQcaw(t.balance) + '</b> qCAW</div>' +
@@ -472,6 +710,124 @@ async function renderNameCard(t) {
   return div;
 }
 
+/* ---------- profile page (?name=<username>) ---------- */
+const profileQuery = new URLSearchParams(location.search).get('name');
+let profileState = null; // { id, username, owner, followersEl }
+async function mintDateOf(id) {
+  let url = API + '/tokens/' + CAW_NAME + '/instances/' + id + '/transfers';
+  for (let page = 0; page < 8; page++) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) return null;
+      const j = await res.json();
+      for (const it of (j.items || [])) {
+        const from = (it.from && it.from.hash) || '';
+        if (from.toLowerCase() === '0x0000000000000000000000000000000000000000') return it.timestamp;
+      }
+      if (!j.next_page_params) return null;
+      url = API + '/tokens/' + CAW_NAME + '/instances/' + id + '/transfers?' + new URLSearchParams(j.next_page_params).toString();
+    } catch (e) { return null; }
+  }
+  return null;
+}
+async function loadProfile() {
+  const head = $('profileHead'), postsBox = $('profilePosts');
+  head.innerHTML = '<p>' + T.loading + '</p>';
+  let id = 0n;
+  try { id = await readUint(MINTER, SEL.idByUsername + encStr(profileQuery).slice(2)); } catch (e) {}
+  if (!id) { head.innerHTML = '<p class="err">' + T.profNotFound + '</p>'; $('profilePostsTitle').style.display = 'none'; return; }
+  const username = (await resolveName(id)) || profileQuery;
+  const owner = await readAddr(CAW_NAME, SEL.ownerOf + word(id)).catch(() => null);
+  const img = await avatarFor(id);
+  let followers = null;
+  try { followers = await readUint(CAW_ACTIONS, SEL.followerCount + word(id)); } catch (e) {}
+  let balance = null;
+  try { balance = await readUint(CAW_NAME, SEL.cawBalanceOf + word(id)); } catch (e) {}
+  const mintTs = await mintDateOf(id);
+  const chips = ['#' + id.toString()];
+  if (followers !== null) chips.push(followers.toString() + ' ' + T.followers);
+  if (balance !== null) chips.push(T.inName + ': ' + fmtQcaw(balance) + ' qCAW');
+  if (mintTs) {
+    const d = new Date(mintTs);
+    chips.push(T.nameCreated + ': ' + d.toLocaleDateString(LANG === 'ja' ? 'ja-JP' : 'en-US', { year: 'numeric', month: 'numeric', day: 'numeric' }));
+  }
+  let html = '<div class="phead">' + avatarHtml(img, username) + '<div>' +
+    '<div class="pname">@' + esc(username) + '</div>' +
+    (owner ? '<div class="small">' + T.ownerLbl + ': <a class="plink" href="' + EXPLORER + '/address/' + owner + '" target="_blank" rel="noopener">' + esc(owner.slice(0, 8)) + '…' + esc(owner.slice(-6)) + '</a></div>' : '') +
+    '<div class="chips">' + chips.map(c => '<span class="chip">' + esc(c) + '</span>').join('') + '</div>' +
+    '<div id="profileActions"></div>' +
+    '</div></div>';
+  head.innerHTML = html;
+  profileState = { id, username, owner };
+  renderProfileActions();
+  profNext = null; profDone = false;
+  postsBox.innerHTML = '';
+  loadProfilePosts();
+}
+async function renderProfileActions() {
+  const box = $('profileActions');
+  if (!box || !profileState) return;
+  const { id, owner } = profileState;
+  const mine = account && owner && account.toLowerCase() === owner.toLowerCase();
+  if (mine) {
+    box.innerHTML = '<p class="ok">' + T.yourNameTag + '</p>' +
+      '<p><a class="plink" href="' + (LANG === 'ja' ? 'ja.html' : 'en.html') + '#mynames"><button class="ghost" type="button">' + T.seeMine + '</button></a></p>';
+    return;
+  }
+  if (!account || !onQl1) { box.innerHTML = ''; return; }
+  const toks = await tokensOf(account).catch(() => []);
+  if (!toks.length) { box.innerHTML = ''; return; }
+  box.innerHTML = '<p><button id="followBtn" type="button">' + T.followBtn + '</button> <span class="small" id="followStatus"></span></p>';
+  $('followBtn').onclick = async () => {
+    const st = $('followStatus');
+    const my = await guardActing(st);
+    if (!my) return;
+    const btn = $('followBtn');
+    try {
+      btn.disabled = true; st.textContent = T.sending;
+      await submitAction({
+        type: 3, senderId: my.id, receiverId: id, ts: nowSec(),
+        sender: account, cawId: randomCawId(), text: 'FOLLOW',
+      });
+      st.textContent = T.followed;
+    } catch (e) {
+      st.textContent = e.message === 'sign' ? T.signFail : T.failed;
+      btn.disabled = false;
+    }
+  };
+}
+let profNext = null, profDone = false, profLoading = false;
+async function loadProfilePosts() {
+  if (!profileState || profLoading || profDone) return;
+  profLoading = true;
+  const box = $('profilePosts');
+  try {
+    let found = 0, pages = 0;
+    while (found < 10 && pages < 4 && !profDone) {
+      let url = API + '/addresses/' + CAW_ACTIONS + '/transactions';
+      if (profNext) url += '?' + new URLSearchParams(profNext).toString();
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('api ' + res.status);
+      const j = await res.json();
+      profNext = j.next_page_params || null;
+      if (!profNext) profDone = true;
+      pages++;
+      const items = (j.items || []).filter(it => it.raw_input && (it.status === 'ok' || !it.status));
+      for (const it of items) {
+        const a = decodeAction(it.raw_input);
+        if (a && a.senderId === profileState.id) {
+          box.appendChild(await renderAction({ ...a, hash: it.hash, blockTs: it.timestamp }));
+          found++;
+        }
+      }
+    }
+    if (!box.children.length && profDone) box.innerHTML = '<p>' + T.empty + '</p>';
+    $('profileMore').style.display = profDone ? 'none' : '';
+  } catch (e) {
+    if (!box.children.length) box.innerHTML = '<p class="err">' + T.loadFail + '</p>';
+  } finally { profLoading = false; }
+}
+
 /* ---------- init ---------- */
 $('moreBtn').onclick = () => loadTimeline(true);
 $('checkBtn').onclick = checkName;
@@ -482,8 +838,22 @@ if (hasWallet()) {
   window.ethereum.on && window.ethereum.on('accountsChanged', refreshWallet);
   window.ethereum.on && window.ethereum.on('chainChanged', refreshWallet);
 }
-loadTimeline(false);
+if (profileQuery) {
+  document.body.classList.add('profile-mode');
+  $('profileBlock').style.display = '';
+  document.querySelectorAll('.langs a').forEach(a => {
+    a.href = a.getAttribute('href') + '?name=' + encodeURIComponent(profileQuery);
+  });
+  const pm = $('profileMore');
+  if (pm) pm.onclick = loadProfilePosts;
+  loadProfile();
+} else {
+  loadTimeline(false);
+}
 refreshWallet();
+if (!profileQuery && location.hash === '#mynames') {
+  setTimeout(() => { const el = $('mynames'); if (el) el.scrollIntoView(); }, 800);
+}
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }

@@ -100,6 +100,39 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .namecard .n { font-weight: 800; font-size: 1.05rem; }
 .namecard .grow { flex: 1 1 auto; min-width: 0; }
 
+/* ---- composer, action buttons, profile ---- */
+textarea {
+  width: 100%; padding: 13px 14px; border: 1px solid var(--line2);
+  border-radius: 12px; font-size: 16px; margin: 8px 0; background: #fff;
+  font-family: inherit; resize: vertical; min-height: 88px;
+}
+textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
+select {
+  padding: 10px 12px; border: 1px solid var(--line2); border-radius: 12px;
+  font-size: 16px; background: #fff; max-width: 100%;
+}
+.charcount { color: var(--sub); font-size: .85rem; }
+.actbtn {
+  background: #fff; color: var(--sub); border: 1px solid var(--line2);
+  border-radius: 999px; padding: 6px 14px; font-size: .85rem; font-weight: 700;
+  min-height: 36px; cursor: pointer;
+}
+.actbtn:hover { color: var(--accent); border-color: var(--accent); background: #fff; }
+.actbtn:disabled { opacity: .45; cursor: not-allowed; }
+.plink { color: inherit; text-decoration: none; }
+a.plink:hover { text-decoration: underline; }
+.profile-mode .home-block { display: none; }
+.phead { display: flex; gap: 14px; align-items: flex-start; }
+.phead .avatar { width: 76px; height: 76px; flex-basis: 76px; font-size: 1.6rem; }
+.pname { font-weight: 800; font-size: 1.3rem; word-break: break-all; }
+.chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.chip {
+  background: #f7f9f9; border: 1px solid var(--line2); border-radius: 999px;
+  padding: 3px 10px; font-size: .8rem; color: var(--sub);
+}
+#profileActions { margin-top: 10px; }
+#profilePostsTitle { margin: 18px 0 4px; font-size: 1.05rem; font-weight: 800; }
+
 /* ---- notice & footer ---- */
 .notice { background: #fff8e6; border-bottom: 1px solid var(--line); }
 footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-height: 1.7; }

@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <div class="wrap">
@@ -28,7 +28,15 @@
     </div>
   </div>
 
-  <section class="block">
+  <section class="block" id="profileBlock" style="display:none">
+    <p><a class="plink" href="ja.html">← タイムラインへ戻る</a></p>
+    <div id="profileHead"><p>読み込み中…</p></div>
+    <h3 id="profilePostsTitle">投稿</h3>
+    <div id="profilePosts"></div>
+    <div class="loadmore"><button id="profileMore" class="ghost" style="display:none">もっと見る</button></div>
+  </section>
+
+  <section class="block home-block">
     <h2>タイムライン</h2>
     <p class="muted">CAW の最新の投稿を、新しい順に表示します。ウォレットがなくても読めます。</p>
     <div id="timeline"><p>読み込み中…</p></div>
@@ -41,7 +49,12 @@
     <button id="connectBtn">ウォレットをつなぐ</button></div>
   </section>
 
-  <section class="block">
+  <section class="block home-block">
+    <h2>投稿する</h2>
+    <div id="composerArea"><p class="small">投稿するには、上のボタンでウォレットをつないでください。</p></div>
+  </section>
+
+  <section class="block home-block">
     <h2>名前を取る</h2>
     <p>名前は、CAW であなたを見つけてもらうための呼び名です。qCAW（CAW のコイン）で一度払えば、ずっとあなたのものです。名前を入力すると、空いているか・いくらか分かります。</p>
     <input type="text" id="nameInput" placeholder="例：alice" autocomplete="off" spellcheck="false">
@@ -50,17 +63,12 @@
     <div id="mintArea"></div>
   </section>
 
-  <section class="block">
+  <section class="block home-block" id="mynames">
     <h2>自分の名前</h2>
     <div id="myNames"><p>ウォレットをつなぐと、あなたの名前が表示されます。</p></div>
   </section>
 
-  <section class="block notice">
-    <h2>投稿はまだ準備中です</h2>
-    <p>QL1 での投稿のやり方を確認してから公開するため、いまは投稿ボタンがありません。読むことと、名前を取ることはそのまま使えます。もう少しお待ちください。</p>
-  </section>
-
-  <section class="block">
+  <section class="block home-block">
     <h2>このサイトについて</h2>
     <p>CAW は、投稿を一つの会社のコンピューターではなく、みんなで共有する公開の記録帳（ブロックチェーン）に残すソーシャルネットワークです。だれでも読めて、あとから勝手に書き換えられることもありません。</p>
     <p>このサイトは、QL1 版の CAW を見るための、有志が作った窓口です。<b>CAW の公式チームが運営しているものではありません。</b>名前を取るときや qCAW を動かすときは、少額の手数料が QOM（QL1 のコイン）でかかります。</p>
@@ -77,6 +85,6 @@
     <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> のひとつです — Don't Panic.
   </footer>
 </div>
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>

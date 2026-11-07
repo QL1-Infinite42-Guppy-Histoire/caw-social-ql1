@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
-<link rel="stylesheet" href="style.css?v=2">
+<link rel="stylesheet" href="style.css?v=3">
 </head>
 <body>
 <div class="wrap">
@@ -28,7 +28,15 @@
     </div>
   </div>
 
-  <section class="block">
+  <section class="block" id="profileBlock" style="display:none">
+    <p><a class="plink" href="en.html">← Back to the timeline</a></p>
+    <div id="profileHead"><p>Loading…</p></div>
+    <h3 id="profilePostsTitle">Posts</h3>
+    <div id="profilePosts"></div>
+    <div class="loadmore"><button id="profileMore" class="ghost" style="display:none">See more</button></div>
+  </section>
+
+  <section class="block home-block">
     <h2>Timeline</h2>
     <p class="muted">The newest posts on CAW, in order. Anyone can read — no wallet needed.</p>
     <div id="timeline"><p>Loading…</p></div>
@@ -41,7 +49,12 @@
     <button id="connectBtn">Connect wallet</button></div>
   </section>
 
-  <section class="block">
+  <section class="block home-block">
+    <h2>Post</h2>
+    <div id="composerArea"><p class="small">Connect your wallet above to post.</p></div>
+  </section>
+
+  <section class="block home-block">
     <h2>Get your name</h2>
     <p>Your name is how people find you on CAW. You pay once with qCAW (CAW's coin) and the name is yours. Type a name to see if it's free and what it costs.</p>
     <input type="text" id="nameInput" placeholder="e.g. alice" autocomplete="off" spellcheck="false">
@@ -50,17 +63,12 @@
     <div id="mintArea"></div>
   </section>
 
-  <section class="block">
+  <section class="block home-block" id="mynames">
     <h2>My names</h2>
     <div id="myNames"><p>Connect your wallet to see your names.</p></div>
   </section>
 
-  <section class="block notice">
-    <h2>Posting isn't ready yet</h2>
-    <p>We're still checking how posting works on QL1 before we switch it on, so there's no post button for now. Reading and getting a name work as usual — thanks for your patience.</p>
-  </section>
-
-  <section class="block">
+  <section class="block home-block">
     <h2>About this site</h2>
     <p>CAW is a social network where posts are kept on a shared public record (a blockchain) instead of one company's computers — so anyone can read them, and nobody can quietly rewrite them later.</p>
     <p>This site is a community-made window into the QL1 version of CAW. It is <b>not</b> run by the official CAW team. When you get a name or move qCAW, a small fee in QOM (QL1's coin) is also needed.</p>
@@ -77,6 +85,6 @@
     Part of <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> — Don't Panic.
   </footer>
 </div>
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
