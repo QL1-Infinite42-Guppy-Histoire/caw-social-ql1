@@ -68,6 +68,7 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .ok { color: var(--ok); font-weight: 700; }
 .warn { color: var(--warn); font-weight: 700; }
 .err { color: #c92a2a; font-weight: 700; }
+.errdetail { font-size: .78rem; color: var(--sub); font-weight: 400; overflow-wrap: anywhere; }
 
 /* ---- timeline (X-style rows) ---- */
 #timeline { margin: 0 -16px; padding: 0 16px; }

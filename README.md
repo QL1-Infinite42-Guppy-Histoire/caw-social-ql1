@@ -52,6 +52,26 @@ style digest per action:
   and author.
 - The wallet signs the raw digest (`eth_sign`); the site then submits
   the batch call `0x84e33f2f` itself.
+- Why not `eth_signTypedData_v4`: a wallet computes the separator and
+  typehash itself from a domain name and a type string, but only the
+  resulting VALUES are stored in / used by this contract — the original
+  strings exist in no public artifact (checked: the deployed bytecode
+  and creation code, the official caw-js-sdk, the official front end).
+  The separator's inputs were recovered by tracing the constructor in
+  a local EVM (standard domain type hash, version "1", chain 766, the
+  contract itself), which leaves a single unknown: the domain NAME
+  whose keccak is `0x47219ae7…f37c96d`. Dictionary and phrase searches
+  (~6.7M candidates) plus structured type-string searches (~330k
+  targeted combinations, with a ~91M-combination sweep on top) did not
+  recover either string, so typed-data signing cannot be shown to
+  produce the digest the contract expects, and is not used. If the
+  QL1 deployer ever publishes the contract source, this can be enabled
+  and re-verified against the same 264 actions.
+- When signing or sending fails, the site now shows the wallet's own
+  error message (in small print under the plain-language explanation),
+  and it checks before sending that the connected wallet still owns
+  the name being posted as. The chosen posting name is remembered per
+  wallet account (browser storage) and restored on reconnect.
 
 How this was pinned down: the real contract code was executed locally
 in an EVM against a real transaction and the hash inputs were read from

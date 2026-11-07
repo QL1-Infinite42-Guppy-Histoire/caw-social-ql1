@@ -49,6 +49,8 @@ const T = {
     postHelp: 'Up to 420 letters. A Japanese letter counts as 3.',
     signNote: 'Your wallet will ask you to sign. That is a one-time OK for this post only — it does not move your coins.',
     signFail: 'Your wallet did not sign, so nothing was sent.',
+    notOwner: 'That name belongs to a different wallet, so this could not be sent.',
+    walletSays: 'Wallet message: ',
     posted: 'Posted!', connectToPost: 'Connect your wallet above to post.',
     needNamePost: 'Get a name above first — then you can post.',
     needNameAct: 'You need a CAW name for this. You can get one above.',
@@ -85,6 +87,8 @@ const T = {
     postHelp: '最大420文字分まで（日本語は1文字で3文字分です）',
     signNote: 'ウォレットが署名を求めてきます。この投稿だけの許可で、コインは動きません。',
     signFail: 'ウォレットで署名されなかったため、送信しませんでした。',
+    notOwner: 'その名前は別のウォレットのものなので、送信できませんでした。',
+    walletSays: 'ウォレットの表示：',
     posted: '投稿しました！', connectToPost: '投稿するには、上のボタンでウォレットをつないでください。',
     needNamePost: '投稿するには、先に上の欄で名前を取ってください。',
     needNameAct: 'これには CAW の名前が必要です。上の欄で取れます。',
@@ -519,7 +523,9 @@ async function refreshWallet() {
   attachProviderListeners();
   try {
     const accts = await EP().request({ method: 'eth_accounts' });
+    const prevAccount = account;
     account = accts && accts[0] ? accts[0] : null;
+    if ((prevAccount || '').toLowerCase() !== (account || '').toLowerCase()) actingId = null; // name choice is per account; restored in myActingToken()
     const cid = await EP().request({ method: 'eth_chainId' });
     onQl1 = cid === CHAIN_ID_HEX;
   } catch (e) { account = null; }
@@ -581,7 +587,7 @@ async function sendTx(to, data) {
     await new Promise(r => setTimeout(r, 3000));
     const rc = await rpc('eth_getTransactionReceipt', [hash]).catch(() => null);
     if (rc) {
-      if (rc.status !== '0x1') throw new Error('tx failed');
+      if (rc.status !== '0x1') throw new Error('transaction ' + hash + ' was written to the chain but failed (reverted)');
       return hash;
     }
   }
@@ -590,11 +596,31 @@ async function sendTx(to, data) {
 
 /* ---------- posting / likes / follows (signed actions) ---------- */
 let actingId = null; // which of my names I act as (BigInt token id); set by the composer picker
+/* The acting-name choice is remembered per connected account (localStorage),
+   so it survives reloads and reconnects. It is only restored while the
+   account still owns that name; otherwise the first owned name is used. */
+const actingKey = () => account ? 'caw-acting-' + account.toLowerCase() : null;
+function loadActingPref() {
+  try { const v = localStorage.getItem(actingKey()); return v ? BigInt(v) : null; } catch (e) { return null; }
+}
+function saveActingPref(id) {
+  try {
+    if (id === null) localStorage.removeItem(actingKey());
+    else localStorage.setItem(actingKey(), id.toString());
+  } catch (e) {}
+}
 async function myActingToken() {
   if (!account || !onQl1) return null;
   const toks = await tokensOf(account).catch(() => []);
   if (!toks.length) return null;
   if (actingId !== null && toks.some(t => t.id === actingId)) return toks.find(t => t.id === actingId);
+  const saved = loadActingPref();
+  if (saved !== null && toks.some(t => t.id === saved)) {
+    actingId = saved;
+    return toks.find(t => t.id === saved);
+  }
+  if (saved !== null) saveActingPref(null); // the remembered name is no longer ours — forget it
+  actingId = toks[0].id;
   return toks[0];
 }
 const randomCawId = () => {
@@ -602,17 +628,70 @@ const randomCawId = () => {
   crypto.getRandomValues(b);
   return '0x' + Array.from(b).map(x => x.toString(16).padStart(2, '0')).join('');
 };
+/* ---- signing ----
+   The contract verifies a plain ECDSA signature over
+   digest = keccak256(0x1901 || DOMAIN_SEPARATOR || structHash), an EIP-712
+   shaped digest whose separator and typehash are fixed values stored in
+   the contract (see the signing core at the top of this section). The
+   wallet must sign that exact digest with no extra prefix.
+   NOTE: eth_signTypedData_v4 cannot be used here. The contract stores only
+   the separator/typehash VALUES; the EIP-712 domain name and type string
+   they were built from exist nowhere public (not in the bytecode, the
+   official SDK, or the community front end), and an extensive dictionary /
+   structured search did not recover them (see repo notes). A wallet asked
+   for typed data would compute a DIFFERENT separator and produce
+   signatures the contract rejects, so the raw-digest method below — the
+   same scheme every verified on-chain action was signed with — stays. */
+async function signActionDigest(act, digest) {
+  return EP().request({ method: 'eth_sign', params: [account, digest] });
+}
+/* Action errors carry a stage ('owner' | 'sign' | 'send') plus the wallet's
+   or the chain's own message, so the UI can explain in plain words AND show
+   the real reason instead of a generic "failed". */
+function actError(stage, detail) {
+  const e = new Error(stage);
+  e.stage = stage;
+  e.detail = detail ? String(detail).slice(0, 400) : '';
+  return e;
+}
+const walletErrText = e => {
+  if (!e) return '';
+  if (typeof e === 'string') return e;
+  return e.message || String(e);
+};
+function showActError(el, e) {
+  if (!el) return;
+  let msg = T.failed;
+  if (e && e.stage === 'owner') msg = T.notOwner;
+  else if (e && e.stage === 'sign') msg = T.signFail;
+  el.textContent = msg;
+  if (e && e.detail) {
+    const d = document.createElement('span');
+    d.className = 'errdetail';
+    d.textContent = T.walletSays + e.detail;
+    el.appendChild(document.createElement('br'));
+    el.appendChild(d);
+  }
+}
 async function submitAction(act) {
+  /* Pre-send ownership check: the signature only counts if the connected
+     wallet owns the name it acts as. Catch a mismatch here, with a clear
+     reason, instead of letting the chain reject it silently. */
+  let owner = null;
+  try { owner = await readAddr(CAW_NAME, SEL.ownerOf + word(act.senderId)); } catch (e) { /* read failed — let the send speak for itself */ }
+  if (owner && account && owner.toLowerCase() !== account.toLowerCase()) throw actError('owner');
   const digest = scActionDigest(act);
   let sig;
   try {
-    sig = await EP().request({ method: 'eth_sign', params: [account, digest] });
-  } catch (e) { throw new Error('sign'); }
+    sig = await signActionDigest(act, digest);
+  } catch (e) { throw actError('sign', walletErrText(e)); }
   const h = strip(sig);
-  if (h.length !== 130) throw new Error('sign');
+  if (h.length !== 130) throw actError('sign', 'unexpected signature format (length ' + h.length + ')');
   const vRaw = parseInt(h.slice(128, 130), 16);
   const s = { v: vRaw < 27 ? vRaw + 27 : vRaw, r: '0x' + h.slice(0, 64), s: '0x' + h.slice(64, 128) };
-  return sendTx(CAW_ACTIONS, scEncodeBatch([act], [s]));
+  try {
+    return await sendTx(CAW_ACTIONS, scEncodeBatch([act], [s]));
+  } catch (e) { throw actError('send', walletErrText(e)); }
 }
 const nowSec = () => Math.floor(Date.now() / 1000);
 async function guardActing(stEl) {
@@ -641,7 +720,7 @@ async function doTargetAction(kind, target, btn, stEl, rootEl) {
       } catch (e) {}
     }
   } catch (e) {
-    if (stEl) stEl.textContent = e.message === 'sign' ? T.signFail : T.failed;
+    showActError(stEl, e);
     btn.disabled = false;
   }
 }
@@ -674,7 +753,7 @@ async function renderComposer() {
   const upd = () => { const left = 420 - byteLen(); cc.textContent = left; btn.disabled = left < 0 || !ta.value.trim(); };
   ta.addEventListener('input', upd); upd();
   const sel = $('postAsSel');
-  if (sel) sel.onchange = () => { actingId = BigInt(sel.value); };
+  if (sel) sel.onchange = () => { actingId = BigInt(sel.value); saveActingPref(actingId); };
   btn.onclick = async () => {
     const text = ta.value.trim();
     if (!text || byteLen() > 420) return;
@@ -690,7 +769,7 @@ async function renderComposer() {
       ta.value = ''; upd();
       setTimeout(() => { loadTimeline(false); }, 4000);
     } catch (e) {
-      st.textContent = e.message === 'sign' ? T.signFail : T.failed;
+      showActError(st, e);
     } finally { btn.disabled = false; upd(); }
   };
 }
@@ -917,7 +996,7 @@ async function renderProfileActions() {
       });
       st.textContent = T.followed;
     } catch (e) {
-      st.textContent = e.message === 'sign' ? T.signFail : T.failed;
+      showActError(st, e);
       btn.disabled = false;
     }
   };
