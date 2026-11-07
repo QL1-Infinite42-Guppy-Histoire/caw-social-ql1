@@ -29,7 +29,7 @@ const T = {
     loading: 'Loading…', loadFail: 'Could not load the timeline. Please try again later.',
     empty: 'No actions found yet.', post: 'Post', like: 'Like', recaw: 'ReCaw', follow: 'Follow',
     viewTx: 'see the record', likes: 'likes', to: 'to',
-    ctxLike: '❤️ Liked a post by {name}', ctxRecaw: '🔁 Shared a post by {name}', ctxFollow: '👥 Followed {name}',
+    ctxLike: 'Liked a post by {name}', ctxRecaw: 'Shared a post by {name}', ctxFollow: 'Followed {name}',
     checking: 'Checking…', invalidName: 'That name cannot be used. Names use small letters, numbers and underscores.',
     taken: 'That name is already taken.', available: 'This name is available!',
     price: 'Price', checkFail: 'Could not check. Please try again.',
@@ -56,12 +56,16 @@ const T = {
     profPosts: 'Posts', nameCreated: 'Name made on', ownerLbl: 'Owner',
     yourNameTag: 'This is your name', seeMine: 'See it in My names',
     profNotFound: 'That name was not found.', likeBtn: 'Like', recawBtn: 'Share',
+    profLoadFail: 'Could not read this name. Please check your connection and try again.',
+    retryBtn: 'Try again', recheckBtn: 'Check again', searching: 'Looking for your wallet…',
+    noWalletGuide: 'No wallet app was found yet. If you are reading this in a normal browser, open this page inside your wallet app (MetaMask or FoxWallet) instead. If your wallet app is starting up, wait a moment and tap Check again.',
+    chainOk: 'On QL1', navHome: 'Home', navGet: 'Get a name', navMine: 'My names',
   },
   ja: {
     loading: '読み込み中…', loadFail: 'タイムラインを読み込めませんでした。しばらくしてからお試しください。',
     empty: 'まだアクションがありません。', post: '投稿', like: 'いいね', recaw: 'リポスト', follow: 'フォロー',
     viewTx: '記録を見る', likes: 'いいね', to: '→',
-    ctxLike: '❤️ {name} さんの投稿にいいね', ctxRecaw: '🔁 {name} さんの投稿をシェア', ctxFollow: '👥 {name} さんをフォロー',
+    ctxLike: '{name} さんの投稿にいいね', ctxRecaw: '{name} さんの投稿をシェア', ctxFollow: '{name} さんをフォロー',
     checking: '調べています…', invalidName: 'その名前は使えません。名前は小文字・数字・アンダースコアです。',
     taken: 'その名前はすでに使われています。', available: 'この名前は取れます！',
     price: '価格', checkFail: '調べられませんでした。もう一度お試しください。',
@@ -88,6 +92,10 @@ const T = {
     profPosts: '投稿', nameCreated: '名前が作られた日', ownerLbl: '持ち主',
     yourNameTag: 'これはあなたの名前です', seeMine: '「自分の名前」で見る',
     profNotFound: 'その名前は見つかりませんでした。', likeBtn: 'いいね', recawBtn: 'シェア',
+    profLoadFail: '名前を読み取れませんでした。通信を確認してもう一度お試しください。',
+    retryBtn: 'もう一度試す', recheckBtn: '再チェック', searching: 'ウォレットを探しています…',
+    noWalletGuide: 'ウォレットアプリがまだ見つかりません。通常のブラウザで開いている場合は、ウォレットアプリ（MetaMask / FoxWallet）の中で開いてください。ウォレットが起動中のときは、少し待ってから「再チェック」を押してください。',
+    chainOk: 'QL1 接続中', navHome: 'ホーム', navGet: '名前を取る', navMine: '自分の名前',
   },
 }[LANG];
 
@@ -248,6 +256,47 @@ const readUint = async (to, data) => decUintRet(await ethCall(to, data));
 const readAddr = async (to, data) => decAddrRet(await ethCall(to, data));
 const readStr = async (to, data) => decStringRet(await ethCall(to, data));
 
+/* line icons (stroke style, no emoji in buttons/nav) */
+const svgIc = (paths, size) => '<svg class="ic" width="' + (size || 18) + '" height="' + (size || 18) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
+const IC_HEART = svgIc('<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>');
+const IC_REPEAT = svgIc('<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>');
+
+/* retry a read a few times (public RPCs and wallet browsers can hiccup) */
+async function withRetry(fn, tries, delayMs) {
+  let lastErr = null;
+  for (let i = 0; i < (tries || 3); i++) {
+    try { return await fn(); } catch (e) {
+      lastErr = e;
+      if (i < (tries || 3) - 1) await new Promise(r => setTimeout(r, delayMs || 700));
+    }
+  }
+  throw lastErr;
+}
+
+/* Resolve a username to its token id, verified against the name list.
+   The QL1 name desk answers idByUsername(name) with tokenId + 1, so the
+   raw answer can never be trusted on its own: check the neighbours and
+   accept only the id whose stored name matches exactly.
+   Returns { status:'ok', id, username } | { status:'notfound' } and
+   throws when the reads themselves failed (callers show a load error,
+   never a false "not found"). */
+async function resolveNameId(rawName) {
+  const q = String(rawName || '').trim().toLowerCase();
+  if (!q) return { status: 'notfound' };
+  const id0 = await withRetry(() => readUint(MINTER, SEL.idByUsername + encStr(q)));
+  if (id0 === 0n) return { status: 'notfound' };
+  const cands = [id0 - 1n, id0, id0 + 1n].filter(c => c >= 1n);
+  let readFailed = false;
+  for (const c of cands) {
+    let uname = null;
+    try { uname = await withRetry(() => readStr(CAW_NAME, SEL.usernames + word(c)), 2, 500); }
+    catch (e) { readFailed = true; }
+    if (uname === q) return { status: 'ok', id: c, username: uname };
+  }
+  if (readFailed) throw new Error('name lookup reads failed');
+  return { status: 'notfound' };
+}
+
 /* ---------- name resolution (NFT metadata first, registry fallback) ---------- */
 const ownerTokensCache = new Map();
 async function tokensOf(owner) {
@@ -380,10 +429,10 @@ async function renderAction(a) {
     try { likes = await readUint(CAW_ACTIONS, SEL.likes + word(a.senderId) + strip(a.cawId)); } catch (e) {}
   }
   html += '<div class="pfoot">' +
-    '<span class="like-count">' + (likes !== null && likes > 0n ? '❤️ ' + likes.toString() : '') + '</span>' +
+    '<span class="like-count">' + (likes !== null && likes > 0n ? IC_HEART + '<span>' + likes.toString() + '</span>' : '') + '</span>' +
     (a.type === 0
-      ? '<button class="actbtn like-btn" type="button">❤️ ' + T.likeBtn + '</button>' +
-        '<button class="actbtn recaw-btn" type="button">🔁 ' + T.recawBtn + '</button>'
+      ? '<button class="actbtn like-btn" type="button">' + IC_HEART + '<span>' + T.likeBtn + '</span></button>' +
+        '<button class="actbtn recaw-btn" type="button">' + IC_REPEAT + '<span>' + T.recawBtn + '</span></button>'
       : '') +
     '<a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a>' +
     '<span class="act-status small"></span></div>';
@@ -401,30 +450,88 @@ async function renderAction(a) {
 
 /* ---------- wallet ---------- */
 let account = null, onQl1 = false;
-const hasWallet = () => typeof window.ethereum !== 'undefined';
+/* Wallet apps often inject their provider a moment AFTER the page loads,
+   and some announce it via EIP-6963 instead of window.ethereum. Keep
+   looking for a few seconds instead of deciding once at load time. */
+let eipProvider = null;
+const EP = () => (typeof window !== 'undefined' && window.ethereum) || eipProvider || null;
+const hasWallet = () => !!EP();
+const shortAddr = a => a ? a.slice(0, 6) + '…' + a.slice(-4) : '';
+let listenersAttachedFor = null;
+function attachProviderListeners() {
+  const p = EP();
+  if (!p || listenersAttachedFor === p || typeof p.on !== 'function') return;
+  listenersAttachedFor = p;
+  try { p.on('accountsChanged', refreshWallet); p.on('chainChanged', refreshWallet); } catch (e) {}
+}
+let walletWatch = null;
+function watchForWallet() {
+  if (hasWallet()) { attachProviderListeners(); refreshWallet(); return; }
+  if (walletWatch) return;
+  let tries = 0;
+  walletWatch = setInterval(() => {
+    tries++;
+    if (hasWallet()) {
+      clearInterval(walletWatch); walletWatch = null;
+      attachProviderListeners(); refreshWallet();
+    } else if (tries >= 24) { // ~12 s of looking is enough
+      clearInterval(walletWatch); walletWatch = null;
+    }
+  }, 500);
+  try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch (e) {}
+}
+if (typeof window !== 'undefined' && window.addEventListener) {
+  window.addEventListener('eip6963:announceProvider', ev => {
+    const p = ev && ev.detail && ev.detail.provider;
+    if (p && !eipProvider) {
+      eipProvider = p;
+      if (walletWatch) { clearInterval(walletWatch); walletWatch = null; }
+      attachProviderListeners(); refreshWallet();
+    }
+  });
+  try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch (e) {}
+}
 async function refreshWallet() {
   const area = $('walletArea');
   if (!hasWallet()) {
-    area.innerHTML = '<p>' + (LANG === 'ja'
-      ? 'ウォレットアプリが見つかりません。MetaMask などのブラウザで開いてください。'
-      : 'No wallet found. Open this page in a wallet browser such as MetaMask.') + '</p>';
+    /* Never leave this area without a big, tappable way forward. */
+    area.innerHTML = '<p>' + T.noWalletGuide + '</p>' +
+      '<div class="row"><button id="connectBtn" class="big-connect">' + T.connectBtn + '</button>' +
+      '<button id="recheckBtn" class="ghost">' + T.recheckBtn + '</button></div>' +
+      '<p class="small" id="walletSearchNote"></p>';
+    $('connectBtn').onclick = () => {
+      if (!hasWallet()) {
+        const note = $('walletSearchNote');
+        if (note) note.textContent = T.searching;
+        watchForWallet();
+        return;
+      }
+      connectWallet();
+    };
+    $('recheckBtn').onclick = () => {
+      const note = $('walletSearchNote');
+      if (note) note.textContent = T.searching;
+      watchForWallet();
+      refreshWallet();
+    };
     renderMyNames(); return;
   }
+  attachProviderListeners();
   try {
-    const accts = await window.ethereum.request({ method: 'eth_accounts' });
+    const accts = await EP().request({ method: 'eth_accounts' });
     account = accts && accts[0] ? accts[0] : null;
-    const cid = await window.ethereum.request({ method: 'eth_chainId' });
+    const cid = await EP().request({ method: 'eth_chainId' });
     onQl1 = cid === CHAIN_ID_HEX;
   } catch (e) { account = null; }
   if (!account) {
     area.innerHTML = '<p>' + (LANG === 'ja'
-      ? '名前の発行や管理にはウォレット（MetaMask / FoxWallet）をつないでください。タイムラインの閲覧はウォレットなしでできます。'
+      ? '名前を取ったり管理したりするには、ウォレット（MetaMask / FoxWallet）をつないでください。タイムラインの閲覧はウォレットなしでできます。'
       : 'Connect a wallet (MetaMask / FoxWallet) to get a name or manage yours. Reading the timeline works without a wallet.') + '</p>' +
-      '<button id="connectBtn">' + T.connectBtn + '</button>';
+      '<button id="connectBtn" class="big-connect">' + T.connectBtn + '</button>';
     $('connectBtn').onclick = connectWallet;
   } else if (!onQl1) {
-    area.innerHTML = '<p><span class="warn">' + T.wrongChain + '</span></p>' +
-      '<p class="small">' + T.connected + ': ' + esc(account) + '</p>' +
+    area.innerHTML = '<p class="addrline"><span class="dot dot-warn"></span><b>' + esc(shortAddr(account)) + '</b>' +
+      '<span class="warn">' + T.wrongChain + '</span></p>' +
       '<button id="switchBtn">' + T.switchBtn + '</button>';
     $('switchBtn').onclick = switchChain;
   } else {
@@ -432,7 +539,9 @@ async function refreshWallet() {
       rpc('eth_getBalance', [account, 'latest']).then(h => BigInt(h)).catch(() => 0n),
       readUint(QCAW, SEL.balanceOf + encAddr(account)).catch(() => 0n),
     ]);
-    area.innerHTML = '<p class="small">' + T.connected + ': ' + esc(account) + '</p>' +
+    area.innerHTML = '<p class="addrline"><span class="dot dot-ok"></span><b>' + esc(shortAddr(account)) + '</b>' +
+      '<span class="chainbadge">' + T.chainOk + '</span></p>' +
+      '<p class="small">' + esc(account) + '</p>' +
       '<p>' + T.myQom + ': <b>' + fmtQcaw(qom) + '</b> QOM ／ ' + T.walletQcaw + ': <b>' + fmtQcaw(qcaw) + '</b> qCAW</p>';
   }
   renderMyNames();
@@ -441,17 +550,17 @@ async function refreshWallet() {
   if (profileQuery && profileState) renderProfileActions();
 }
 async function connectWallet() {
-  if (!hasWallet()) return;
-  try { await window.ethereum.request({ method: 'eth_requestAccounts' }); } catch (e) {}
+  if (!hasWallet()) { watchForWallet(); return; }
+  try { await EP().request({ method: 'eth_requestAccounts' }); } catch (e) {}
   await refreshWallet();
 }
 async function switchChain() {
   try {
-    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID_HEX }] });
+    await EP().request({ method: 'wallet_switchEthereumChain', params: [{ chainId: CHAIN_ID_HEX }] });
   } catch (e) {
     if (e && (e.code === 4902 || /Unrecognized chain/i.test(e.message || ''))) {
       try {
-        await window.ethereum.request({
+        await EP().request({
           method: 'wallet_addEthereumChain',
           params: [{
             chainId: CHAIN_ID_HEX, chainName: 'QL1',
@@ -465,7 +574,7 @@ async function switchChain() {
   await refreshWallet();
 }
 async function sendTx(to, data) {
-  const hash = await window.ethereum.request({
+  const hash = await EP().request({
     method: 'eth_sendTransaction', params: [{ from: account, to, data }],
   });
   for (let i = 0; i < 40; i++) {
@@ -497,7 +606,7 @@ async function submitAction(act) {
   const digest = scActionDigest(act);
   let sig;
   try {
-    sig = await window.ethereum.request({ method: 'eth_sign', params: [account, digest] });
+    sig = await EP().request({ method: 'eth_sign', params: [account, digest] });
   } catch (e) { throw new Error('sign'); }
   const h = strip(sig);
   if (h.length !== 130) throw new Error('sign');
@@ -528,7 +637,7 @@ async function doTargetAction(kind, target, btn, stEl, rootEl) {
       try {
         const likes = await readUint(CAW_ACTIONS, SEL.likes + word(target.senderId) + strip(target.cawId));
         const el = rootEl.querySelector('.like-count');
-        if (el && likes > 0n) el.textContent = '❤️ ' + likes.toString();
+        if (el && likes > 0n) el.innerHTML = IC_HEART + '<span>' + likes.toString() + '</span>';
       } catch (e) {}
     }
   } catch (e) {
@@ -595,13 +704,14 @@ async function checkName() {
   if (!name) { out.innerHTML = ''; lastCheck = null; return; }
   out.innerHTML = '<p>' + T.checking + '</p>';
   try {
-    const enc = '0x' + encStr(name);
-    const [valid, idRaw, cost] = await Promise.all([
-      ethCall(MINTER, SEL.isValidUsername + enc.slice(2)).then(h => decUintRet(h) !== 0n),
-      ethCall(MINTER, SEL.idByUsername + enc.slice(2)).then(decUintRet),
-      readUint(MINTER, SEL.costOfName + enc.slice(2)),
+    const enc = encStr(name);
+    const [valid, res, cost] = await Promise.all([
+      ethCall(MINTER, SEL.isValidUsername + enc).then(h => decUintRet(h) !== 0n),
+      resolveNameId(name).catch(() => ({ status: 'error' })),
+      readUint(MINTER, SEL.costOfName + enc),
     ]);
-    const taken = idRaw !== 0n;
+    if (valid && res.status === 'error') throw new Error('lookup failed');
+    const taken = res.status === 'ok';
     lastCheck = { name, valid, taken, cost };
     if (!valid) out.innerHTML = '<p class="err">' + T.invalidName + '</p>';
     else if (taken) out.innerHTML = '<p class="warn">' + T.taken + '</p>';
@@ -733,10 +843,26 @@ async function mintDateOf(id) {
 async function loadProfile() {
   const head = $('profileHead'), postsBox = $('profilePosts');
   head.innerHTML = '<p>' + T.loading + '</p>';
-  let id = 0n;
-  try { id = await readUint(MINTER, SEL.idByUsername + encStr(profileQuery).slice(2)); } catch (e) {}
-  if (!id) { head.innerHTML = '<p class="err">' + T.profNotFound + '</p>'; $('profilePostsTitle').style.display = 'none'; return; }
-  const username = (await resolveName(id)) || profileQuery;
+  let res;
+  try {
+    res = await resolveNameId(profileQuery);
+  } catch (e) {
+    /* the reads themselves failed — that is NOT the same as "no such
+       name", so say so and offer a way to try again */
+    head.innerHTML = '<p class="err">' + T.profLoadFail + '</p>' +
+      '<p><button id="profRetry" type="button">' + T.retryBtn + '</button></p>';
+    $('profilePostsTitle').style.display = 'none';
+    const rb = $('profRetry');
+    if (rb) rb.onclick = () => { $('profilePostsTitle').style.display = ''; loadProfile(); };
+    return;
+  }
+  if (res.status !== 'ok') {
+    head.innerHTML = '<p class="err">' + T.profNotFound + '</p>';
+    $('profilePostsTitle').style.display = 'none';
+    return;
+  }
+  const id = res.id;
+  const username = res.username || (await resolveName(id)) || profileQuery;
   const owner = await readAddr(CAW_NAME, SEL.ownerOf + word(id)).catch(() => null);
   const img = await avatarFor(id);
   let followers = null;
@@ -751,12 +877,12 @@ async function loadProfile() {
     const d = new Date(mintTs);
     chips.push(T.nameCreated + ': ' + d.toLocaleDateString(LANG === 'ja' ? 'ja-JP' : 'en-US', { year: 'numeric', month: 'numeric', day: 'numeric' }));
   }
-  let html = '<div class="phead">' + avatarHtml(img, username) + '<div>' +
+  let html = '<div class="pband"></div>' +
+    '<div class="prow"><div class="pava">' + avatarHtml(img, username) + '</div>' +
+    '<div id="profileActions" class="pactions"></div></div>' +
     '<div class="pname">@' + esc(username) + '</div>' +
-    (owner ? '<div class="small">' + T.ownerLbl + ': <a class="plink" href="' + EXPLORER + '/address/' + owner + '" target="_blank" rel="noopener">' + esc(owner.slice(0, 8)) + '…' + esc(owner.slice(-6)) + '</a></div>' : '') +
-    '<div class="chips">' + chips.map(c => '<span class="chip">' + esc(c) + '</span>').join('') + '</div>' +
-    '<div id="profileActions"></div>' +
-    '</div></div>';
+    (owner ? '<div class="small">' + T.ownerLbl + ': <a class="plink" href="' + EXPLORER + '/address/' + owner + '" target="_blank" rel="noopener">' + esc(shortAddr(owner)) + '</a></div>' : '') +
+    '<div class="chips">' + chips.map(c => '<span class="chip">' + esc(c) + '</span>').join('') + '</div>';
   head.innerHTML = html;
   profileState = { id, username, owner };
   renderProfileActions();
@@ -777,7 +903,7 @@ async function renderProfileActions() {
   if (!account || !onQl1) { box.innerHTML = ''; return; }
   const toks = await tokensOf(account).catch(() => []);
   if (!toks.length) { box.innerHTML = ''; return; }
-  box.innerHTML = '<p><button id="followBtn" type="button">' + T.followBtn + '</button> <span class="small" id="followStatus"></span></p>';
+  box.innerHTML = '<button id="followBtn" class="follow-pill" type="button">' + T.followBtn + '</button> <span class="small" id="followStatus"></span>';
   $('followBtn').onclick = async () => {
     const st = $('followStatus');
     const my = await guardActing(st);
@@ -834,10 +960,14 @@ $('checkBtn').onclick = checkName;
 $('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') checkName(); });
 const cb = $('connectBtn');
 if (cb) cb.onclick = connectWallet;
-if (hasWallet()) {
-  window.ethereum.on && window.ethereum.on('accountsChanged', refreshWallet);
-  window.ethereum.on && window.ethereum.on('chainChanged', refreshWallet);
-}
+attachProviderListeners();
+watchForWallet();
+const fab = $('fabBtn');
+if (fab) fab.onclick = () => {
+  const ca = $('composerArea');
+  if (ca) ca.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  setTimeout(() => { const ta = $('postText'); if (ta) ta.focus({ preventScroll: true }); }, 450);
+};
 if (profileQuery) {
   document.body.classList.add('profile-mode');
   $('profileBlock').style.display = '';

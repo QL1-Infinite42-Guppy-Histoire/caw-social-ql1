@@ -73,6 +73,12 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 #timeline { margin: 0 -16px; padding: 0 16px; }
 .post { display: flex; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
 .post:last-child { border-bottom: 0; }
+@media (hover: hover) {
+  .post { transition: background .15s ease; }
+  .post:hover { background: #f7f9f9; }
+}
+.ic { flex: 0 0 auto; }
+.like-count { display: inline-flex; align-items: center; gap: 5px; }
 .avatar {
   width: 44px; height: 44px; border-radius: 50%; flex: 0 0 44px;
   object-fit: cover; background: var(--accent-soft);
@@ -113,18 +119,35 @@ select {
 }
 .charcount { color: var(--sub); font-size: .85rem; }
 .actbtn {
-  background: #fff; color: var(--sub); border: 1px solid var(--line2);
-  border-radius: 999px; padding: 6px 14px; font-size: .85rem; font-weight: 700;
+  background: transparent; color: var(--sub); border: 0;
+  border-radius: 999px; padding: 7px 10px; font-size: .85rem; font-weight: 700;
   min-height: 36px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 6px;
 }
-.actbtn:hover { color: var(--accent); border-color: var(--accent); background: #fff; }
+.actbtn:hover { color: var(--accent); background: var(--accent-soft); }
 .actbtn:disabled { opacity: .45; cursor: not-allowed; }
 .plink { color: inherit; text-decoration: none; }
 a.plink:hover { text-decoration: underline; }
 .profile-mode .home-block { display: none; }
-.phead { display: flex; gap: 14px; align-items: flex-start; }
-.phead .avatar { width: 76px; height: 76px; flex-basis: 76px; font-size: 1.6rem; }
-.pname { font-weight: 800; font-size: 1.3rem; word-break: break-all; }
+.profile-mode .fab { display: none; }
+/* profile header: X-style band with the avatar overlapping it */
+.pband {
+  height: 112px; border-radius: 16px; margin-top: 2px;
+  background: linear-gradient(120deg, #0f1419 0%, #43302a 52%, var(--accent) 130%);
+}
+.prow { display: flex; align-items: flex-end; justify-content: space-between; margin-top: -46px; padding: 0 8px; }
+.pava .avatar {
+  width: 96px; height: 96px; flex-basis: 96px; font-size: 2rem;
+  border: 4px solid #fff; background: #fff;
+}
+.pactions { padding-bottom: 8px; min-height: 44px; }
+.follow-pill {
+  background: var(--ink); color: #fff; border-radius: 999px;
+  padding: 10px 24px; min-height: 44px; font-size: .95rem;
+  box-shadow: 0 2px 8px rgba(15,20,25,.18);
+}
+.follow-pill:hover { background: #272c33; }
+.pname { font-weight: 800; font-size: 1.35rem; word-break: break-all; margin-top: 8px; }
 .chips { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .chip {
   background: #f7f9f9; border: 1px solid var(--line2); border-radius: 999px;
@@ -132,6 +155,45 @@ a.plink:hover { text-decoration: underline; }
 }
 #profileActions { margin-top: 10px; }
 #profilePostsTitle { margin: 18px 0 4px; font-size: 1.05rem; font-weight: 800; }
+
+/* ---- wallet area states ---- */
+button.big-connect { width: 100%; min-height: 56px; font-size: 1.06rem; }
+.addrline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.dot { width: 10px; height: 10px; border-radius: 50%; flex: 0 0 10px; }
+.dot-ok { background: var(--ok); }
+.dot-warn { background: var(--accent); }
+.chainbadge {
+  background: #e6f4ea; color: var(--ok); border-radius: 999px;
+  padding: 2px 10px; font-size: .78rem; font-weight: 700;
+}
+#composerArea .row { justify-content: space-between; }
+
+/* ---- floating post button ---- */
+.fab {
+  position: fixed; right: 18px; bottom: 92px; z-index: 30;
+  width: 58px; height: 58px; min-height: 58px; border-radius: 50%;
+  padding: 0; display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 6px 18px rgba(15,20,25,.30);
+}
+@media (min-width: 861px) { .fab { bottom: 28px; } }
+
+/* ---- bottom nav (phones) ---- */
+.bottomnav {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 29;
+  background: rgba(255,255,255,.96); backdrop-filter: blur(8px);
+  border-top: 1px solid var(--line2);
+  display: none;
+}
+.bottomnav a {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+  padding: 8px 0 calc(8px + env(safe-area-inset-bottom));
+  color: var(--sub); text-decoration: none; font-size: .68rem; font-weight: 700;
+}
+.bottomnav a:active { color: var(--ink); }
+@media (max-width: 860px) {
+  .bottomnav { display: flex; }
+  body { padding-bottom: 78px; }
+}
 
 /* ---- notice & footer ---- */
 .notice { background: #fff8e6; border-bottom: 1px solid var(--line); }

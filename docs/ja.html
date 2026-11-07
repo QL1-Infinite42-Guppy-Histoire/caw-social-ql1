@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
-<link rel="stylesheet" href="style.css?v=3">
+<link rel="stylesheet" href="style.css?v=4">
 </head>
 <body>
 <div class="wrap">
@@ -54,7 +54,7 @@
     <div id="composerArea"><p class="small">投稿するには、上のボタンでウォレットをつないでください。</p></div>
   </section>
 
-  <section class="block home-block">
+  <section class="block home-block" id="getname">
     <h2>名前を取る</h2>
     <p>名前は、CAW であなたを見つけてもらうための呼び名です。qCAW（CAW のコイン）で一度払えば、ずっとあなたのものです。名前を入力すると、空いているか・いくらか分かります。</p>
     <input type="text" id="nameInput" placeholder="例：alice" autocomplete="off" spellcheck="false">
@@ -85,6 +85,14 @@
     <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> のひとつです — Don't Panic.
   </footer>
 </div>
-<script src="app.js?v=3"></script>
+<button id="fabBtn" class="fab" type="button" aria-label="投稿する">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
+</button>
+<nav class="bottomnav">
+  <a href="ja.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>ホーム</span></a>
+  <a href="ja.html#getname"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>名前を取る</span></a>
+  <a href="ja.html#mynames"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>自分の名前</span></a>
+</nav>
+<script src="app.js?v=4"></script>
 </body>
 </html>

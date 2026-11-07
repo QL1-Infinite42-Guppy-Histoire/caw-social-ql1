@@ -74,6 +74,27 @@ changed afterwards. (The one description string in `CawNameURI` is a
 single global text for all names, changeable only by that contract's
 owner.)
 
+## Fixes (2026-11-07, second round)
+
+- **Profile pages said "not found" for real names.** Two causes: the
+  profile loader built its `idByUsername` calldata with two hex
+  characters cut off (the call always reverted and the failure was
+  shown as "not found"), and this port's name desk answers
+  `idByUsername(name)` with `tokenId + 1`. Name lookups now verify the
+  answer against the stored names of the neighbouring ids and accept
+  only an exact match; a failed read shows a load error with a retry
+  button instead of "not found". The same verified lookup backs the
+  name check on the mint form.
+- **Wallets injected after page load were never seen.** The site now
+  keeps looking for a wallet provider for ~12 s after load and also
+  listens for EIP-6963 announcements; the wallet area always shows a
+  large connect button (plus a re-check button and a short guide when
+  no wallet has been found yet).
+- **Look and feel.** Closer to X: profile pages have a header band
+  with the picture overlapping it and a pill-shaped follow button,
+  post actions use line icons, phones get a bottom navigation bar
+  (home / get a name / my names) and a round floating post button.
+
 ## Contracts (QL1, chain ID 766)
 
 | What | Address |
