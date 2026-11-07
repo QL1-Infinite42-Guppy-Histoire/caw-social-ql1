@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CAW Social — QL1</title>
-<meta name="description" content="CAW Social on QL1: read the newest posts, get your own name, and look after your qCAW. A community site, in plain words.">
+<meta name="description" content="CAW Social on QL1 is paused for maintenance. We'll be back soon.">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -13,7 +13,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
-<link rel="stylesheet" href="style.css?v=5">
+<link rel="stylesheet" href="style.css?v=6">
 </head>
 <body>
 <div class="wrap">
@@ -28,56 +28,12 @@
     </div>
   </div>
 
-  <section class="block" id="profileBlock" style="display:none">
-    <p><a class="plink" href="en.html">← Back to the timeline</a></p>
-    <div id="profileHead"><p>Loading…</p></div>
-    <h3 id="profilePostsTitle">Posts</h3>
-    <div id="profilePosts"></div>
-    <div class="loadmore"><button id="profileMore" class="ghost" style="display:none">See more</button></div>
-  </section>
-
-  <section class="block home-block">
-    <h2>Timeline</h2>
-    <p class="muted">The newest posts on CAW, in order. Anyone can read — no wallet needed.</p>
-    <div id="timeline"><p>Loading…</p></div>
-    <div class="loadmore"><button id="moreBtn" class="ghost" style="display:none">See more</button></div>
-  </section>
-
-  <section class="block">
-    <h2>Your wallet</h2>
-    <div id="walletArea"><p>To get a name or look after yours, connect your wallet app (MetaMask or FoxWallet). You don't need one just to read.</p>
-    <button id="connectBtn">Connect wallet</button></div>
-  </section>
-
-  <section class="block home-block">
-    <h2>Post</h2>
-    <div id="composerArea"><p class="small">Connect your wallet above to post.</p></div>
-  </section>
-
-  <section class="block home-block" id="getname">
-    <h2>Get your name</h2>
-    <p>Your name is how people find you on CAW. You pay once with qCAW (CAW's coin) and the name is yours. Type a name to see if it's free and what it costs.</p>
-    <input type="text" id="nameInput" placeholder="e.g. alice" autocomplete="off" spellcheck="false">
-    <div class="row"><button id="checkBtn">Check this name</button></div>
-    <div id="nameResult"></div>
-    <div id="mintArea"></div>
-  </section>
-
-  <section class="block home-block" id="mynames">
-    <h2>My names</h2>
-    <div id="myNames"><p>Connect your wallet to see your names.</p></div>
-  </section>
-
-  <section class="block home-block">
-    <h2>About this site</h2>
-    <p>CAW is a social network where posts are kept on a shared public record (a blockchain) instead of one company's computers — so anyone can read them, and nobody can quietly rewrite them later.</p>
-    <p>This site is a community-made window into the QL1 version of CAW. It is <b>not</b> run by the official CAW team. When you get a name or move qCAW, a small fee in QOM (QL1's coin) is also needed.</p>
-    <p class="small">Add this page to your home screen and it opens like an app.<br>
-    Places this site talks to on QL1:<br>
-    Names: <code>0x864f08Af11F6DC2c0De42562e4664d4f033D393f</code><br>
-    Posts: <code>0x95c2AFEc2dE8b09323Cdc7E40Bcce42C3C49E496</code><br>
-    Name desk: <code>0xFC2f8743E3b09a6c973B114c3a082433e974eD9f</code><br>
-    qCAW coin: <code>0xd2140E16aDf37194036865E90BbCA1139b739d0D</code></p>
+  <section class="block pause-hero">
+    <div class="pause-icon" aria-hidden="true">⏸</div>
+    <h2>Paused for maintenance</h2>
+    <p>CAW Social (QL1) is paused while we do some maintenance.<br>
+    We'll be back soon — thank you for your patience.</p>
+    <p class="backlink"><a href="https://ql1-infinite42-guppy-histoire.github.io/links/">← Back to Guppy's Guide</a></p>
   </section>
 
   <footer>
@@ -85,14 +41,10 @@
     Part of <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> — Don't Panic.
   </footer>
 </div>
-<button id="fabBtn" class="fab" type="button" aria-label="Post">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>
-</button>
-<nav class="bottomnav">
-  <a href="en.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a>
-  <a href="en.html#getname"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Get a name</span></a>
-  <a href="en.html#mynames"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>My names</span></a>
-</nav>
-<script src="app.js?v=6"></script>
+<script>
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
+</script>
 </body>
 </html>

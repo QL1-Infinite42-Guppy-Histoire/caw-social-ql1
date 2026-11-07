@@ -196,6 +196,19 @@ button.big-connect { width: 100%; min-height: 56px; font-size: 1.06rem; }
   body { padding-bottom: 78px; }
 }
 
+/* ---- paused (maintenance) page ---- */
+.pause-hero { text-align: center; padding: 56px 20px 64px; }
+.pause-hero .pause-icon { font-size: 3rem; line-height: 1; }
+.pause-hero h2 { font-size: 1.35rem; margin: 16px 0 10px; }
+.pause-hero p { color: var(--sub); margin: 6px 0; }
+.pause-hero .backlink { margin-top: 26px; }
+.pause-hero .backlink a {
+  display: inline-block; color: var(--accent-dark); font-weight: 700;
+  text-decoration: none; border: 1px solid var(--line2); border-radius: 999px;
+  padding: 10px 22px;
+}
+.pause-hero .backlink a:hover { background: var(--accent-soft); }
+
 /* ---- notice & footer ---- */
 .notice { background: #fff8e6; border-bottom: 1px solid var(--line); }
 footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-height: 1.7; }
