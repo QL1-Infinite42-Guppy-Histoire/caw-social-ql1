@@ -49,6 +49,7 @@ const T = {
     postHelp: 'Up to 420 letters. A Japanese letter counts as 3.',
     signNote: 'Your wallet will ask you to sign. That is a one-time OK for this post only — it does not move your coins.',
     signFail: 'Your wallet did not sign, so nothing was sent.',
+    signUnsupported: 'This wallet app can\'t sign posts, so nothing was sent. Open this page in another wallet app\'s browser (such as MetaMask) to post.',
     notOwner: 'That name belongs to a different wallet, so this could not be sent.',
     walletSays: 'Wallet message: ',
     posted: 'Posted!', connectToPost: 'Connect your wallet above to post.',
@@ -87,6 +88,7 @@ const T = {
     postHelp: '最大420文字分まで（日本語は1文字で3文字分です）',
     signNote: 'ウォレットが署名を求めてきます。この投稿だけの許可で、コインは動きません。',
     signFail: 'ウォレットで署名されなかったため、送信しませんでした。',
+    signUnsupported: 'このウォレットアプリでは署名ができないため、投稿できませんでした。MetaMask など、別のウォレットアプリのブラウザでこのページを開くと投稿できます。',
     notOwner: 'その名前は別のウォレットのものなので、送信できませんでした。',
     walletSays: 'ウォレットの表示：',
     posted: '投稿しました！', connectToPost: '投稿するには、上のボタンでウォレットをつないでください。',
@@ -659,13 +661,23 @@ const walletErrText = e => {
   if (typeof e === 'string') return e;
   return e.message || String(e);
 };
+/* Some wallet apps refuse the plain signing this site needs — FoxWallet,
+   for one, answers "does not support eth_sign". When the wallet's own
+   message says so, show plain guidance about what to do instead of the
+   raw error text alone. */
+const signUnsupported = text => {
+  const t = (text || '').toLowerCase();
+  return t.includes('eth_sign') && (t.includes('not support') || t.includes('unsupported'));
+};
 function showActError(el, e) {
   if (!el) return;
+  const unsup = signUnsupported((e && e.detail) || walletErrText(e));
   let msg = T.failed;
-  if (e && e.stage === 'owner') msg = T.notOwner;
+  if (unsup) msg = T.signUnsupported;
+  else if (e && e.stage === 'owner') msg = T.notOwner;
   else if (e && e.stage === 'sign') msg = T.signFail;
   el.textContent = msg;
-  if (e && e.detail) {
+  if (e && e.detail && !unsup) {
     const d = document.createElement('span');
     d.className = 'errdetail';
     d.textContent = T.walletSays + e.detail;

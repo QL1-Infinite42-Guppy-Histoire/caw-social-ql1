@@ -2,7 +2,7 @@
    opens like an app. Chain data always comes from the network (the fetch
    handler below only handles same-origin GET requests, and revalidates
    them in the background). */
-const CACHE = 'caw-shell-v4';
+const CACHE = 'caw-shell-v5';
 const SHELL = [
   './', 'index.html', 'en.html', 'ja.html',
   'style.css', 'app.js', 'manifest.webmanifest',
