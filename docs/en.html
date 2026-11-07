@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CAW SocialFi on QL1</title>
+<meta name="description" content="A simple front end for the community-run CAW social network on QL1. Read the timeline, get a name, manage your names.">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="langbar"><a href="en.html" class="active">English</a><a href="ja.html">日本語</a></div>
+<header>
+  <h1>🐦 CAW SocialFi (QL1)</h1>
+  <p>A community-run social network on the QL1 chain — posts are stored on the blockchain.</p>
+</header>
+<main>
+  <section class="card" id="walletCard">
+    <h2>Wallet</h2>
+    <div id="walletArea"><p>Connect a wallet (MetaMask / FoxWallet) to get a name or manage yours. Reading the timeline works without a wallet.</p>
+    <button id="connectBtn">Connect wallet</button></div>
+  </section>
+
+  <section class="card">
+    <h2>Timeline</h2>
+    <p class="small">Newest posts and actions recorded on QL1, read straight from the chain.</p>
+    <div id="timeline"><p>Loading…</p></div>
+    <div class="row"><button id="moreBtn" class="ghost" style="display:none">Load more</button></div>
+  </section>
+
+  <section class="card">
+    <h2>Get a name</h2>
+    <p>Your name is an NFT on QL1. You need it to take part. Names are paid in qCAW.</p>
+    <input type="text" id="nameInput" placeholder="e.g. alice" autocomplete="off" spellcheck="false">
+    <div class="row"><button id="checkBtn" class="secondary">Check this name</button></div>
+    <div id="nameResult"></div>
+    <div id="mintArea"></div>
+  </section>
+
+  <section class="card">
+    <h2>My names</h2>
+    <div id="myNames"><p>Connect your wallet to see your names.</p></div>
+  </section>
+
+  <section class="card notice">
+    <h2>Posting is under investigation</h2>
+    <p>Posting, liking and following are <b>not available on this site yet</b>. On QL1, every post so far was signed by its author and then sent by a community relay. We are still verifying exactly how those signatures are made, so the buttons stay hidden instead of guessing. The timeline above is fully readable in the meantime.</p>
+  </section>
+
+  <section class="card">
+    <h2>About</h2>
+    <p>CAW (A Hunters Dream) is a social protocol first designed for Ethereum. This site talks to a <b>community port running on QL1</b>. It is <b>not</b> run by the official cawdevelopment team, and the contracts are not verified on the explorer — this page reads and writes them as they are.</p>
+    <p class="small">
+      CawName: <code>0x864f08Af11F6DC2c0De42562e4664d4f033D393f</code><br>
+      CawActions: <code>0x95c2AFEc2dE8b09323Cdc7E40Bcce42C3C49E496</code><br>
+      Name minter: <code>0xFC2f8743E3b09a6c973B114c3a082433e974eD9f</code><br>
+      qCAW token: <code>0xd2140E16aDf37194036865E90BbCA1139b739d0D</code>
+    </p>
+  </section>
+</main>
+<footer>
+  <p>CAW SocialFi (QL1) — a community front end. Not affiliated with cawdevelopment.<br>
+  Part of <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> — Don't Panic.</p>
+</footer>
+<script src="app.js?v=1"></script>
+</body>
+</html>
