@@ -28,13 +28,14 @@ const T = {
   en: {
     loading: 'Loading…', loadFail: 'Could not load the timeline. Please try again later.',
     empty: 'No actions found yet.', post: 'Post', like: 'Like', recaw: 'ReCaw', follow: 'Follow',
-    viewTx: 'view tx', likes: 'likes', to: 'to',
+    viewTx: 'see the record', likes: 'likes', to: 'to',
+    ctxLike: '❤️ Liked a post by {name}', ctxRecaw: '🔁 Shared a post by {name}', ctxFollow: '👥 Followed {name}',
     checking: 'Checking…', invalidName: 'That name cannot be used. Names use small letters, numbers and underscores.',
     taken: 'That name is already taken.', available: 'This name is available!',
     price: 'Price', checkFail: 'Could not check. Please try again.',
     needWallet: 'Connect your wallet above to get this name.',
-    yourQcaw: 'Your qCAW', step1: 'Step 1: allow the minter to use your qCAW', step2: 'Step 2: get the name',
-    approveBtn: 'Allow', mintBtn: 'Get this name', sending: 'Check your wallet…',
+    yourQcaw: 'Your qCAW', step1: 'Step 1 of 2 — let this site use your qCAW to pay for the name', step2: 'Step 2 of 2 — one more tap and the name is yours',
+    approveBtn: 'OK, allow it', mintBtn: 'Get this name', sending: 'Check your wallet…',
     waiting: 'Waiting for the chain…', done: 'Done!', failed: 'The transaction failed or was rejected.',
     notEnough: 'Not enough qCAW for this name.', connectFirst: 'Connect your wallet first.',
     connected: 'Connected', wrongChain: 'Your wallet is on another chain.',
@@ -42,18 +43,19 @@ const T = {
     noNames: 'This wallet has no CAW names yet. Get one above!',
     followers: 'followers', inName: 'inside this name', walletQcaw: 'qCAW in wallet',
     deposit: 'Put in', withdraw: 'Take out', amountPh: 'amount (qCAW)',
-    approveName: 'Allow the name contract to use your qCAW', myQom: 'QOM (gas)',
+    approveName: 'One quick OK first, so your qCAW can move into the name', myQom: 'QOM (for small fees)',
     unknownName: 'name #',
   },
   ja: {
     loading: '読み込み中…', loadFail: 'タイムラインを読み込めませんでした。しばらくしてからお試しください。',
     empty: 'まだアクションがありません。', post: '投稿', like: 'いいね', recaw: 'リポスト', follow: 'フォロー',
-    viewTx: 'txを見る', likes: 'いいね', to: '→',
+    viewTx: '記録を見る', likes: 'いいね', to: '→',
+    ctxLike: '❤️ {name} さんの投稿にいいね', ctxRecaw: '🔁 {name} さんの投稿をシェア', ctxFollow: '👥 {name} さんをフォロー',
     checking: '調べています…', invalidName: 'その名前は使えません。名前は小文字・数字・アンダースコアです。',
     taken: 'その名前はすでに使われています。', available: 'この名前は取れます！',
     price: '価格', checkFail: '調べられませんでした。もう一度お試しください。',
     needWallet: 'この名前を取るには、上のボタンでウォレットをつないでください。',
-    yourQcaw: 'あなたの qCAW', step1: 'ステップ1：ミンターに qCAW の使用を許可', step2: 'ステップ2：名前を取る',
+    yourQcaw: 'あなたの qCAW', step1: 'ステップ 1/2：名前の料金に、あなたの qCAW を使う許可を出します', step2: 'ステップ 2/2：あと1タップで名前が取れます',
     approveBtn: '許可する', mintBtn: 'この名前を取る', sending: 'ウォレットで確認してください…',
     waiting: 'チェーンの確定を待っています…', done: 'できました！', failed: '取引が失敗したか、キャンセルされました。',
     notEnough: 'qCAW が足りません。', connectFirst: '先にウォレットをつないでください。',
@@ -62,7 +64,7 @@ const T = {
     noNames: 'このウォレットには、まだ CAW の名前がありません。上の欄で取ってみましょう！',
     followers: 'フォロワー', inName: 'この名前の中にある qCAW', walletQcaw: 'ウォレットの qCAW',
     deposit: '入れる', withdraw: '出す', amountPh: '量（qCAW）',
-    approveName: '名前コントラクトに qCAW の使用を許可', myQom: 'QOM（ガス代）',
+    approveName: '先に、qCAW を名前へ移す許可が必要です', myQom: 'QOM（手数料用）',
     unknownName: '名前 #',
   },
 }[LANG];
@@ -215,30 +217,55 @@ async function loadTimeline(append) {
     if (!append) box.innerHTML = '<p class="err">' + T.loadFail + '</p>';
   } finally { loadingTl = false; }
 }
+/* avatar image for a name id (from its picture data), cached */
+const avatarCache = new Map();
+function avatarFor(id) {
+  id = BigInt(id);
+  if (!avatarCache.has(id)) {
+    avatarCache.set(id, (async () => {
+      try {
+        const uri = await readStr(CAW_NAME, SEL.tokenURI + word(id));
+        if (uri.startsWith('data:application/json;base64,')) {
+          const meta = JSON.parse(atob(uri.split(',')[1]));
+          if (meta.image) return meta.image.startsWith('ipfs://') ? 'https://ipfs.io/ipfs/' + meta.image.slice(7) : meta.image;
+        }
+      } catch (e) { /* no picture */ }
+      return null;
+    })());
+  }
+  return avatarCache.get(id);
+}
+function avatarHtml(url, name) {
+  if (url) return '<img class="avatar" alt="" src="' + esc(url) + '">';
+  const ch = name ? name.replace(/^@/, '').charAt(0).toUpperCase() : '?';
+  return '<div class="avatar avatar-fallback">' + esc(ch) + '</div>';
+}
+
 async function renderAction(a) {
   const div = document.createElement('div');
   div.className = 'post';
-  const kinds = [
-    { k: 'post', label: T.post, cls: '' }, { k: 'like', label: T.like, cls: 'like' },
-    { k: 'recaw', label: T.recaw, cls: 'recaw' }, { k: 'follow', label: T.follow, cls: 'follow' },
-  ];
-  const kind = kinds[a.type];
-  const who = await nameLabel(a.senderId);
-  let html = '<div class="meta"><span class="name">' + esc(who) + '</span>' +
-    '<span class="badge ' + kind.cls + '">' + kind.label + '</span>';
+  const name = await resolveName(a.senderId);
+  const who = name ? '@' + name : T.unknownName + a.senderId;
+  const img = await avatarFor(a.senderId);
+  let html = avatarHtml(img, name);
+  html += '<div class="pbody">';
   if (a.type !== 0 && a.receiverId > 0n) {
-    html += '<span class="small">' + T.to + ' ' + esc(await nameLabel(a.receiverId)) + '</span>';
+    const target = await nameLabel(a.receiverId);
+    const tpl = a.type === 1 ? T.ctxLike : a.type === 2 ? T.ctxRecaw : T.ctxFollow;
+    html += '<div class="ctx">' + esc(tpl.replace('{name}', target)) + '</div>';
   }
   const when = new Date((a.ts || 0) * 1000);
-  html += '<span class="time">' + esc(when.toLocaleString(LANG === 'ja' ? 'ja-JP' : 'en-US')) + '</span></div>';
-  if (a.type === 0 && a.text) html += '<div class="text">' + esc(a.text) + '</div>';
+  const whenStr = when.toLocaleString(LANG === 'ja' ? 'ja-JP' : 'en-US', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  html += '<div class="meta"><span class="name">' + esc(who) + '</span><span class="time">· ' + esc(whenStr) + '</span></div>';
+  if (a.type === 0 && a.text) html += '<div class="ptext">' + esc(a.text) + '</div>';
   let likes = null;
   if (a.type === 0) {
     try { likes = await readUint(CAW_ACTIONS, SEL.likes + word(a.senderId) + strip(a.cawId)); } catch (e) {}
   }
-  html += '<div class="foot">' +
-    (likes !== null && likes > 0n ? '<span>❤️ ' + likes.toString() + '</span>' : '') +
-    '<a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + '</a></div>';
+  html += '<div class="pfoot">' +
+    (likes !== null && likes > 0n ? '<span>❤️ ' + likes.toString() + '</span>' : '<span></span>') +
+    '<a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a></div>';
+  html += '</div>';
   div.innerHTML = html;
   return div;
 }
@@ -404,17 +431,11 @@ async function renderMyNames() {
 async function renderNameCard(t) {
   const div = document.createElement('div');
   div.className = 'namecard';
-  let img = '', followers = null;
-  try {
-    const uri = await readStr(CAW_NAME, SEL.tokenURI + word(t.id));
-    if (uri.startsWith('data:application/json;base64,')) {
-      const meta = JSON.parse(atob(uri.split(',')[1]));
-      if (meta.image) img = meta.image.startsWith('ipfs://') ? 'https://ipfs.io/ipfs/' + meta.image.slice(7) : meta.image;
-    }
-  } catch (e) {}
+  let followers = null;
+  const img = await avatarFor(t.id);
   try { followers = await readUint(CAW_ACTIONS, SEL.followerCount + word(t.id)); } catch (e) {}
   div.innerHTML =
-    (img ? '<img alt="" src="' + esc(img) + '">' : '') +
+    avatarHtml(img, t.username) +
     '<div class="grow"><div class="n">@' + esc(t.username) + '</div>' +
     '<div class="small">#' + t.id.toString() +
     (followers !== null ? ' ・ ' + followers.toString() + ' ' + T.followers : '') + '</div>' +
@@ -463,3 +484,6 @@ if (hasWallet()) {
 }
 loadTimeline(false);
 refreshWallet();
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}

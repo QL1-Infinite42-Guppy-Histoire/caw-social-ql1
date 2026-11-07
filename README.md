@@ -5,6 +5,11 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
 - Site: https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/
 - Status: live (read features + name minting + name balance management).
   Posting / liking / following are **not enabled yet** — see "Posting" below.
+- Design: white, X-style timeline (round avatars, light borders), plain
+  everyday wording, one accent colour. Also a **PWA**: add it to the
+  home screen and it opens standalone like an app (manifest +
+  service-worker app-shell cache). A native Android app is a possible
+  later step, after the web version.
 
 ## What works
 
