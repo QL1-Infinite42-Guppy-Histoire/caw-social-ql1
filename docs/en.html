@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CAW Social — QL1</title>
-<meta name="description" content="CAW Social on QL1 is paused for maintenance. We'll be back soon.">
+<title>CAW Social — QL1 (web viewer)</title>
+<meta name="description" content="Read the CAW timeline on QL1 from your browser — PC or phone. The web version is for viewing only; posting is in the Android app.">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -13,38 +13,99 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
-<div class="wrap">
-  <div class="topbar">
-    <div class="topbar-inner">
-      <img class="logo" src="icon-192.png" alt="">
-      <div>
-        <div class="title">CAW Social</div>
-        <div class="tag">on QL1</div>
-      </div>
-      <div class="langs"><a href="en.html" class="active">English</a><a href="ja.html">日本語</a></div>
+<div class="topbar">
+  <div class="topbar-inner">
+    <img class="logo" src="icon-192.png" alt="">
+    <div>
+      <div class="title">CAW Social</div>
+      <div class="tag">on QL1 · web viewer</div>
     </div>
+    <div class="langs"><a href="en.html" class="active">English</a><a href="ja.html">日本語</a></div>
   </div>
-
-  <section class="block pause-hero">
-    <div class="pause-icon" aria-hidden="true">⏸</div>
-    <h2>Paused for maintenance</h2>
-    <p>CAW Social (QL1) is paused while we do some maintenance.<br>
-    We'll be back soon — thank you for your patience.</p>
-    <p class="backlink"><a href="https://ql1-infinite42-guppy-histoire.github.io/links/">← Back to Guppy's Guide</a></p>
-  </section>
-
-  <footer>
-    CAW Social (QL1) — made by the community. Not run by the official CAW team.<br>
-    Part of <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> — Don't Panic.
-  </footer>
 </div>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(function () {});
-  }
-</script>
+
+<div class="layout">
+  <aside class="rail">
+    <section class="railcard app-cta">
+      <h3>Posting is in the app</h3>
+      <p>This web version is for reading. To post, like or follow, use the Android app — signing happens safely inside it.</p>
+      <p><a class="cta-btn" href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Get the Android app</a></p>
+    </section>
+    <section class="railcard">
+      <h3>About this site</h3>
+      <p>CAW is a social network where posts are kept on a shared public record (a blockchain) instead of one company's computers — so anyone can read them, and nobody can quietly rewrite them later.</p>
+      <p>This site is a community-made window into the QL1 version of CAW. It is <b>not</b> run by the official CAW team.</p>
+      <p class="small">Add this page to your home screen and it opens like an app.</p>
+    </section>
+    <section class="railcard">
+      <h3>On QL1</h3>
+      <p class="small">Names: <code>0x864f08Af11F6DC2c0De42562e4664d4f033D393f</code><br>
+      Posts: <code>0x95c2AFEc2dE8b09323Cdc7E40Bcce42C3C49E496</code><br>
+      Name desk: <code>0xFC2f8743E3b09a6c973B114c3a082433e974eD9f</code><br>
+      qCAW coin: <code>0xd2140E16aDf37194036865E90BbCA1139b739d0D</code></p>
+      <p class="small"><a href="https://ql1-infinite42-guppy-histoire.github.io/links/">← Guppy's Guide — all our tools</a></p>
+    </section>
+  </aside>
+
+  <main class="maincol">
+    <section class="block notice">
+      <h2>Read-only web version</h2>
+      <p>You are reading the CAW timeline on QL1. Viewing is free and needs no wallet or account. Posting, likes and follows are in the <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Android app</a>.</p>
+    </section>
+
+    <section class="block" id="lookup">
+      <h2>Look up a name</h2>
+      <input type="text" id="lookupInput" placeholder="e.g. neptune" autocomplete="off" spellcheck="false">
+      <div class="row"><button id="lookupBtn">Look up</button></div>
+      <div id="lookupResult"></div>
+    </section>
+
+    <section class="block" id="viewHome" style="display:none">
+      <h2>Timeline</h2>
+      <p class="muted">The newest posts on CAW, in order. Anyone can read — no wallet needed.</p>
+      <div id="timeline"><p>Loading…</p></div>
+      <div class="loadmore"><button id="moreBtn" class="ghost" style="display:none">See more</button></div>
+    </section>
+
+    <section class="block" id="viewProfile" style="display:none">
+      <p><a class="plink" href="en.html">← Back to the timeline</a></p>
+      <div id="profileHead"><p>Loading…</p></div>
+      <h3 id="profilePostsTitle">Posts</h3>
+      <div id="profilePosts"></div>
+      <div class="loadmore"><button id="profileMore" class="ghost" style="display:none">See more</button></div>
+    </section>
+
+    <section class="block" id="viewPost" style="display:none">
+      <p><a class="plink" href="en.html">← Back to the timeline</a></p>
+      <div id="postMain"><p>Loading…</p></div>
+      <p id="postCounts" class="counts"></p>
+      <p id="postNote" class="small"></p>
+      <div id="threadBlock">
+        <h3 class="detail-h">Replies</h3>
+        <p class="small">Replies are shown oldest first.</p>
+        <div id="postThread"></div>
+      </div>
+      <div id="quotesBlock">
+        <h3 class="detail-h">Quotes</h3>
+        <div id="postQuotes"></div>
+      </div>
+    </section>
+
+    <footer>
+      CAW Social (QL1) — made by the community. Not run by the official CAW team.<br>
+      Part of <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> — Don't Panic.
+    </footer>
+  </main>
+</div>
+
+<nav class="bottomnav">
+  <a href="en.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a>
+  <a href="en.html#lookup"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Look up</span></a>
+  <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span>App</span></a>
+</nav>
+<script src="app.js?v=7"></script>
 </body>
 </html>

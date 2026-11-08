@@ -1,13 +1,14 @@
-/* CAW Social — PAUSED for maintenance.
-   This service worker replaces the app-shell worker (caw-shell-v5 and
-   earlier): it deletes every old cache, never caches or serves app.js,
-   and always tries the network first so the pause page is what people
-   see. When the site reopens, ship a new worker with a fresh cache
-   name that caches the app shell again. */
-const CACHE = 'caw-shell-v6-paused';
+/* CAW Social — read-only web viewer.
+   Replaces the maintenance worker (caw-shell-v6-paused) and all
+   earlier shells: fresh cache name, old caches deleted on activate,
+   app.js cached again (the viewer has no write features at all).
+   Strategy is NETWORK FIRST for same-origin pages and assets, with
+   the cache only as an offline fallback — a fresh visitor always
+   gets the newest build, never a stale shell. */
+const CACHE = 'caw-view-v7';
 const SHELL = [
   './', 'index.html', 'en.html', 'ja.html',
-  'style.css', 'manifest.webmanifest',
+  'style.css', 'app.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
 ];
 
@@ -28,16 +29,6 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
   if (event.request.method !== 'GET' || url.origin !== self.location.origin) return;
-  // The app is paused: never hand out the app script, even to a tab that
-  // still holds the old page.
-  if (url.pathname.endsWith('/app.js') || url.pathname.endsWith('app.js')) {
-    event.respondWith(new Response('/* CAW Social is paused for maintenance. */', {
-      headers: { 'Content-Type': 'application/javascript' },
-    }));
-    return;
-  }
-  // Network first, cache as a fallback: the pause page must win over any
-  // stale copy of the old app shell.
   event.respondWith(
     fetch(event.request).then(res => {
       if (res && res.ok) {

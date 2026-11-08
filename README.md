@@ -3,37 +3,59 @@
 A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
 
 - Site: https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/
-- Status: live (read features + name minting + name balance management +
-  posting / liking / re-caws / following + per-name profile pages).
-  The signature scheme behind posting was fully verified against real
-  on-chain actions before being enabled — see "Posting" below.
-- Design: white, X-style timeline (round avatars, light borders), plain
-  everyday wording, one accent colour. Also a **PWA**: add it to the
-  home screen and it opens standalone like an app (manifest +
-  service-worker app-shell cache). A native Android app is a possible
-  later step, after the web version.
+- Status: **live again as a READ-ONLY web viewer** (revived 2026-11-08).
+  The timeline, post pages and profiles are decoded in your browser
+  from the public explorer API and the chain itself. There is no
+  wallet connection and nothing here signs or sends anything.
+- Posting, likes, re-caws and follows live in the **Android app**
+  ([download page](https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/)),
+  where signing happens inside the app. The web write features were
+  retired in November 2026: the scheme needs a raw-digest signature
+  (`eth_sign`) that common wallet apps refuse, and the app made the
+  whole question moot. The verified research behind it is kept below
+  under "Posting" as a historical record.
+- Design: white, X-style timeline (round avatars, light borders),
+  plain everyday wording, one accent colour. A two-pane layout on
+  desktop (rail + reading column), a single column on phones. Also a
+  **PWA**: add it to the home screen and it opens standalone.
 
-## What works
+## What works (read-only)
 
-- **Timeline** — posts, likes, re-caws and follows recorded by the QL1
-  `CawActions` contract, decoded in your browser from the explorer API and
-  the chain itself (author names resolved from the `CawName` NFT metadata).
-- **Get a name** — live availability and price checks against the
-  `CawNameMinter` contract; minting is a guided two-step flow
-  (approve the exact qCAW cost, then mint) through your own wallet.
-- **My names** — your `CawName` NFTs, their internal qCAW balance,
-  follower counts, and deposit / withdraw of qCAW.
-- **Posting, likes, re-caws, follows** — signed with your own wallet
-  (see "Posting" below). Plain actions move no qCAW: the contract calls
-  its spend step with amount 0 unless tip lists are attached (this site
-  never attaches tips).
-- **Profile pages** — tap a name or avatar to open `?name=<username>`:
-  the name's picture, id, owner, follower count, internal qCAW balance,
-  the day the name was made (from its first on-chain transfer), and only
-  that name's posts. A follow button appears when you hold a name
-  yourself; your own name's page links back to My names.
+- **Timeline** — posts, re-caws and follows recorded by the QL1
+  `CawActions` contract, decoded in your browser (batch-aware
+  decoder). Like actions never render as rows — they only feed the
+  like counts on their target posts, matching the app.
+- **Names from the card** — an author's name is read from the name
+  token's own metadata (`tokenURI`), the mint-proven source. The
+  `usernames()` getter is shifted by one (it returns the NEXT
+  token's name) and is never used directly; see the note under
+  "Fixes" for the corrected history.
+- **Recaws show the original** — X-style: a "Recawed" header and the
+  original post itself as the card body, with an honest "not found"
+  frame when the original is outside the loaded feed.
+- **Replies and quote Recaws** — the app marks them as ordinary
+  posts whose text ends with `[caw:reply:<base64url(parent cawId)>]`
+  or `[caw:quote:<…>]`. The viewer parses the same convention: the
+  marker line is never shown, quotes render with the original in an
+  embedded frame, and a post's own page (?post=<cawId>) assembles
+  its reply thread (oldest first) and its quotes. As of the revival,
+  the chain holds quote posts but no replies yet — the reply path
+  shares the quote-proven code and is covered by the verification
+  harness at the codec level.
+- **Profile pages** — `?name=<username>`: the name's picture, id,
+  owner, follower count, internal qCAW balance, mint day, and that
+  name's posts (found by scanning the contract feed). Name lookup
+  on the home page resolves through the same card-verified lookup.
+- **Verification** — `node scripts/verify-viewer.mjs` checks the
+  viewer against live chain data: decoding, the like-row rule,
+  card-name resolution (including the token-190 incident case),
+  Recaw→original resolution, and marker parsing. 21/21 at revival.
 
-## Posting
+## Posting (historical — the retired web write path)
+
+> The web version no longer posts: this section is kept as the
+> research record behind the scheme the Android app now uses.
+> Nothing in the current viewer signs or sends.
 
 Verified 2026-11-07. The QL1 `CawActions` contract checks an EIP-712
 style digest per action:
@@ -99,12 +121,15 @@ owner.)
 - **Profile pages said "not found" for real names.** Two causes: the
   profile loader built its `idByUsername` calldata with two hex
   characters cut off (the call always reverted and the failure was
-  shown as "not found"), and this port's name desk answers
-  `idByUsername(name)` with `tokenId + 1`. Name lookups now verify the
-  answer against the stored names of the neighbouring ids and accept
-  only an exact match; a failed read shows a load error with a retry
-  button instead of "not found". The same verified lookup backs the
-  name check on the mint form.
+  shown as "not found"). Name lookups verify the answer against the
+  neighbouring ids and accept only an exact match; a failed read
+  shows a load error with a retry button instead of "not found".
+  *(Correction, settled later by the mint records: `idByUsername`
+  returns the TRUE token id — the "+1" once suspected here was an
+  artifact of comparing it against the shifted `usernames()` getter.
+  The one broken getter is `usernames(n)`, which returns token
+  n+1's name; the current viewer verifies lookup candidates against
+  each token's CARD name and never trusts `usernames(id)`.)*
 - **Wallets injected after page load were never seen.** The site now
   keeps looking for a wallet provider for ~12 s after load and also
   listens for EIP-6963 announcements; the wallet area always shows a
@@ -132,10 +157,12 @@ owner.)
   the QL1 explorer; this site interacts with them as they are.
 - The action calldata layout was reverse-engineered from 300 real
   transactions (264 full actions decoded; the rest are empty heartbeat
-  calls). Two name registries in the port disagree for some early
-  token ids; this site prefers the NFT metadata name.
+  calls). Name truth was settled by the mint transactions themselves:
+  a token's card (`tokenURI`) carries its minted name, while the
+  `usernames()` getter is shifted by one — the viewer always prefers
+  the card.
 - Static site, no build step: everything lives in `docs/`.
-  Writes happen only through the visitor's wallet — no keys are handled.
+  The viewer is read-only — it never handles keys and never sends.
 
 Part of [Guppy's Guide](https://ql1-infinite42-guppy-histoire.github.io/links/) — Don't Panic.
 

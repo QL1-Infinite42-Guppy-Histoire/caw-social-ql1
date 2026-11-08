@@ -27,6 +27,51 @@ body {
 @media (min-width: 640px) {
   .wrap { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
 }
+
+/* ---- read-only viewer layout: rail + reading column ----
+   Desktop gets a real two-pane layout (sticky rail on the left, a
+   640px reading column); phones get the single column alone. */
+.layout {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+.maincol { min-width: 0; }
+@media (min-width: 1024px) {
+  .layout {
+    display: grid;
+    grid-template-columns: 296px minmax(0, 640px);
+    gap: 32px;
+    justify-content: center;
+    align-items: start;
+  }
+  .rail {
+    position: sticky; top: 74px;
+    display: flex; flex-direction: column; gap: 16px;
+    padding-top: 18px;
+  }
+  .maincol { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+}
+@media (max-width: 1023.98px) {
+  .rail { display: none; }
+  .maincol { max-width: 640px; margin: 0 auto; }
+}
+@media (min-width: 640px) and (max-width: 1023.98px) {
+  .maincol { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+}
+.railcard {
+  border: 1px solid var(--line2); border-radius: 16px;
+  padding: 16px 18px; background: #fff;
+}
+.railcard h3 { margin: 0 0 8px; font-size: 1.02rem; font-weight: 800; }
+.railcard p { margin: 6px 0; font-size: .92rem; }
+.railcard.app-cta { background: var(--accent-soft); border-color: #ffd8b5; }
+.cta-btn {
+  display: inline-block; background: var(--accent); color: #fff;
+  border-radius: 999px; padding: 11px 22px; font-weight: 700;
+  text-decoration: none; min-height: 44px; line-height: 22px;
+}
+.cta-btn:hover { background: var(--accent-dark); }
 .topbar {
   position: sticky; top: 0; z-index: 10;
   background: rgba(255,255,255,.92);
@@ -36,6 +81,7 @@ body {
 .topbar-inner {
   display: flex; align-items: center; gap: 10px;
   padding: 10px 16px;
+  max-width: 1120px; margin: 0 auto; width: 100%;
 }
 .topbar img.logo { width: 34px; height: 34px; border-radius: 50%; }
 .topbar .title { font-weight: 800; font-size: 1.12rem; }
@@ -208,6 +254,31 @@ button.big-connect { width: 100%; min-height: 56px; font-size: 1.06rem; }
   padding: 10px 22px;
 }
 .pause-hero .backlink a:hover { background: var(--accent-soft); }
+
+/* ---- quote frames, recaw nesting, context rows, post page ---- */
+.quotebox {
+  border: 1px solid var(--line2); border-radius: 14px;
+  padding: 10px 12px; margin-top: 8px; cursor: pointer; background: #fff;
+}
+.quotebox:hover { background: #f7f9f9; }
+.quotebox .qhead { display: flex; align-items: center; gap: 7px; }
+.quotebox .qhead .avatar { width: 22px; height: 22px; flex-basis: 22px; font-size: .7rem; }
+.quotebox .qname { font-weight: 800; font-size: .88rem; }
+.quotebox .qhead .time { color: var(--sub); font-size: .8rem; }
+.quotebox .qtext { margin-top: 3px; white-space: pre-wrap; word-break: break-word; font-size: .94rem; }
+.post-nested { border-bottom: 0; padding: 6px 0 2px; }
+.post-nested:hover { background: transparent; }
+.ctxrow { padding: 8px 0; }
+.recaw-ctx { display: flex; align-items: center; gap: 6px; font-weight: 700; }
+.recaw-ctx .time { font-weight: 400; }
+.reply-ctx a { color: var(--sub); }
+.reply-count { display: inline-flex; align-items: center; gap: 5px; }
+.counts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-weight: 700; padding: 4px 0; }
+.counts .ic { vertical-align: -3px; }
+.dot-sep { color: var(--sub); font-weight: 400; }
+.detail-h { margin: 22px 0 4px; font-size: 1.05rem; font-weight: 800; }
+#postThread .post, #postQuotes .post { border-bottom: 1px solid var(--line); }
+.notice a { color: var(--accent-dark); font-weight: 700; }
 
 /* ---- notice & footer ---- */
 .notice { background: #fff8e6; border-bottom: 1px solid var(--line); }

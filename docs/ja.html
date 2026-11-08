@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CAW Social — QL1</title>
-<meta name="description" content="QL1 の CAW Social はメンテナンスのため一時停止中です。近日中に再開します。">
+<title>CAW Social — QL1（ウェブ閲覧版）</title>
+<meta name="description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。ウェブ版は閲覧専用です。投稿は Android アプリから。">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -13,38 +13,99 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
-<link rel="stylesheet" href="style.css?v=6">
+<link rel="stylesheet" href="style.css?v=7">
 </head>
 <body>
-<div class="wrap">
-  <div class="topbar">
-    <div class="topbar-inner">
-      <img class="logo" src="icon-192.png" alt="">
-      <div>
-        <div class="title">CAW Social</div>
-        <div class="tag">QL1 版</div>
-      </div>
-      <div class="langs"><a href="en.html">English</a><a href="ja.html" class="active">日本語</a></div>
+<div class="topbar">
+  <div class="topbar-inner">
+    <img class="logo" src="icon-192.png" alt="">
+    <div>
+      <div class="title">CAW Social</div>
+      <div class="tag">QL1 版・ウェブ閲覧</div>
     </div>
+    <div class="langs"><a href="en.html">English</a><a href="ja.html" class="active">日本語</a></div>
   </div>
-
-  <section class="block pause-hero">
-    <div class="pause-icon" aria-hidden="true">⏸</div>
-    <h2>メンテナンスのため一時停止しています</h2>
-    <p>CAW Social（QL1）はメンテナンスのため一時停止しています。<br>
-    近日中に再開しますので、しばらくお待ちください。</p>
-    <p class="backlink"><a href="https://ql1-infinite42-guppy-histoire.github.io/links/">← Guppy's Guide に戻る</a></p>
-  </section>
-
-  <footer>
-    CAW Social（QL1）は有志によるサイトです。CAW 公式チームが運営しているものではありません。<br>
-    <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> の一員です — Don't Panic.
-  </footer>
 </div>
-<script>
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js').catch(function () {});
-  }
-</script>
+
+<div class="layout">
+  <aside class="rail">
+    <section class="railcard app-cta">
+      <h3>投稿はアプリから</h3>
+      <p>このウェブ版は読むためのものです。投稿・いいね・フォローは Android アプリからどうぞ。署名はアプリの中で安全に行われます。</p>
+      <p><a class="cta-btn" href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Android アプリを入れる</a></p>
+    </section>
+    <section class="railcard">
+      <h3>このサイトについて</h3>
+      <p>CAW は、投稿を1つの会社のコンピュータではなく、みんなで共有する公開の記録（ブロックチェーン）に残すソーシャルネットワークです。だから誰でも読めて、あとからこっそり書き換えることもできません。</p>
+      <p>このサイトは、QL1 版 CAW をのぞくための有志の窓口です。公式の CAW チームが運営しているものでは<b>ありません</b>。</p>
+      <p class="small">このページをホーム画面に追加すると、アプリのように開けます。</p>
+    </section>
+    <section class="railcard">
+      <h3>QL1 上の場所</h3>
+      <p class="small">名前：<code>0x864f08Af11F6DC2c0De42562e4664d4f033D393f</code><br>
+      投稿：<code>0x95c2AFEc2dE8b09323Cdc7E40Bcce42C3C49E496</code><br>
+      名前の窓口：<code>0xFC2f8743E3b09a6c973B114c3a082433e974eD9f</code><br>
+      qCAW コイン：<code>0xd2140E16aDf37194036865E90BbCA1139b739d0D</code></p>
+      <p class="small"><a href="https://ql1-infinite42-guppy-histoire.github.io/links/">← Guppy's Guide（道具箱）へ</a></p>
+    </section>
+  </aside>
+
+  <main class="maincol">
+    <section class="block notice">
+      <h2>ウェブ版は閲覧専用です</h2>
+      <p>QL1 の CAW のタイムラインを読んでいます。閲覧は無料で、ウォレットもアカウントも要りません。投稿・いいね・フォローは <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Android アプリ</a> からできます。</p>
+    </section>
+
+    <section class="block" id="lookup">
+      <h2>名前をさがす</h2>
+      <input type="text" id="lookupInput" placeholder="例：neptune" autocomplete="off" spellcheck="false">
+      <div class="row"><button id="lookupBtn">さがす</button></div>
+      <div id="lookupResult"></div>
+    </section>
+
+    <section class="block" id="viewHome" style="display:none">
+      <h2>タイムライン</h2>
+      <p class="muted">CAW の新しい投稿を順番に表示します。誰でも読めます（ウォレット不要）。</p>
+      <div id="timeline"><p>読み込み中…</p></div>
+      <div class="loadmore"><button id="moreBtn" class="ghost" style="display:none">もっと見る</button></div>
+    </section>
+
+    <section class="block" id="viewProfile" style="display:none">
+      <p><a class="plink" href="ja.html">← タイムラインへ戻る</a></p>
+      <div id="profileHead"><p>読み込み中…</p></div>
+      <h3 id="profilePostsTitle">投稿</h3>
+      <div id="profilePosts"></div>
+      <div class="loadmore"><button id="profileMore" class="ghost" style="display:none">もっと見る</button></div>
+    </section>
+
+    <section class="block" id="viewPost" style="display:none">
+      <p><a class="plink" href="ja.html">← タイムラインへ戻る</a></p>
+      <div id="postMain"><p>読み込み中…</p></div>
+      <p id="postCounts" class="counts"></p>
+      <p id="postNote" class="small"></p>
+      <div id="threadBlock">
+        <h3 class="detail-h">返信</h3>
+        <p class="small">返信は古い順に表示します。</p>
+        <div id="postThread"></div>
+      </div>
+      <div id="quotesBlock">
+        <h3 class="detail-h">引用</h3>
+        <div id="postQuotes"></div>
+      </div>
+    </section>
+
+    <footer>
+      CAW Social（QL1）は有志が作ったものです。公式の CAW チームが運営しているものではありません。<br>
+      <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> の一部です — Don't Panic.
+    </footer>
+  </main>
+</div>
+
+<nav class="bottomnav">
+  <a href="ja.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>ホーム</span></a>
+  <a href="ja.html#lookup"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>さがす</span></a>
+  <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span>アプリ</span></a>
+</nav>
+<script src="app.js?v=7"></script>
 </body>
 </html>
