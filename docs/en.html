@@ -11,8 +11,7 @@
 <meta property="og:image" content="https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/icon-512.png">
 <link rel="preconnect" href="https://evm-rpc-ql1.mschihuahua.org">
 <link rel="preconnect" href="https://scan.qom.network">
-<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" id="themeColorMeta" content="#f7f8fa">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icon-192.png?v=11">
 <link rel="apple-touch-icon" href="apple-touch-icon.png?v=11">
@@ -20,6 +19,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
+<script>(function(){try{var t=localStorage.getItem('guppy-theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){document.documentElement.dataset.theme='light';}})();</script>
 <link rel="stylesheet" href="style.css?v=11">
 </head>
 <body>
@@ -30,7 +30,7 @@
       <div class="title">CAW Social</div>
       <div class="tag">on QL1 · web viewer</div>
     </div>
-    <div class="langs"><a href="en.html" class="active">English</a><a href="ja.html">日本語</a></div>
+    <div class="langs"><a href="en.html" class="active">English</a><a href="ja.html">日本語</a><button id="themeToggle" class="theme-btn" type="button">🌙 Dark</button></div>
   </div>
 </div>
 
@@ -166,6 +166,26 @@ setTimeout(function () {
   var tl = document.getElementById('timeline');
   if (tl) tl.innerHTML = '<p class="err">The viewer did not start. An older saved copy of this site may be in the way — please <a href="en.html">reload the page</a>.</p>';
 }, 10000);
+</script>
+<script>
+(function () {
+  var b = document.getElementById('themeToggle');
+  if (!b) return;
+  var ja = (document.documentElement.lang || '').indexOf('ja') === 0;
+  function render() {
+    var d = document.documentElement.dataset.theme === 'dark';
+    b.textContent = d ? (ja ? '☀️ 白背景' : '☀️ Light') : (ja ? '🌙 黒背景' : '🌙 Dark');
+    var m = document.getElementById('themeColorMeta');
+    if (m) m.setAttribute('content', d ? '#000000' : '#f7f8fa');
+  }
+  b.addEventListener('click', function () {
+    var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+    document.documentElement.dataset.theme = next;
+    try { localStorage.setItem('guppy-theme', next); } catch (e) {}
+    render();
+  });
+  render();
+})();
 </script>
 </body>
 </html>

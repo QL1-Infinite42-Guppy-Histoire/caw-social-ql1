@@ -1,54 +1,70 @@
-:root {
-  --ink: #0f1419;
-  --sub: #536471;
-  --line: #eff3f4;
-  --line2: #e3e8ea;
+:root, :root[data-theme="light"] {
+  --ink: #14181f;
+  --text: #14181f;
+  --sub: #5c6572;
+  --muted: #5c6572;
+  --line: #e3e6ec;
+  --line2: #d9dee6;
   --accent: #e8590c;
   --accent-dark: #d9480f;
   --accent-soft: #fff1e6;
   --ok: #1a7f37;
   --warn: #9a6a00;
-  /* surface palette (v9): every hard-coded surface colour goes
-     through these, so the dark scheme below only swaps values. */
-  --bg: #ffffff;
+  /* surface palette: every hard-coded surface colour goes
+     through these, so the dark scheme below only swaps values.
+     Theme is chosen explicitly (localStorage `guppy-theme`,
+     default light) — the OS setting no longer decides. */
+  --bg: #f7f8fa;
+  --card: #ffffff;
   --surface: #ffffff;
   --surface2: #f7f9f9;
   --hover: #f7f9f9;
   --topbar-bg: rgba(255,255,255,.92);
   --bottomnav-bg: rgba(255,255,255,.96);
   --notice-bg: #fff8e6;
-  --chip-bg: #f7f9f9;
-  --code-bg: #f7f9f9;
+  --chip-bg: #eef1f5;
+  --chip: #eef1f5;
+  --code-bg: #eef1f5;
+  --input-bg: #ffffff;
   --pill-bg: #0f1419;
   --pill-fg: #ffffff;
   --pill-hover: #272c33;
   --avatar-border: #ffffff;
   --badge-bg: #e6f4ea;
+  --cta-border: #ffd8b5;
+  --mark-bg: #ffe58f;
+  --shadow: 0 1px 3px rgba(16,24,40,.06);
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --ink: #e7e9ea;
-    --sub: #71767b;
-    --line: #2f3336;
-    --line2: #333639;
-    --accent-soft: #2e1c0d;
-    --ok: #3fb97f;
-    --warn: #d29922;
-    --bg: #000000;
-    --surface: #000000;
-    --surface2: #16181c;
-    --hover: #080808;
-    --topbar-bg: rgba(0,0,0,.85);
-    --bottomnav-bg: rgba(0,0,0,.92);
-    --notice-bg: #221a04;
-    --chip-bg: #16181c;
-    --code-bg: #16181c;
-    --pill-bg: #e7e9ea;
-    --pill-fg: #0f1419;
-    --pill-hover: #c9cdd1;
-    --avatar-border: #000000;
-    --badge-bg: #123524;
-  }
+:root[data-theme="dark"] {
+  --ink: #f2f3f5;
+  --text: #f2f3f5;
+  --sub: #9aa1ab;
+  --muted: #9aa1ab;
+  --line: #26282e;
+  --line2: #333639;
+  --accent-soft: #2e1c0d;
+  --ok: #3fb97f;
+  --warn: #d29922;
+  --bg: #000000;
+  --card: #121316;
+  --surface: #121316;
+  --surface2: #16181c;
+  --hover: #1b1d21;
+  --topbar-bg: rgba(0,0,0,.85);
+  --bottomnav-bg: rgba(0,0,0,.92);
+  --notice-bg: #221a04;
+  --chip-bg: #1b1d21;
+  --chip: #1b1d21;
+  --code-bg: #1b1d21;
+  --input-bg: #0a0a0b;
+  --pill-bg: #e7e9ea;
+  --pill-fg: #0f1419;
+  --pill-hover: #c9cdd1;
+  --avatar-border: #121316;
+  --badge-bg: #123524;
+  --cta-border: #5a3413;
+  --mark-bg: #6b5510;
+  --shadow: none;
 }
 * { box-sizing: border-box; }
 html { -webkit-text-size-adjust: 100%; }
@@ -58,7 +74,7 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
 }
 .wrap {
   max-width: 600px;
@@ -75,7 +91,11 @@ body {
 .layout {
   max-width: 1120px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0 20px;
+}
+.maincol { background: var(--surface); }
+@media (max-width: 640px) {
+  .layout { padding: 0 16px; }
 }
 .maincol { min-width: 0; }
 @media (min-width: 1024px) {
@@ -102,11 +122,14 @@ body {
 }
 .railcard {
   border: 1px solid var(--line2); border-radius: 16px;
-  padding: 16px 18px; background: var(--surface);
+  padding: 20px; background: var(--surface); box-shadow: var(--shadow);
+}
+@media (max-width: 640px) {
+  .railcard { padding: 16px; }
 }
 .railcard h3 { margin: 0 0 8px; font-size: 1.02rem; font-weight: 800; }
 .railcard p { margin: 6px 0; font-size: .92rem; }
-.railcard.app-cta { background: var(--accent-soft); border-color: #ffd8b5; }
+.railcard.app-cta { background: var(--accent-soft); border-color: var(--cta-border); }
 .cta-btn {
   display: inline-block; background: var(--accent); color: #fff;
   border-radius: 999px; padding: 11px 22px; font-weight: 700;
@@ -121,7 +144,7 @@ body {
 }
 .topbar-inner {
   display: flex; align-items: center; gap: 10px;
-  padding: 10px 16px;
+  padding: 10px 20px;
   max-width: 1120px; margin: 0 auto; width: 100%;
 }
 .topbar img.logo { width: 34px; height: 34px; border-radius: 50%; }
@@ -130,15 +153,28 @@ body {
 .topbar .langs { margin-left: auto; font-size: .85rem; white-space: nowrap; }
 .topbar .langs a { color: var(--sub); text-decoration: none; margin-left: 10px; }
 .topbar .langs a.active { color: var(--ink); font-weight: 700; text-decoration: underline; }
-section.block { padding: 18px 16px 22px; border-bottom: 1px solid var(--line); }
-section.block h2 { margin: 0 0 8px; font-size: 1.12rem; font-weight: 800; }
+.theme-btn {
+  background: var(--chip-bg); color: var(--ink); border: 1px solid var(--line2);
+  border-radius: 12px; padding: 10px 16px; font-size: 15px; font-weight: 600;
+  cursor: pointer; min-height: 44px; white-space: nowrap;
+}
+.theme-btn:hover { background: var(--hover); }
+@media (max-width: 640px) {
+  .theme-btn { padding: 8px 10px; font-size: 14px; }
+  .topbar .tag { display: none; }
+}
+section.block { padding: 20px; border-bottom: 1px solid var(--line); }
+@media (max-width: 640px) {
+  section.block { padding: 16px; }
+}
+section.block h2 { margin: 0 0 8px; font-size: 18px; font-weight: 800; }
 section.block p { margin: 6px 0; }
 .muted { color: var(--sub); }
 .small { font-size: .85rem; color: var(--sub); }
 button {
-  background: var(--accent); color: #fff; border: 0; border-radius: 999px;
-  padding: 13px 24px; font-size: 1rem; font-weight: 700; cursor: pointer;
-  min-height: 48px;
+  background: var(--accent); color: #fff; border: 0; border-radius: 12px;
+  padding: 10px 16px; font-size: 15px; font-weight: 700; cursor: pointer;
+  min-height: 44px;
 }
 button:hover { background: var(--accent-dark); }
 button.secondary { background: var(--pill-bg); color: var(--pill-fg); }
@@ -147,8 +183,8 @@ button.ghost { background: var(--surface); color: var(--ink); border: 1px solid 
 button.ghost:hover { background: var(--hover); }
 button:disabled { opacity: .45; cursor: not-allowed; }
 input[type="text"], input[type="number"] {
-  width: 100%; padding: 13px 14px; border: 1px solid var(--line2);
-  border-radius: 12px; font-size: 16px; margin: 8px 0 12px; background: var(--surface); color: var(--ink);
+  width: 100%; padding: 12px; border: 1px solid var(--line2);
+  border-radius: 12px; font-size: 16px; margin: 8px 0 12px; background: var(--input-bg); color: var(--ink);
 }
 input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 .row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
@@ -196,14 +232,14 @@ input:focus { outline: 2px solid var(--accent); border-color: transparent; }
 
 /* ---- composer, action buttons, profile ---- */
 textarea {
-  width: 100%; padding: 13px 14px; border: 1px solid var(--line2);
-  border-radius: 12px; font-size: 16px; margin: 8px 0; background: var(--surface); color: var(--ink);
+  width: 100%; padding: 12px; border: 1px solid var(--line2);
+  border-radius: 12px; font-size: 16px; margin: 8px 0; background: var(--input-bg); color: var(--ink);
   font-family: inherit; resize: vertical; min-height: 88px;
 }
 textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
 select {
-  padding: 10px 12px; border: 1px solid var(--line2); border-radius: 12px;
-  font-size: 16px; background: var(--surface); color: var(--ink); max-width: 100%;
+  padding: 12px; border: 1px solid var(--line2); border-radius: 12px;
+  font-size: 16px; background: var(--input-bg); color: var(--ink); max-width: 100%;
 }
 .charcount { color: var(--sub); font-size: .85rem; }
 .actbtn {
@@ -334,8 +370,7 @@ html { scroll-behavior: smooth; }
 .hidden { display: none !important; }
 .newpill { text-align: center; margin: 10px 0 2px; }
 .newpill button { min-height: 40px; padding: 9px 20px; font-size: .92rem; box-shadow: 0 4px 14px rgba(15,20,25,.22); }
-mark { background: #ffe58f; color: inherit; padding: 0 1px; border-radius: 2px; }
-@media (prefers-color-scheme: dark) { mark { background: #6b5510; } }
+mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius: 2px; }
 .stats-card { margin-bottom: 16px; }
 .stats-main { margin-bottom: 14px; }
 @media (min-width: 1024px) { .stats-main { display: none !important; } }
