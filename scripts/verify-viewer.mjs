@@ -1,4 +1,4 @@
-/* Verification for the read-only web viewer (docs/app.js), run
+/* Verification for the read-only web viewer (docs/viewer.js), run
    against LIVE QL1 data. Checks:
    1. the feed decodes (posts + likes present in the raw walk);
    2. the row rule: likes never render (isVisibleRow), everything
@@ -14,8 +14,9 @@
       parent (thread order oldest-first).
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
+import fs from 'node:fs';
 const require = createRequire(import.meta.url);
-const V = require('../docs/app.js');
+const V = require('../docs/viewer.js');
 
 let pass = 0, fail = 0;
 const ok = (cond, label, extra) => {
@@ -162,6 +163,33 @@ for (const kind of ['reply', 'quote']) {
     }
   }
 }
+
+/* Static guards for the 2026-11-08 desktop outage: retired service
+   workers sabotage the script name app.js (pause worker stubs it,
+   cache-first shells serve their cached copy), so the viewer must
+   ship as viewer.js, the shells must watchdog the boot flag, every
+   fetch must carry a timeout, and the icon set must be the real
+   PNGs at the sizes the manifest promises. */
+console.log('— stale-worker / asset guards —');
+const read = rel => fs.readFileSync(new URL(rel, import.meta.url), 'utf8');
+const enHtml = read('../docs/en.html'), jaHtml = read('../docs/ja.html');
+const swSrc = read('../docs/sw.js'), viewerSrc = read('../docs/viewer.js');
+for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+  ok(html.includes('viewer.js?v=') && !html.includes('app.js'), label + ' loads viewer.js, never app.js');
+  ok(html.includes('__cawViewerBooted'), label + ' has the boot watchdog');
+}
+ok(swSrc.includes("'viewer.js'") && !swSrc.includes("'app.js'"), 'sw.js shell caches viewer.js, not app.js');
+ok(/const CACHE = 'caw-view-v\d+'/.test(swSrc), 'sw.js cache name is versioned');
+ok(viewerSrc.includes('window.__cawViewerBooted = true'), 'viewer.js sets the boot flag');
+ok(viewerSrc.includes('AbortController') && viewerSrc.includes('fetchTimeout'), 'viewer.js fetches carry a timeout');
+function pngSize(rel) {
+  const b = fs.readFileSync(new URL(rel, import.meta.url));
+  if (b.length < 24 || b.toString('ascii', 1, 4) !== 'PNG') return null;
+  return [b.readUInt32BE(16), b.readUInt32BE(20)];
+}
+ok(JSON.stringify(pngSize('../docs/icon-192.png')) === '[192,192]', 'icon-192.png is a 192x192 PNG');
+ok(JSON.stringify(pngSize('../docs/icon-512.png')) === '[512,512]', 'icon-512.png is a 512x512 PNG');
+ok(JSON.stringify(pngSize('../docs/apple-touch-icon.png')) === '[180,180]', 'apple-touch-icon.png is a 180x180 PNG');
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

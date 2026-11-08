@@ -7,18 +7,18 @@
 <meta name="description" content="Read the CAW timeline on QL1 from your browser — PC or phone. The web version is for viewing only; posting is in the Android app.">
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png">
-<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png?v=8">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=8">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
-<link rel="stylesheet" href="style.css?v=7">
+<link rel="stylesheet" href="style.css?v=8">
 </head>
 <body>
 <div class="topbar">
   <div class="topbar-inner">
-    <img class="logo" src="icon-192.png" alt="">
+    <img class="logo" src="icon-192.png?v=8" alt="">
     <div>
       <div class="title">CAW Social</div>
       <div class="tag">on QL1 · web viewer</div>
@@ -106,6 +106,15 @@
   <a href="en.html#lookup"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Look up</span></a>
   <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span>App</span></a>
 </nav>
-<script src="app.js?v=7"></script>
+<script src="viewer.js?v=8"></script>
+<script>
+/* If the viewer script was blocked or replaced by an older saved
+   copy of this site, say so instead of loading forever. */
+setTimeout(function () {
+  if (window.__cawViewerBooted) return;
+  var tl = document.getElementById('timeline');
+  if (tl) tl.innerHTML = '<p class="err">The viewer did not start. An older saved copy of this site may be in the way — please <a href="en.html">reload the page</a>.</p>';
+}, 10000);
+</script>
 </body>
 </html>

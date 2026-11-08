@@ -1,14 +1,23 @@
 /* CAW Social — read-only web viewer.
-   Replaces the maintenance worker (caw-shell-v6-paused) and all
-   earlier shells: fresh cache name, old caches deleted on activate,
-   app.js cached again (the viewer has no write features at all).
+   Fresh cache name per release; old caches are deleted on activate.
    Strategy is NETWORK FIRST for same-origin pages and assets, with
    the cache only as an offline fallback — a fresh visitor always
-   gets the newest build, never a stale shell. */
-const CACHE = 'caw-view-v7';
+   gets the newest build, never a stale shell.
+
+   The viewer script is called viewer.js ON PURPOSE — do not rename
+   it back to app.js. Retired workers attack the old name: the pause
+   worker (caw-shell-v6-paused) answers ANY app.js request with an
+   empty stub ("paused for maintenance"), and the cache-first shells
+   before it serve their cached app.js for app.js?v=… because they
+   match with ignoreSearch. Either way the page shell loads but the
+   viewer never boots and the timeline stays blank (this bit real
+   users on 2026-11-08). viewer.js is in no old cache and matches no
+   stub rule, so it reaches the network untouched; once this worker
+   installs (skipWaiting + clients.claim) it takes over cleanly. */
+const CACHE = 'caw-view-v8';
 const SHELL = [
   './', 'index.html', 'en.html', 'ja.html',
-  'style.css', 'app.js', 'manifest.webmanifest',
+  'style.css', 'viewer.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
 ];
 

@@ -9,6 +9,13 @@
    the mint-proven source. The usernames() getter is shifted by one
    (it returns the NEXT token's name) and is never used directly. */
 
+/* Loaded as viewer.js, never app.js: the retired service workers
+   sabotage the old name (see sw.js). The inline watchdog in the HTML
+   shells checks this flag — it is set the moment the real script
+   runs, so a stubbed or stale script shows a reload hint instead of
+   a silently blank timeline. */
+if (typeof window !== 'undefined') window.__cawViewerBooted = true;
+
 const RPC = 'https://evm-rpc-ql1.mschihuahua.org';
 const API = 'https://scan.qom.network/api/v2';
 const EXPLORER = 'https://scan.qom.network';
@@ -123,9 +130,19 @@ function fmtQcaw(wei) {
 }
 
 /* ---------- read-only RPC ---------- */
+/* Every fetch carries a hard timeout: one hung request must never
+   freeze the viewer. Callers already degrade on a thrown error
+   (names fall back to a label, counts are skipped, pages report a
+   load failure) — a hang was the only failure with no way out. */
+async function fetchTimeout(url, opts, ms) {
+  const ctl = new AbortController();
+  const t = setTimeout(() => ctl.abort(), ms || 12000);
+  try { return await fetch(url, { ...(opts || {}), signal: ctl.signal }); }
+  finally { clearTimeout(t); }
+}
 let rpcSeq = 0;
 async function rpc(method, params) {
-  const res = await fetch(RPC, {
+  const res = await fetchTimeout(RPC, {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ jsonrpc: '2.0', id: ++rpcSeq, method, params }),
   });
@@ -372,7 +389,7 @@ const HEAD_KEY = '__first__';
 async function fetchPageUncached(next) {
   let url = API + '/addresses/' + CAW_ACTIONS + '/transactions';
   if (next) url += '?' + new URLSearchParams(next).toString();
-  const res = await fetch(url);
+  const res = await fetchTimeout(url);
   if (!res.ok) throw new Error('api ' + res.status);
   const j = await res.json();
   const items = [];
