@@ -19,6 +19,37 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   desktop (rail + reading column), a single column on phones. Also a
   **PWA**: add it to the home screen and it opens standalone.
 
+## What's new in v9 (2026-11-08)
+
+- **Faster.** A name's card (`tokenURI`) is now read **once** per
+  author and serves both the name and the picture (it used to be
+  read twice). A page of posts is built in parallel and appears in
+  order; like counts fill in after the post is already on screen
+  instead of holding it up. Skeleton rows show while the first page
+  loads, and more posts load on their own as you scroll (the button
+  still works too). A Refresh button at the top reloads the newest
+  posts.
+- **Easier to read.** Times are relative ("5m", "3h", "2d"; the
+  full time is in the tooltip), web links and @names in post text
+  are tappable, and tapping anywhere on a post opens its page.
+  Dark colours follow your device setting automatically.
+- **Search posts.** A second search box looks through the words
+  *inside* posts (the name lookup stays as it was). It reads the
+  public record in chunks and can keep going further back.
+- **Following / Followers lists on profiles.** The counts open
+  lists rebuilt from the public record — the same reconstruction
+  the app uses (latest follow/unfollow per pair wins; follows from
+  a name holding no qCAW in its name balance never registered and
+  are left out). Repeat visits only re-read what is new. The
+  follower number in the header is still the chain's own count, so
+  a list can differ a little from it.
+- **Groundwork only:** the verified CAW signing core
+  (`actionDigest` + `encodeBatch`, with the hand-rolled keccak from
+  this repo's own pre-pause web app) is back in `viewer.js` as a
+  clearly separated section, and the harness proves it rebuilds a
+  real on-chain batch byte-for-byte. **It is not wired to any UI —
+  nothing in v9 signs or sends.**
+
 ## What works (read-only)
 
 - **Timeline** — posts, re-caws and follows recorded by the QL1
@@ -49,7 +80,10 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
 - **Verification** — `node scripts/verify-viewer.mjs` checks the
   viewer against live chain data: decoding, the like-row rule,
   card-name resolution (including the token-190 incident case),
-  Recaw→original resolution, and marker parsing. 21/21 at revival.
+  Recaw→original resolution, and marker parsing. v9 adds: the
+  signing core rebuilding a real batch byte-for-byte, the
+  single-card-read rule (counted), linkify escaping, and the
+  relative-time formatter.
 
 ## Posting (historical — the retired web write path)
 

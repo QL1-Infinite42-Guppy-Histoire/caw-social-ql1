@@ -191,5 +191,71 @@ ok(JSON.stringify(pngSize('../docs/icon-192.png')) === '[192,192]', 'icon-192.pn
 ok(JSON.stringify(pngSize('../docs/icon-512.png')) === '[512,512]', 'icon-512.png is a 512x512 PNG');
 ok(JSON.stringify(pngSize('../docs/apple-touch-icon.png')) === '[180,180]', 'apple-touch-icon.png is a 180x180 PNG');
 
+console.log('— v9: signing core rebuilds a real batch byte-for-byte —');
+ok(V.keccakHex(new Uint8Array(0)) === 'c5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470',
+  'keccak256("") matches the known vector');
+ok(V.keccakHex(new TextEncoder().encode('hello')) === '1c8aff950685c2ed4bc3174f3472287b56d9517b9c948127319a09a7a36deac8',
+  'keccak256("hello") matches the known vector');
+{
+  /* Pull one real processAction tx straight from the explorer API,
+     decode its actions with the viewer, lift the (v, r, s) arrays
+     out of the same calldata, and rebuild the whole batch. */
+  const res = await fetch('https://scan.qom.network/api/v2/addresses/' + V.CAW_ACTIONS + '/transactions');
+  const j = await res.json();
+  const wAt = (body, i) => body.slice(i * 64, i * 64 + 64);
+  const wi = (body, i) => Number(BigInt('0x' + wAt(body, i)));
+  let rebuilt = false, tried = 0;
+  for (const it of (j.items || [])) {
+    if (!it.raw_input || !it.raw_input.startsWith('0x84e33f2f')) continue;
+    const actions = V.decodeActions(it.raw_input);
+    if (!actions.length) continue;
+    tried++;
+    try {
+      const body = it.raw_input.slice(10);
+      const headAt = wi(body, 1) / 32;
+      const arrAt = offIdx => headAt + wi(body, headAt + offIdx) / 32;
+      const vAt = arrAt(1), rAt = arrAt(2), sAt = arrAt(3);
+      const n = wi(body, vAt);
+      if (n !== actions.length || wi(body, rAt) !== n || wi(body, sAt) !== n) continue;
+      const sigs = [];
+      for (let k = 0; k < n; k++) {
+        sigs.push({
+          v: wi(body, vAt + 1 + k),
+          r: '0x' + wAt(body, rAt + 1 + k),
+          s: '0x' + wAt(body, sAt + 1 + k),
+        });
+      }
+      if (V.encodeBatch(actions, sigs).toLowerCase() === it.raw_input.toLowerCase()) { rebuilt = true; break; }
+    } catch (e) { /* try the next tx */ }
+  }
+  ok(rebuilt, 'encodeBatch rebuilt a real live batch byte-for-byte', tried + ' candidate txs tried');
+}
+
+console.log('— v9: one tokenURI read per name card —');
+V.resetCardCacheForTest();
+{
+  const [nm, im] = await Promise.all([V.resolveName(190n), V.avatarFor(190n)]);
+  ok(nm === 'neptune' && !!im, 'cardFor serves name + image together', 'name=' + nm);
+  ok(V.cardStats.tokenUriReads === 1, 'exactly one tokenURI eth_call for name+image', 'reads=' + V.cardStats.tokenUriReads);
+}
+
+console.log('— v9: linkify + relative time —');
+{
+  const lf = V.linkify('x <script>alert(1)</script> & https://a.example/b?c=1. ping @neptune');
+  ok(!lf.includes('<script>') && lf.includes('&lt;script&gt;'), 'linkify escapes HTML first');
+  ok(lf.includes('href="https://a.example/b?c=1"'), 'linkify links URLs (trailing dot kept outside)');
+  ok(lf.includes('?name=neptune') && lf.includes('@neptune'), 'linkify links @mentions to profiles');
+  const NOW = 1700000000;
+  ok(V.relTime(NOW - 30, NOW) === 'now', 'relTime: under a minute is "now"');
+  ok(V.relTime(NOW - 300, NOW) === '5m', 'relTime: minutes');
+  ok(V.relTime(NOW - 3 * 3600, NOW) === '3h', 'relTime: hours');
+  ok(V.relTime(NOW - 2 * 86400, NOW) === '2d', 'relTime: days');
+  ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
+}
+
+console.log('— v9: version guards —');
+ok(enHtml.includes('?v=9') && jaHtml.includes('?v=9'), 'shells reference ?v=9 assets');
+ok(swSrc.includes("caw-view-v9"), 'sw.js cache name is caw-view-v9');
+
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

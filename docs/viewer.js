@@ -59,6 +59,16 @@ const T = {
     profNotFound: 'That name was not found.',
     profLoadFail: 'Could not read this name. Please check your connection and try again.',
     retryBtn: 'Try again', openPost: 'Open this post',
+    refreshBtn: 'Refresh', justNow: 'now',
+    postSearchTitle: 'Search posts', postSearchPh: 'Words in a post…', postSearchBtn: 'Search posts',
+    searchingPosts: 'Searching… looked through {n} posts so far.',
+    searchFound: '{n} posts found.', searchNone: 'No posts matched.',
+    searchEnd: 'That is the whole record we could read.', searchMoreBtn: 'Search further back',
+    searchTitle: 'Posts matching “{q}”',
+    followingLbl: 'Following', followersLbl: 'Followers',
+    followNote: 'These lists are rebuilt from the public record, so they can differ a little from the counts.',
+    followBuilding: 'Reading the public record… {n} pages so far.',
+    followEmpty: 'Nobody here yet.',
   },
   ja: {
     loading: '読み込み中…', loadFail: '読み込めませんでした。しばらくしてからお試しください。',
@@ -84,6 +94,16 @@ const T = {
     profNotFound: 'その名前は見つかりませんでした。',
     profLoadFail: '名前を読み取れませんでした。通信を確認してもう一度お試しください。',
     retryBtn: 'もう一度試す', openPost: 'この投稿を開く',
+    refreshBtn: '更新する', justNow: '今',
+    postSearchTitle: '投稿をさがす', postSearchPh: '投稿の中の言葉…', postSearchBtn: '投稿をさがす',
+    searchingPosts: 'さがしています… これまでに {n} 件の投稿を見ました。',
+    searchFound: '{n} 件見つかりました。', searchNone: '合う投稿は見つかりませんでした。',
+    searchEnd: '読める記録はここまでです。', searchMoreBtn: 'もっと昔までさがす',
+    searchTitle: '「{q}」を含む投稿',
+    followingLbl: 'フォロー中', followersLbl: 'フォロワー',
+    followNote: 'この一覧は公開の記録から作り直しているため、数と少し違うことがあります。',
+    followBuilding: '公開の記録を読んでいます… {n} ページ目まで読みました。',
+    followEmpty: 'まだ誰もいません。',
   },
 }[LANG];
 
@@ -256,6 +276,47 @@ function parsePostText(text) {
   return { body: raw, ref: null };
 }
 
+/* ---------- text helpers: safe linkify + relative time (v9) ---------- */
+const PAGE_FILE = LANG === 'ja' ? 'ja.html' : 'en.html';
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+/* Escape FIRST, then link: http(s) URLs become external links and
+   @name mentions become profile links. Runs on the parsed body
+   only — reply/quote marker lines are already stripped by
+   parsePostText, so a marker can never be linkified. */
+function linkify(body) {
+  const escaped = escapeHtml(body);
+  return escaped.replace(/(https?:\/\/[^\s<]+)|@([A-Za-z0-9_]{1,30})/g, (m, url, mention) => {
+    if (url) {
+      const clean = url.replace(/[.,!?;:)”’]+$/, '');
+      const tail = url.slice(clean.length);
+      return '<a href="' + clean + '" target="_blank" rel="noopener">' + clean + '</a>' + tail;
+    }
+    return '<a class="plink mention" href="' + PAGE_FILE + '?name=' + encodeURIComponent(mention) + '">@' + mention + '</a>';
+  });
+}
+/* Compact relative time ("5m" / "3h" / "2d"; JA「5分」「3時間」
+   「2日」); from ~30 days on, the plain date. Deterministic when
+   nowSec is passed (the harness uses that). */
+function relTime(ts, nowSec) {
+  const t = Number(ts) || 0;
+  const now = nowSec || Math.floor(Date.now() / 1000);
+  const diff = Math.max(0, now - t);
+  if (diff < 60) return T.justNow;
+  if (diff < 3600) { const m = Math.floor(diff / 60); return LANG === 'ja' ? m + '分' : m + 'm'; }
+  if (diff < 86400) { const h = Math.floor(diff / 3600); return LANG === 'ja' ? h + '時間' : h + 'h'; }
+  if (diff < 30 * 86400) { const d = Math.floor(diff / 86400); return LANG === 'ja' ? d + '日' : d + 'd'; }
+  return new Date(t * 1000).toLocaleDateString(LANG === 'ja' ? 'ja-JP' : 'en-US',
+    { year: 'numeric', month: 'numeric', day: 'numeric' });
+}
+function fullTimeStr(ts) {
+  return new Date((ts || 0) * 1000).toLocaleString(LANG === 'ja' ? 'ja-JP' : 'en-US',
+    { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
 /* ---------- names: the token's CARD is the truth ----------
    Mint records settled which source is right: Minter.mint("neptune")
    created token 190 and its card says "neptune", while usernames(190)
@@ -279,39 +340,61 @@ function metaFromUri(uri) {
   } catch (e) { /* not parseable metadata */ }
   return null;
 }
-async function readCardName(idIn) {
-  const id = BigInt(idIn);
+/* ---------- one card read per name (v9) ----------
+   A name's CARD (its tokenURI metadata) carries BOTH the name and
+   the picture, so they are read together, once, and cached: the
+   older viewer fetched tokenURI twice per author (once for the
+   name, once for the picture). cardStats.tokenUriReads counts the
+   actual tokenURI eth_calls so the verification harness can prove
+   the single-read rule. The name fallback chain is unchanged:
+   card name → usernames(id − 1) → the owner's token list.
+   usernames(id) itself is NEVER used (shifted getter). */
+const cardStats = { tokenUriReads: 0 };
+const cardCache = new Map(); // id (bigint) -> Promise<{name, image}>
+const nameById = new Map();  // id (bigint) -> resolved name (sync view, for search)
+async function readCard(id) {
+  let name = '', image = null;
   try {
-    const uri = await withRetry(() => readStr(CAW_NAME, SEL.tokenURI + word(id)), 2, 400);
+    const uri = await withRetry(() => { cardStats.tokenUriReads++; return readStr(CAW_NAME, SEL.tokenURI + word(id)); }, 2, 400);
     const meta = metaFromUri(uri);
-    if (meta && typeof meta.name === 'string' && meta.name) return meta.name;
-  } catch (e) { /* fall through */ }
-  if (id >= 1n) {
+    if (meta && typeof meta.name === 'string' && meta.name) name = meta.name;
+    if (meta && typeof meta.image === 'string' && meta.image) {
+      image = meta.image.startsWith('ipfs://') ? 'https://ipfs.io/ipfs/' + meta.image.slice(7) : meta.image;
+    } else if (uri.startsWith('http')) image = uri;
+  } catch (e) { /* fall through to the name fallbacks */ }
+  if (!name && id >= 1n) {
     try {
       const n = await withRetry(() => readStr(CAW_NAME, SEL.usernames + word(id - 1n)), 2, 400);
-      if (n) return n;
+      if (n) name = n;
     } catch (e) { /* fall through */ }
   }
-  try {
-    const owner = await readAddr(CAW_NAME, SEL.ownerOf + word(id));
-    const toks = await tokensOf(owner);
-    const hit = toks.find(t => t.id === id);
-    if (hit && hit.username) return hit.username;
-  } catch (e) { /* no name found */ }
-  return '';
-}
-const nameCache = new Map();
-function resolveName(idIn) {
-  const id = BigInt(idIn);
-  if (!nameCache.has(id)) {
-    const p = readCardName(id).then(n => {
-      if (!n) nameCache.delete(id); // a transient miss must not stick
-      return n || null;
-    }).catch(() => { nameCache.delete(id); return null; });
-    nameCache.set(id, p);
+  if (!name) {
+    try {
+      const owner = await readAddr(CAW_NAME, SEL.ownerOf + word(id));
+      const toks = await tokensOf(owner);
+      const hit = toks.find(t => t.id === id);
+      if (hit && hit.username) name = hit.username;
+    } catch (e) { /* no name found */ }
   }
-  return nameCache.get(id);
+  return { name, image };
 }
+function cardFor(idIn) {
+  const id = BigInt(idIn);
+  if (!cardCache.has(id)) {
+    const p = readCard(id).then(card => {
+      if (!card.name) cardCache.delete(id); // a transient miss must not stick
+      else nameById.set(id, card.name);
+      return card;
+    }).catch(() => { cardCache.delete(id); return { name: '', image: null }; });
+    cardCache.set(id, p);
+  }
+  return cardCache.get(id);
+}
+async function readCardName(idIn) { return (await cardFor(idIn)).name; }
+function resolveName(idIn) {
+  return cardFor(idIn).then(c => c.name || null);
+}
+function resetCardCacheForTest() { cardCache.clear(); nameById.clear(); cardStats.tokenUriReads = 0; }
 const ownerTokensCache = new Map();
 function tokensOf(owner) {
   if (!ownerTokensCache.has(owner)) {
@@ -340,24 +423,10 @@ async function resolveNameId(rawName) {
   return { status: 'notfound' };
 }
 
-/* avatar image for a name id (from its card), cached */
-const avatarCache = new Map();
+/* avatar image for a name id — the picture half of the same single
+   card read that resolveName uses (see cardFor above). */
 function avatarFor(idIn) {
-  const id = BigInt(idIn);
-  if (!avatarCache.has(id)) {
-    avatarCache.set(id, (async () => {
-      try {
-        const uri = await withRetry(() => readStr(CAW_NAME, SEL.tokenURI + word(id)), 2, 400);
-        const meta = metaFromUri(uri);
-        if (meta && typeof meta.image === 'string' && meta.image) {
-          return meta.image.startsWith('ipfs://') ? 'https://ipfs.io/ipfs/' + meta.image.slice(7) : meta.image;
-        }
-        if (uri.startsWith('http')) return uri;
-      } catch (e) { /* no picture */ }
-      return null;
-    })());
-  }
-  return avatarCache.get(id);
+  return cardFor(idIn).then(c => c.image);
 }
 
 /* ---------- the feed: pages, indexes, walks ----------
@@ -507,6 +576,227 @@ async function collectPostContext(post, maxPages) {
 /* like count for one post, from the contract (authoritative) */
 const likesOf = a => readUint(CAW_ACTIONS, SEL.likes + word(a.senderId) + strip(a.cawId));
 
+/* ---------- signing core — GROUNDWORK ONLY (v9) ----------
+   Ported verbatim from the verified implementation that shipped in
+   this repo's pre-pause web app (docs/app.js, commits 9901dc3 /
+   e3be564) and that the Android app still uses (src/lib/cawCore.ts
+   there is a port of the same code; the hand-rolled keccak below
+   was re-checked against ethers' keccak256 for the empty string
+   and "hello"). It is present so the next phase can wire CAW
+   actions (post / like / Recaw / follow) onto it — THIS release
+   has no wallet UI, nothing calls these functions, and nothing in
+   this file signs or sends. */
+/* ==== signing core (verified) ====
+   The CAW write path on QL1, pinned down from the live CawActions contract:
+   - digest = keccak256(0x1901 || DOMAIN_SEPARATOR || structHash), where
+     DOMAIN_SEPARATOR is the value the contract itself keeps in storage
+     slot 2, and structHash = keccak256(TYPEHASH || fields) with the fields
+     in the contract's own order (the two tip lists are empty in every real
+     action seen on QL1, so they contribute keccak256('')).
+   - This exact code was tested off-chain against all 264 actions found in
+     recent real transactions: every signature recovered its sender, and
+     the batch encoder below rebuilt every real calldata byte for byte. */
+const SC_DS = '1131b7219bb3aaedaa16d8f6e50191b447828129c4c2c5b3fa55263a6f37c96d';
+const SC_TYPEHASH = 'd2f7d9453bd20ea9069ffefabd584b9d0b624994852fb9b9568a2a8ecc3517ac';
+const SC_RC = [
+  0x0000000000000001n, 0x0000000000008082n, 0x800000000000808an, 0x8000000080008000n,
+  0x000000000000808bn, 0x0000000080000001n, 0x8000000080008081n, 0x8000000000008009n,
+  0x000000000000008an, 0x0000000000000088n, 0x0000000080008009n, 0x000000008000000an,
+  0x000000008000808bn, 0x800000000000008bn, 0x8000000000008089n, 0x8000000000008003n,
+  0x8000000000008002n, 0x8000000000000080n, 0x000000000000800an, 0x800000008000000an,
+  0x8000000080008081n, 0x8000000000008080n, 0x0000000080000001n, 0x8000000080008008n,
+];
+const SC_R = [[0, 36, 3, 41, 18], [1, 44, 10, 45, 2], [62, 6, 43, 15, 61], [28, 55, 25, 21, 56], [27, 20, 39, 8, 14]];
+const SC_MASK = 0xffffffffffffffffn;
+function scRotl(v, n) { return n === 0 ? v : (((v << BigInt(n)) | (v >> BigInt(64 - n))) & SC_MASK); }
+function scKeccakF(st) {
+  for (let round = 0; round < 24; round++) {
+    const C = [], D = [];
+    for (let x = 0; x < 5; x++) C[x] = st[x] ^ st[x + 5] ^ st[x + 10] ^ st[x + 15] ^ st[x + 20];
+    for (let x = 0; x < 5; x++) D[x] = C[(x + 4) % 5] ^ scRotl(C[(x + 1) % 5], 1);
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) st[x + 5 * y] ^= D[x];
+    const B = new Array(25);
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) B[y + 5 * ((2 * x + 3 * y) % 5)] = scRotl(st[x + 5 * y], SC_R[x][y]);
+    for (let x = 0; x < 5; x++) for (let y = 0; y < 5; y++) st[x + 5 * y] = B[x + 5 * y] ^ ((~B[(x + 1) % 5 + 5 * y]) & B[(x + 2) % 5 + 5 * y]);
+    st[0] ^= SC_RC[round];
+  }
+}
+function scKeccak(bytes) { // Uint8Array -> hex string (no 0x)
+  const rate = 136;
+  const st = new Array(25).fill(0n);
+  const padded = Array.from(bytes);
+  padded.push(0x01);
+  while (padded.length % rate !== rate - 1) padded.push(0);
+  padded.push(0x80);
+  for (let off = 0; off < padded.length; off += rate) {
+    for (let i = 0; i < rate / 8; i++) {
+      let lane = 0n;
+      for (let j = 7; j >= 0; j--) lane = (lane << 8n) | BigInt(padded[off + i * 8 + j]);
+      st[i] ^= lane;
+    }
+    scKeccakF(st);
+  }
+  let out = '';
+  for (let i = 0; i < 4; i++) {
+    let lane = st[i];
+    for (let j = 0; j < 8; j++) { out += Number(lane & 0xffn).toString(16).padStart(2, '0'); lane >>= 8n; }
+  }
+  return out;
+}
+const scHexBytes = h => { h = h.replace(/^0x/, ''); const b = new Uint8Array(h.length / 2); for (let i = 0; i < b.length; i++) b[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16); return b; };
+const scUtf8 = s => new TextEncoder().encode(s);
+const scWord = v => BigInt(v).toString(16).padStart(64, '0');
+const scAddrWord = a => a.replace(/^0x/, '').toLowerCase().padStart(64, '0');
+const SC_EMPTY_HASH = scKeccak(new Uint8Array(0));
+function scActionDigest(a) { // a: {type,senderId,receiverId,ts,sender,cawId,text} -> '0x…' digest to sign
+  const structHash = scKeccak(scHexBytes(
+    SC_TYPEHASH + scWord(a.type) + scWord(a.senderId) + scWord(a.receiverId) +
+    SC_EMPTY_HASH + scWord(a.ts) + SC_EMPTY_HASH + scAddrWord(a.sender) +
+    a.cawId.replace(/^0x/, '') + scKeccak(scUtf8(a.text))
+  ));
+  return '0x' + scKeccak(scHexBytes('1901' + SC_DS + structHash));
+}
+function scEncodeAction(a) {
+  const tb = scUtf8(a.text);
+  const textTail = scWord(tb.length) + Array.from(tb).map(b => b.toString(16).padStart(2, '0')).join('').padEnd(Math.ceil(tb.length / 32) * 64 || 64, '0');
+  return scWord(a.type) + scWord(a.senderId) + scWord(a.receiverId) + scWord(0x120) + scWord(a.ts) +
+    scAddrWord(a.sender) + scWord(0x140) + a.cawId.replace(/^0x/, '') + scWord(0x160) +
+    scWord(0) + scWord(0) + textTail; // the two tip lists are always empty here
+}
+function scEncodeBatch(actions, sigs) { // -> full calldata for the processAction batch call
+  const n = actions.length;
+  const tails = actions.map(scEncodeAction);
+  let acts = scWord(n), off = n * 32;
+  const offs = tails.map(t => { const o = off; off += t.length / 2; return o; });
+  acts += offs.map(o => scWord(o)).join('') + tails.join('');
+  const vs = scWord(n) + sigs.map(s => scWord(s.v)).join('');
+  const rs = scWord(n) + sigs.map(s => s.r.replace(/^0x/, '')).join('');
+  const ss = scWord(n) + sigs.map(s => s.s.replace(/^0x/, '')).join('');
+  const head = scWord(0x80) + scWord(0x80 + acts.length / 2) + scWord(0x80 + acts.length / 2 + vs.length / 2) + scWord(0x80 + acts.length / 2 + vs.length / 2 + rs.length / 2);
+  return '0x84e33f2f' + scWord(1) + scWord(0x40) + head + acts + vs + rs + ss;
+}
+/* ==== end signing core ==== */
+/* Public names for the next phase + the verification harness. */
+const actionDigest = scActionDigest;
+const encodeBatch = scEncodeBatch;
+const keccakHex = bytes => scKeccak(bytes);
+
+/* ---------- follow index (rebuilt from the public record) ----------
+   CawActions keeps only a follower COUNT per name, so the lists
+   are reconstructed from the follow / unfollow actions themselves
+   (the app's followIndex rule): for each (sender, receiver) pair
+   the LATEST action wins and a type-4 unfollow closes the pair.
+   The pair map persists in localStorage with a block watermark,
+   so repeat visits only walk pages newer than the watermark; an
+   interrupted build resumes from its stored cursor. Lists are
+   refined the app's way: followers whose sender name currently
+   holds no qCAW in its name balance are dropped (those follows
+   never registered), and a failed balance read keeps the pair
+   (fail-open). The profile header number stays the chain's own
+   followerCount — only the lists are reconstructions. */
+const FI_KEY = 'caw-follow-index-v1';
+let fiPairs = new Map(), fiWatermark = 0, fiCursor = null, fiHead = 0, fiHydrated = false, fiBuilding = null, fiPages = 0;
+const fiZeroVerdicts = new Map();
+const fiStore = {
+  get() { try { return typeof localStorage !== 'undefined' ? localStorage.getItem(FI_KEY) : null; } catch (e) { return null; } },
+  set(v) { try { if (typeof localStorage !== 'undefined') localStorage.setItem(FI_KEY, v); } catch (e) {} },
+};
+const fiKey = (s, r) => s.toString() + '->' + r.toString();
+function fiNewer(a, b) { return a.b > b.b || (a.b === b.b && (a.x > b.x || (a.x === b.x && a.k > b.k))); }
+function fiHydrate() {
+  if (fiHydrated) return;
+  fiHydrated = true;
+  try {
+    const j = JSON.parse(fiStore.get() || 'null');
+    if (j && typeof j.watermark === 'number' && j.pairs) {
+      fiWatermark = j.watermark;
+      fiPairs = new Map(Object.entries(j.pairs));
+      if (j.buildCursor && typeof j.buildCursor === 'object') { fiCursor = j.buildCursor; fiHead = j.buildHead || 0; }
+    }
+  } catch (e) { /* a broken cache just means a fresh build */ }
+}
+function fiPersist() {
+  const obj = {};
+  for (const [k, v] of fiPairs) obj[k] = v;
+  fiStore.set(JSON.stringify({ watermark: fiWatermark, pairs: obj, buildCursor: fiCursor, buildHead: fiHead }));
+}
+function fiMerge(it) {
+  if ((it.type !== 3 && it.type !== 4) || it.block === undefined) return;
+  const rec = { t: it.type, b: it.block, x: it.txIndex ?? 0, k: 0 };
+  const cur = fiPairs.get(fiKey(it.senderId, it.receiverId));
+  if (!cur || !fiNewer(cur, rec)) fiPairs.set(fiKey(it.senderId, it.receiverId), rec);
+}
+/* Walk the feed and merge every follow/unfollow. Stops early once
+   a whole page is at or below the stored watermark. maxPages caps
+   one run; the cursor is persisted so the next run resumes. */
+function buildFollowIndex(onProgress, maxPages) {
+  if (fiBuilding) return fiBuilding;
+  fiBuilding = (async () => {
+    try {
+      fiHydrate();
+      let cursor = fiCursor, pages = 0, headBlock = fiHead;
+      fiPages = 0;
+      while (true) {
+        const page = await fetchPage(cursor);
+        pages++; fiPages = pages;
+        if (onProgress) onProgress(pages);
+        let pageMax = 0;
+        for (const it of page.items) { if (it.block !== undefined && it.block > pageMax) pageMax = it.block; fiMerge(it); }
+        if (pages === 1 && headBlock === 0) headBlock = pageMax;
+        cursor = page.next;
+        if (!cursor) break;
+        if (pageMax > 0 && pageMax <= fiWatermark) break;
+        if (maxPages && pages >= maxPages) { fiCursor = cursor; fiHead = headBlock; fiPersist(); return; }
+        if (pages % 10 === 0) { fiCursor = cursor; fiHead = headBlock; fiPersist(); }
+        if (pages >= 400) { fiCursor = cursor; fiHead = headBlock; fiPersist(); return; } // hard safety cap
+      }
+      if (headBlock > fiWatermark) fiWatermark = headBlock;
+      fiCursor = null; fiHead = 0;
+      fiPersist();
+    } finally { fiBuilding = null; }
+  })();
+  return fiBuilding;
+}
+function followListsOf(idIn) {
+  fiHydrate();
+  const id = BigInt(idIn).toString();
+  const following = [], followers = [];
+  for (const [key, rec] of fiPairs) {
+    if (rec.t !== 3) continue;
+    const [s, r] = key.split('->');
+    if (s === id) following.push({ id: BigInt(r), rec });
+    if (r === id) followers.push({ id: BigInt(s), rec });
+  }
+  const byRecency = (a, b) => b.rec.b - a.rec.b || b.rec.x - a.rec.x;
+  following.sort(byRecency); followers.sort(byRecency);
+  return { following: following.map(f => f.id), followers: followers.map(f => f.id) };
+}
+async function fiRegistered(s, r) {
+  const key = fiKey(s, r);
+  const rec = fiPairs.get(key);
+  if (!rec || rec.t !== 3) return false;
+  if (fiZeroVerdicts.has(key)) return !fiZeroVerdicts.get(key);
+  let registered = true;
+  try { registered = (await readUint(CAW_NAME, SEL.cawBalanceOf + word(s))) > 0n; }
+  catch (e) { registered = true; } // fail-open
+  fiZeroVerdicts.set(key, !registered);
+  return registered;
+}
+async function refinedFollowListsOf(idIn) {
+  const base = followListsOf(idIn);
+  const refine = async (ids, asSender) => {
+    const out = [];
+    for (let i = 0; i < ids.length; i += 8) {
+      const chunk = ids.slice(i, i + 8);
+      const verdicts = await Promise.all(chunk.map(o => asSender ? fiRegistered(idIn, o) : fiRegistered(o, idIn)));
+      chunk.forEach((o, j) => { if (verdicts[j]) out.push(o); });
+    }
+    return out;
+  };
+  const [following, followers] = await Promise.all([refine(base.following, true), refine(base.followers, false)]);
+  return { following, followers };
+}
+
 /* Timeline row rule (app v0.4.x semantics): LIKE actions never
    render as rows — they only feed the counts on their target post.
    Posts, Recaws, follows and unfollows do render. */
@@ -531,10 +821,8 @@ function avatarHtml(url, name) {
   const ch = name ? name.replace(/^@/, '').charAt(0).toUpperCase() : '?';
   return '<div class="avatar avatar-fallback">' + esc(ch) + '</div>';
 }
-function whenStr(ts) {
-  return new Date((ts || 0) * 1000).toLocaleString(LANG === 'ja' ? 'ja-JP' : 'en-US',
-    { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-}
+function whenStr(ts) { return relTime(ts); }
+const timeHtml = ts => '<span class="time" title="' + esc(fullTimeStr(ts)) + '">· ' + esc(whenStr(ts)) + '</span>';
 const nameLabel = async id => {
   const n = await resolveName(id);
   return n ? '@' + n : T.unknownName + id;
@@ -552,8 +840,8 @@ async function fillOriginalFrame(el, cawId) {
     const who = name ? '@' + name : T.unknownName + post.senderId;
     el.innerHTML =
       '<div class="qhead">' + avatarHtml(img, name) +
-      '<span class="qname">' + esc(who) + '</span><span class="time">· ' + esc(whenStr(post.ts)) + '</span></div>' +
-      '<div class="qtext">' + esc(parsePostText(post.text).body) + '</div>';
+      '<span class="qname">' + esc(who) + '</span>' + timeHtml(post.ts) + '</div>' +
+      '<div class="qtext">' + linkify(parsePostText(post.text).body) + '</div>';
     el.onclick = () => { location.href = postUrl(post.cawId); };
   } catch (e) {
     el.innerHTML = '<span class="small">' + T.originalMissing + '</span>';
@@ -584,20 +872,32 @@ async function postCard(a, opts) {
     html += '<div class="ctx reply-ctx" data-parent="' + parsed.ref.parentCawId + '">' + esc(T.replyingTo.replace('{name}', '…')) + '</div>';
   }
   const whoHtml = profHref ? '<a class="plink" href="' + profHref + '">' + esc(who) + '</a>' : esc(who);
-  html += '<div class="meta"><span class="name">' + whoHtml + '</span><span class="time">· ' + esc(whenStr(a.ts)) + '</span></div>';
-  if (parsed.body) html += '<div class="ptext">' + esc(parsed.body) + '</div>';
+  html += '<div class="meta"><span class="name">' + whoHtml + '</span>' + timeHtml(a.ts) + '</div>';
+  if (parsed.body) html += '<div class="ptext">' + linkify(parsed.body) + '</div>';
   html += '<div class="frameslot"></div>';
-  let likes = null;
-  try { likes = await likesOf(a); } catch (e) {}
   const replyCount = refChildren(a.cawId, 'reply').length;
   html += '<div class="pfoot">' +
-    '<span class="like-count">' + (likes !== null && likes > 0n ? IC_HEART + '<span>' + likes.toString() + '</span>' : '') + '</span>' +
+    '<span class="like-count"></span>' +
     (replyCount > 0 ? '<span class="reply-count">' + IC_REPLY + '<span>' + replyCount + '</span></span>' : '') +
     (opts.nested ? '' : '<a href="' + postUrl(a.cawId) + '">' + T.openPost + '</a>') +
     '<a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a>' +
     '</div>';
   html += '</div>';
   div.innerHTML = html;
+  /* Like count fills in after the card is on screen — it must
+     never hold up rendering (v9 speed rule). */
+  const likeEl = div.querySelector('.like-count');
+  if (likeEl) {
+    likesOf(a).then(n => { if (n > 0n) likeEl.innerHTML = IC_HEART + '<span>' + n.toString() + '</span>'; }).catch(() => {});
+  }
+  /* Whole-card click opens the post page, except on links/buttons. */
+  if (!opts.nested) {
+    div.classList.add('clickable');
+    div.addEventListener('click', e => {
+      if (e.target.closest('a,button')) return;
+      location.href = postUrl(a.cawId);
+    });
+  }
   const slot = div.querySelector('.frameslot');
   if (parsed.ref && parsed.ref.kind === 'quote') slot.appendChild(originalFrame(parsed.ref.parentCawId));
   const rctx = div.querySelector('.reply-ctx');
@@ -621,7 +921,7 @@ async function recawCard(a) {
   const who = name ? '@' + name : T.unknownName + a.senderId;
   let html = avatarHtml(img, name) + '<div class="pbody">' +
     '<div class="ctx recaw-ctx">' + IC_REPEAT + '<span>' + esc(T.recawedBy.replace('{name}', who)) + '</span>' +
-    '<span class="time">· ' + esc(whenStr(a.ts)) + '</span></div>' +
+    timeHtml(a.ts) + '</div>' +
     '<div class="frameslot"></div>' +
     '<div class="pfoot"><a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a></div>' +
     '</div>';
@@ -658,29 +958,38 @@ async function rowFor(a) {
 }
 
 /* ---------- home timeline ---------- */
+function skeletonHtml(n) {
+  let s = '';
+  for (let i = 0; i < (n || 5); i++) {
+    s += '<div class="post skel" aria-hidden="true"><div class="avatar skel-block"></div>' +
+      '<div class="pbody"><div class="skel-line w40"></div><div class="skel-line w90"></div><div class="skel-line w70"></div></div></div>';
+  }
+  return s;
+}
 let tlCursor = null, tlDone = false, tlLoading = false;
 async function loadTimeline(append) {
   if (tlLoading || (append && tlDone)) return;
   tlLoading = true;
   const box = $('timeline');
   try {
-    if (!append) { box.innerHTML = ''; tlCursor = null; tlDone = false; }
-    let rendered = 0, pages = 0;
+    if (!append) { box.innerHTML = skeletonHtml(5); tlCursor = null; tlDone = false; }
+    let rendered = 0, pages = 0, cleared = append;
     while (rendered === 0 && pages < 4 && !tlDone) {
       const page = await fetchPage(tlCursor);
       tlCursor = page.next;
       if (!tlCursor) tlDone = true;
       pages++;
-      for (const a of page.items) {
-        const row = await rowFor(a);
-        if (row) { box.appendChild(row); rendered++; }
-      }
+      /* Build the whole page's rows in parallel, append in order —
+         never await one row at a time (v9 speed rule). */
+      const rows = await Promise.all(page.items.map(a => rowFor(a).catch(() => null)));
+      if (!cleared) { box.innerHTML = ''; cleared = true; }
+      for (const row of rows) if (row) { box.appendChild(row); rendered++; }
       if (!page.items.length) tlDone = true;
     }
     if (!box.children.length && tlDone) box.innerHTML = '<p>' + T.empty + '</p>';
     $('moreBtn').style.display = tlDone ? 'none' : '';
   } catch (e) {
-    if (!box.children.length) box.innerHTML = '<p class="err">' + T.loadFail + '</p>';
+    if (!box.querySelector('.post:not(.skel)')) box.innerHTML = '<p class="err">' + T.loadFail + '</p>';
     else $('moreBtn').style.display = '';
   } finally { tlLoading = false; }
 }
@@ -714,10 +1023,10 @@ async function loadPostPage(cawId) {
     note.textContent = ctx.complete ? '' : T.searchStopped;
     threadBox.innerHTML = '';
     if (!ctx.replies.length) threadBox.innerHTML = '<p class="small">' + T.empty + '</p>';
-    for (const r of ctx.replies) threadBox.appendChild(await postCard(r));
+    for (const row of await Promise.all(ctx.replies.map(r => postCard(r)))) threadBox.appendChild(row);
     quotesBox.innerHTML = '';
     if (!ctx.quotes.length) quotesBox.innerHTML = '<p class="small">' + T.empty + '</p>';
-    for (const q of ctx.quotes) quotesBox.appendChild(await postCard(q));
+    for (const row of await Promise.all(ctx.quotes.map(q => postCard(q)))) quotesBox.appendChild(row);
   } else {
     note.textContent = T.loadFail;
   }
@@ -782,8 +1091,19 @@ async function loadProfile() {
     '<div class="prow"><div class="pava">' + avatarHtml(img, username) + '</div></div>' +
     '<div class="pname">@' + esc(username) + '</div>' +
     (owner ? '<div class="small">' + T.ownerLbl + ': <a class="plink" href="' + EXPLORER + '/address/' + owner + '" target="_blank" rel="noopener">' + esc(shortAddr(owner)) + '</a></div>' : '') +
-    '<div class="chips">' + chips.map(c => '<span class="chip">' + esc(c) + '</span>').join('') + '</div>';
+    '<div class="chips">' + chips.map(c => '<span class="chip">' + esc(c) + '</span>').join('') + '</div>' +
+    /* Follow lists (v9): the counts are tappable and open the
+       reconstructed lists inline. The Followers number shown here
+       is the chain's own followerCount; the list itself is the
+       reconstruction (see the small print under it). */
+    '<div class="followbar">' +
+    '<button type="button" class="ghost follow-open" id="followingBtn">' + T.followingLbl + '</button>' +
+    '<button type="button" class="ghost follow-open" id="followersBtn">' + T.followersLbl + (followers !== null ? ': ' + followers.toString() : '') + '</button>' +
+    '</div><div id="followLists"></div>';
   profileState = { id, username };
+  const fb = $('followingBtn'), rb2 = $('followersBtn');
+  if (fb) fb.onclick = () => openFollowList('following');
+  if (rb2) rb2.onclick = () => openFollowList('followers');
   profCursor = undefined; profDone = false;
   $('profilePosts').innerHTML = '';
   loadProfilePosts();
@@ -803,12 +1123,9 @@ async function loadProfilePosts() {
       profCursor = page.next;
       if (!profCursor) profDone = true;
       pages++;
-      for (const a of page.items) {
-        if (a.senderId === profileState.id) {
-          const row = await rowFor(a);
-          if (row) { box.appendChild(row); found++; }
-        }
-      }
+      const mine = page.items.filter(a => a.senderId === profileState.id);
+      const rows = await Promise.all(mine.map(a => rowFor(a).catch(() => null)));
+      for (const row of rows) if (row) { box.appendChild(row); found++; }
       if (!page.items.length) profDone = true;
     }
     if (!box.children.length && profDone) box.innerHTML = '<p>' + T.empty + '</p>';
@@ -816,6 +1133,103 @@ async function loadProfilePosts() {
   } catch (e) {
     if (!box.children.length) box.innerHTML = '<p class="err">' + T.loadFail + '</p>';
   } finally { profLoading = false; }
+}
+
+/* ---------- profile follow lists (reconstructed, v9) ---------- */
+let followOpenKind = null;
+async function openFollowList(kind) {
+  if (!profileState) return;
+  const box = $('followLists');
+  if (!box) return;
+  if (followOpenKind === kind) { box.innerHTML = ''; followOpenKind = null; return; }
+  followOpenKind = kind;
+  box.innerHTML = '<p class="small">' + esc(T.followBuilding.replace('{n}', '0')) + '</p>';
+  try {
+    await buildFollowIndex(pages => {
+      if (followOpenKind === kind) {
+        box.innerHTML = '<p class="small">' + esc(T.followBuilding.replace('{n}', String(pages))) + '</p>';
+      }
+    });
+  } catch (e) { /* render whatever was merged */ }
+  if (followOpenKind !== kind || !profileState) return;
+  let lists;
+  try { lists = await refinedFollowListsOf(profileState.id); }
+  catch (e) { lists = followListsOf(profileState.id); }
+  const ids = kind === 'following' ? lists.following : lists.followers;
+  const btn = $(kind === 'following' ? 'followingBtn' : 'followersBtn');
+  if (btn && kind === 'following') btn.textContent = T.followingLbl + ': ' + ids.length;
+  if (!ids.length) {
+    box.innerHTML = '<p class="small">' + T.followEmpty + '</p><p class="small">' + T.followNote + '</p>';
+    return;
+  }
+  box.innerHTML = '';
+  const rows = await Promise.all(ids.map(async id => {
+    const [nm, im] = await Promise.all([resolveName(id), avatarFor(id)]);
+    const d = document.createElement('div');
+    d.className = 'namecard';
+    const label = nm ? '@' + nm : T.unknownName + id;
+    d.innerHTML = (nm ? '<a class="plink" href="' + profUrl(nm) + '">' + avatarHtml(im, nm) + '</a>' : avatarHtml(im, nm)) +
+      '<div class="grow"><div class="n">' + (nm ? '<a class="plink" href="' + profUrl(nm) + '">' + esc(label) + '</a>' : esc(label)) + '</div>' +
+      '<div class="small">#' + id.toString() + '</div></div>';
+    return d;
+  }));
+  for (const r of rows) box.appendChild(r);
+  const note = document.createElement('p');
+  note.className = 'small';
+  note.textContent = T.followNote;
+  box.appendChild(note);
+}
+
+/* ---------- post text search (?q=keyword, v9) ---------- */
+let searchState = null;
+function postMatchesQuery(a, qLower) {
+  if (a.type !== 0) return false;
+  const { body } = parsePostText(a.text);
+  if (body.toLowerCase().includes(qLower)) return true;
+  const nm = nameById.get(BigInt(a.senderId));
+  return !!nm && nm.toLowerCase().includes(qLower);
+}
+async function runSearch(append) {
+  if (!searchState || searchState.running || (append && searchState.done)) return;
+  searchState.running = true;
+  const box = $('searchResults'), prog = $('searchProgress');
+  const qLower = searchState.q.toLowerCase();
+  try {
+    if (!append) { box.innerHTML = skeletonHtml(3); searchState.cursor = null; searchState.done = false; searchState.scanned = 0; searchState.found = 0; }
+    let pages = 0, renderedThisRun = 0;
+    /* One run scans at most ~60 feed pages (or stops at 20 new
+       matches); "search further back" resumes from the cursor. */
+    while (pages < 60 && renderedThisRun < 20 && !searchState.done) {
+      const page = await fetchPage(searchState.cursor);
+      searchState.cursor = page.next;
+      if (!searchState.cursor) searchState.done = true;
+      pages++;
+      const hits = [];
+      for (const a of page.items) {
+        if (a.type === 0) searchState.scanned++;
+        if (postMatchesQuery(a, qLower)) hits.push(a);
+      }
+      if (hits.length) {
+        const rows = await Promise.all(hits.map(a => postCard(a).catch(() => null)));
+        if (!append && renderedThisRun === 0) box.innerHTML = '';
+        for (const row of rows) if (row) { box.appendChild(row); searchState.found++; renderedThisRun++; }
+      } else if (!append && renderedThisRun === 0 && pages === 1) {
+        box.innerHTML = '';
+      }
+      prog.textContent = T.searchingPosts.replace('{n}', String(searchState.scanned));
+      if (!page.items.length) searchState.done = true;
+    }
+    if (!box.querySelector('.post:not(.skel)')) box.innerHTML = '<p>' + T.searchNone + '</p>';
+    prog.textContent = T.searchFound.replace('{n}', String(searchState.found)) +
+      (searchState.done ? ' ' + T.searchEnd : '');
+    $('searchMoreBtn').style.display = searchState.done ? 'none' : '';
+  } catch (e) {
+    if (!box.querySelector('.post:not(.skel)')) box.innerHTML = '<p class="err">' + T.loadFail + '</p>';
+  } finally { searchState.running = false; }
+}
+function doPostSearch() {
+  const v = $('searchInput').value.trim();
+  if (v) location.href = pageFile + '?q=' + encodeURIComponent(v);
 }
 
 /* ---------- name lookup (read-only) ---------- */
@@ -835,6 +1249,7 @@ async function doLookup() {
 
 /* ---------- init ---------- */
 const postQuery = new URLSearchParams(location.search).get('post');
+const searchQuery = new URLSearchParams(location.search).get('q');
 document.querySelectorAll('.langs a').forEach(a => {
   const base = a.getAttribute('href').split('?')[0];
   a.href = base + location.search;
@@ -848,13 +1263,33 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
   $('viewProfile').style.display = '';
   loadProfile();
   $('profileMore').onclick = loadProfilePosts;
+} else if (searchQuery) {
+  $('viewSearch').style.display = '';
+  $('searchTitle').textContent = T.searchTitle.replace('{q}', searchQuery);
+  searchState = { q: searchQuery, cursor: null, done: false, running: false, scanned: 0, found: 0 };
+  runSearch(false);
+  $('searchMoreBtn').onclick = () => runSearch(true);
 } else {
   $('viewHome').style.display = '';
   loadTimeline(false);
   $('moreBtn').onclick = () => loadTimeline(true);
+  const rb = $('refreshBtn');
+  if (rb) rb.onclick = () => loadTimeline(false);
+  /* Auto-load more when the "See more" area scrolls into view;
+     the button stays as the manual fallback. */
+  if (typeof IntersectionObserver !== 'undefined') {
+    const io = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) loadTimeline(true);
+    }, { rootMargin: '600px' });
+    io.observe($('moreBtn'));
+  }
 }
 $('lookupBtn').onclick = doLookup;
 $('lookupInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLookup(); });
+const sb = $('searchBtn');
+if (sb) sb.onclick = doPostSearch;
+const si = $('searchInput');
+if (si) si.addEventListener('keydown', e => { if (e.key === 'Enter') doPostSearch(); });
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
@@ -866,6 +1301,9 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     decodeActions, parsePostText, b64UrlToHex, metaFromUri,
     readCardName, resolveName, resolveNameId, avatarFor,
+    cardFor, cardStats, resetCardCacheForTest, linkify, escapeHtml, relTime, fullTimeStr,
+    actionDigest, encodeBatch, keccakHex,
+    buildFollowIndex, followListsOf, refinedFollowListsOf,
     fetchPage, findPostByCawId, findPostDeep, collectPostContext,
     postIndex, refIndex, refChildren, indexItem, likesOf, isVisibleRow,
     rpc, readUint, readStr, SEL, CAW_NAME, CAW_ACTIONS, MINTER, word,

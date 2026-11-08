@@ -5,20 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CAW Social — QL1（ウェブ閲覧版）</title>
 <meta name="description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。ウェブ版は閲覧専用です。投稿は Android アプリから。">
-<meta name="theme-color" content="#ffffff">
+<meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png?v=8">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=8">
+<link rel="icon" type="image/png" href="icon-192.png?v=9">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=9">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
-<link rel="stylesheet" href="style.css?v=8">
+<link rel="stylesheet" href="style.css?v=9">
 </head>
 <body>
 <div class="topbar">
   <div class="topbar-inner">
-    <img class="logo" src="icon-192.png?v=8" alt="">
+    <img class="logo" src="icon-192.png?v=9" alt="">
     <div>
       <div class="title">CAW Social</div>
       <div class="tag">QL1 版・ウェブ閲覧</div>
@@ -61,13 +62,28 @@
       <input type="text" id="lookupInput" placeholder="例：neptune" autocomplete="off" spellcheck="false">
       <div class="row"><button id="lookupBtn">さがす</button></div>
       <div id="lookupResult"></div>
+      <h2 style="margin-top:22px">投稿をさがす</h2>
+      <p class="muted">投稿の中の言葉でさがせます。</p>
+      <input type="text" id="searchInput" placeholder="投稿の中の言葉…" autocomplete="off" spellcheck="false">
+      <div class="row"><button id="searchBtn" class="secondary">投稿をさがす</button></div>
     </section>
 
     <section class="block" id="viewHome" style="display:none">
-      <h2>タイムライン</h2>
+      <div class="row" style="justify-content:space-between">
+        <h2 style="margin:0">タイムライン</h2>
+        <button id="refreshBtn" class="ghost" type="button">更新する</button>
+      </div>
       <p class="muted">CAW の新しい投稿を順番に表示します。誰でも読めます（ウォレット不要）。</p>
       <div id="timeline"><p>読み込み中…</p></div>
       <div class="loadmore"><button id="moreBtn" class="ghost" style="display:none">もっと見る</button></div>
+    </section>
+
+    <section class="block" id="viewSearch" style="display:none">
+      <p><a class="plink" href="ja.html">← タイムラインへ戻る</a></p>
+      <h2 id="searchTitle">さがす</h2>
+      <p id="searchProgress" class="small"></p>
+      <div id="searchResults"></div>
+      <div class="loadmore"><button id="searchMoreBtn" class="ghost" style="display:none">もっと昔までさがす</button></div>
     </section>
 
     <section class="block" id="viewProfile" style="display:none">
@@ -106,7 +122,7 @@
   <a href="ja.html#lookup"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>さがす</span></a>
   <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span>アプリ</span></a>
 </nav>
-<script src="viewer.js?v=8"></script>
+<script src="viewer.js?v=9"></script>
 <script>
 /* If the viewer script was blocked or replaced by an older saved
    copy of this site, say so instead of loading forever. */
