@@ -17,6 +17,11 @@
    v10 adds: the persistent card cache (a stored card costs zero
    tokenURI reads in a fresh session), the new-head comparison
    helper, keyword highlighting, and the follow-build chunk cap.
+   v11 adds: the live name check (valid / taken / available with
+   the price cross-read directly), the hand-computed mint
+   calldata, the NFT preview byte-compared with token 190's real
+   on-chain card, and the write-path guards (exactly one send
+   site in viewer.js, no signing method named anywhere).
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -258,9 +263,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v10: version guards —');
-ok(enHtml.includes('?v=10') && jaHtml.includes('?v=10'), 'shells reference ?v=10 assets');
-ok(swSrc.includes("caw-view-v10"), 'sw.js cache name is caw-view-v10');
+console.log('— v11: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=11') && jaHtml.includes('?v=11'), 'shells reference ?v=11 assets');
+ok(swSrc.includes("caw-view-v11"), 'sw.js cache name is caw-view-v11');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -313,6 +318,70 @@ console.log('— v10: persistent card cache —');
     }
   } finally {
     delete globalThis.localStorage;
+  }
+}
+
+console.log('— v11: name check against the live chain —');
+{
+  const nep = await V.checkName('neptune');
+  ok(nep.valid === true && nep.taken === true && nep.name === 'neptune',
+    'checkName("neptune") -> valid + taken', 'cost=' + nep.cost);
+  const directNep = BigInt(await rawCall(V.MINTER, V.SEL.costOfName + V.encStr('neptune')));
+  ok(nep.cost === directNep, 'checkName("neptune") price matches a direct costOfName read');
+  const upper = await V.checkName('NEPTUNE');
+  ok(upper.name === 'neptune' && upper.taken === true,
+    'checkName("NEPTUNE") normalises like the app input -> the same taken name');
+  const bad = await V.checkName('bad name');
+  ok(bad.valid === false, 'checkName("bad name") -> invalid (the contract rejects spaces)');
+  const probeName = 'zzq' + Date.now().toString(36) + 'xwq9';
+  const free = await V.checkName(probeName);
+  ok(free.valid === true && free.taken === false,
+    'checkName(random unregistered name) -> valid + available', probeName);
+  const directFree = BigInt(await rawCall(V.MINTER, V.SEL.costOfName + V.encStr(probeName)));
+  ok(free.cost === directFree && directFree > 0n,
+    'available name price equals a direct costOfName read', 'cost=' + free.cost);
+}
+
+console.log('— v11: mint calldata builders (hand-computed expectations) —');
+{
+  const expApprove = '0x095ea7b3' +
+    '000000000000000000000000' + 'fc2f8743e3b09a6c973b114c3a082433e974ed9f' +
+    '00000000000000000000000000000000000000000000000000000000000f4240';
+  ok(V.buildApproveCalldata(1000000n) === expApprove,
+    'approve calldata = approve selector + minter word + cost word (1,000,000)');
+  const expMint = '0xd85d3d27' +
+    '0000000000000000000000000000000000000000000000000000000000000020' +
+    '0000000000000000000000000000000000000000000000000000000000000007' +
+    '6e657074756e65' + '0'.repeat(50);
+  ok(V.buildMintCalldata('neptune') === expMint,
+    'mint calldata = mint selector + string tail for "neptune"');
+}
+
+console.log('— v11: NFT preview port —');
+{
+  ok(V.nameNftFontSize('abc') === 99, 'nameNftFontSize: 3 chars -> 99');
+  ok(V.nameNftFontSize('neptune') === 49, 'nameNftFontSize: 7 chars -> 49');
+  ok(V.nameNftFontSize('a'.repeat(17)) === 22, 'nameNftFontSize: 17 chars -> 22');
+  const svg = V.nameNftSvg('neptune');
+  ok(svg.includes('>neptune</text>') && svg.includes('font-size="49px"'),
+    'nameNftSvg("neptune") carries the name text at 49px');
+  const uri190 = rawString(await rawCall(V.CAW_NAME, V.SEL.tokenURI + V.word(190n)));
+  const meta190 = JSON.parse(Buffer.from(uri190.split(',')[1], 'base64').toString('utf8'));
+  const onchainSvg = Buffer.from(meta190.image.split(',')[1], 'base64').toString('utf8');
+  ok(svg === onchainSvg, 'nameNftSvg("neptune") is byte-identical to token 190\'s on-chain card');
+}
+
+console.log('— v11: write-path guards —');
+{
+  const sendSites = (viewerSrc.match(/eth_sendTransaction/g) || []).length;
+  ok(sendSites === 1, 'viewer.js has exactly ONE send site (the sendTx helper)', 'sites=' + sendSites);
+  ok(!/eth_sign/.test(viewerSrc) && !/personal_sign/.test(viewerSrc),
+    'viewer.js never names a signing method anywhere');
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    ok(html.includes('id="getname"') && html.includes('id="mintNameInput"') &&
+       html.includes('id="mintCheckBtn"') && html.includes('id="walletArea"') &&
+       html.includes('id="mintArea"') && html.includes('id="myNames"'),
+       label + ' carries the get-a-name section and its controls');
   }
 }
 

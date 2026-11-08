@@ -3,21 +3,65 @@
 A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
 
 - Site: https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/
-- Status: **live again as a READ-ONLY web viewer** (revived 2026-11-08).
-  The timeline, post pages and profiles are decoded in your browser
-  from the public explorer API and the chain itself. There is no
-  wallet connection and nothing here signs or sends anything.
+- Status: **live as a web viewer — plus name minting** (viewer
+  revived 2026-11-08; minting added in v11, 2026-11-08). The
+  timeline, post pages and profiles are decoded in your browser
+  from the public explorer API and the chain itself, and reading
+  needs no wallet. Getting a name connects your own wallet and
+  sends two ordinary transactions (a qCAW allowance, then the
+  mint) — the only sends this site can make. It never asks for
+  any kind of signature and never handles keys.
 - Posting, likes, re-caws and follows live in the **Android app**
   ([download page](https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/)),
-  where signing happens inside the app. The web write features were
-  retired in November 2026: the scheme needs a raw-digest signature
-  (`eth_sign`) that common wallet apps refuse, and the app made the
-  whole question moot. The verified research behind it is kept below
+  where signing happens inside the app. The web posting features
+  were retired in November 2026: the scheme needs a raw-digest
+  signature (`eth_sign`) that common wallet apps refuse, and the
+  app made the whole question moot. Minting needs no such
+  signature, which is why it — alone — could come back. The
+  verified research behind the posting scheme is kept below
   under "Posting" as a historical record.
 - Design: white, X-style timeline (round avatars, light borders),
   plain everyday wording, one accent colour. A two-pane layout on
   desktop (rail + reading column), a single column on phones. Also a
   **PWA**: add it to the home screen and it opens standalone.
+
+## What's new in v11 (2026-11-08)
+
+- **You can get a name here now.** The site stays a viewer for
+  everything else, but the one write that never needed the
+  posting signature scheme — minting a CAW name — is back, done
+  the way the app does it: check the name (the contract's own
+  rules, whether it is taken, and its price in qCAW), see the
+  real NFT card design before paying anything, connect your own
+  wallet, then send two ordinary transactions — first allow the
+  qCAW to be used, then mint — each confirmed on the record
+  before the next step appears. Amounts are always re-read at
+  click time: if the name was taken, or the price moved, in
+  between, sending stops and the page says so. A wallet holding
+  no QOM (the small-fee coin) is warned and cannot send. The
+  names the connected wallet owns are listed under the form,
+  which is also how a fresh mint shows up.
+- **One send site, no signatures, no keys.** The whole viewer
+  contains a single place that asks a wallet to send, and the
+  only payloads it can carry are the two mint-step calls. The
+  page never asks for any kind of signature and never handles a
+  key or a phrase — that is exactly why posting (which needs the
+  raw-digest signature) remains app-only while minting works
+  here. When a wallet refuses or a send fails, the page shows a
+  plain explanation plus the wallet's own error message in small
+  print. Wallets are found even when they inject late (a ~12 s
+  watch plus EIP-6963 announcements); a wallet on the wrong
+  network gets a Switch-to-QL1 button (adding QL1 when the
+  wallet does not know it yet).
+- **Verified without sending.** The harness checks the name
+  check against live data (taken / invalid / available, the
+  price cross-read directly from the contract), the mint
+  calldata against hand-computed bytes, and the NFT preview
+  byte-for-byte against token 190's real on-chain card — plus
+  the send-site count. No real mint has been sent from this
+  site (no keys are handled here): **the first real mint from a
+  visitor's own wallet is the end-to-end check**, mirroring how
+  the original web version was verified.
 
 ## What's new in v10 (2026-11-08)
 
@@ -86,8 +130,13 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   real on-chain batch byte-for-byte. **It is not wired to any UI —
   nothing in v9 signs or sends.**
 
-## What works (read-only)
+## What works
 
+- **Getting a name (the one write)** — check a name against the
+  contract's rules, taken-ness and price; preview the real NFT
+  card; then mint it through your own wallet in two confirmed
+  steps (qCAW allowance, then the mint), with your owned names
+  listed below. See "What's new in v11".
 - **Timeline** — posts, re-caws and follows recorded by the QL1
   `CawActions` contract, decoded in your browser (batch-aware
   decoder). Like actions never render as rows — they only feed the
@@ -122,13 +171,16 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   relative-time formatter. v10 adds: the persistent card cache
   (a stored card costs zero card reads in a fresh session), the
   new-head comparison helper, keyword highlighting, and the
-  follow-build chunk cap.
+  follow-build chunk cap. v11 adds: the live name check, the
+  hand-computed mint calldata, the NFT preview byte-compared
+  with a real minted card, and the single-send-site guards.
 
 ## Posting (historical — the retired web write path)
 
-> The web version no longer posts: this section is kept as the
+> The web version does not post: this section is kept as the
 > research record behind the scheme the Android app now uses.
-> Nothing in the current viewer signs or sends.
+> The viewer never asks for a signature; its only send is name
+> minting (see "What's new in v11").
 
 Verified 2026-11-07. The QL1 `CawActions` contract checks an EIP-712
 style digest per action:
@@ -235,7 +287,9 @@ owner.)
   `usernames()` getter is shifted by one — the viewer always prefers
   the card.
 - Static site, no build step: everything lives in `docs/`.
-  The viewer is read-only — it never handles keys and never sends.
+  Reading never handles keys, and the site never asks for a
+  signature; the only send it can make is minting a name through
+  the visitor's own wallet (v11).
 
 Part of [Guppy's Guide](https://ql1-infinite42-guppy-histoire.github.io/links/) — Don't Panic.
 

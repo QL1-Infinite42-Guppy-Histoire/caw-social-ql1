@@ -1,10 +1,13 @@
 'use strict';
-/* CAW Social (QL1) — READ-ONLY web viewer.
-   This page only ever READS: the timeline, post pages and profiles are
-   decoded in your browser from the public explorer API and the chain
-   itself. There is no wallet connection and nothing here can sign or
-   send — posting, liking and following live in the Android app, where
-   signing happens inside the app itself.
+/* CAW Social (QL1) — web viewer + name minting.
+   Reading is free and open: the timeline, post pages and profiles
+   are decoded in your browser from the public explorer API and the
+   chain itself. The ONE write on this site is getting a name: an
+   ordinary contract call sent through the visitor's own wallet
+   app, which shows its own confirmation. This page never asks
+   for any kind of signature, never handles a key or a phrase, and
+   cannot send anything else — posting, liking and following live
+   in the Android app, where signing happens inside the app itself.
    Names come from each name token's CARD (its tokenURI metadata) —
    the mint-proven source. The usernames() getter is shifted by one
    (it returns the NEXT token's name) and is never used directly. */
@@ -24,12 +27,16 @@ const APP_PAGE = 'https://ql1-infinite42-guppy-histoire.github.io/caw-social-app
 const CAW_NAME = '0x864f08Af11F6DC2c0De42562e4664d4f033D393f';
 const CAW_ACTIONS = '0x95c2AFEc2dE8b09323Cdc7E40Bcce42C3C49E496';
 const MINTER = '0xFC2f8743E3b09a6c973B114c3a082433e974eD9f';
+const QCAW = '0xd2140E16aDf37194036865E90BbCA1139b739d0D';
 const ACTION_SELECTOR = '0x84e33f2f';
+const CHAIN_ID_HEX = '0x2fe'; // QL1, chain id 766
 
 const SEL = {
   usernames: '0x136dd963', ownerOf: '0x6352211e', tokens: '0xe4860339',
   tokenURI: '0xc87b56dd', cawBalanceOf: '0x532f3a34', totalSupply: '0x18160ddd',
   idByUsername: '0x9ebf19e8', followerCount: '0x9f46a705', likes: '0x14ce3e7d',
+  balanceOf: '0x70a08231', allowance: '0xdd62ed3e', approve: '0x095ea7b3',
+  costOfName: '0x8c87aa8a', isValidUsername: '0x3b032005', mint: '0xd85d3d27',
 };
 
 const LANG = (typeof document !== 'undefined' && document.documentElement.lang === 'ja') ? 'ja' : 'en';
@@ -38,8 +45,8 @@ const T = {
   en: {
     loading: 'Loading…', loadFail: 'Could not load. Please try again later.',
     empty: 'No posts found yet.', viewTx: 'see the record', moreBtn: 'See more',
-    noticeTitle: 'Read-only web version',
-    noticeText: 'You are reading the CAW timeline on QL1. Viewing is free and needs no wallet or account. Posting, likes and follows are in the Android app.',
+    noticeTitle: 'Reading is free — and you can get a name here',
+    noticeText: 'You are reading the CAW timeline on QL1. Viewing is free and needs no wallet or account. You can also get a name here with your own wallet. Posting, likes and follows are in the Android app.',
     appBtn: 'Get the Android app',
     lookupTitle: 'Look up a name', lookupPh: 'e.g. neptune', lookupBtn: 'Look up',
     checking: 'Looking…', notFound: 'That name was not found.',
@@ -79,12 +86,41 @@ const T = {
     followKeepBtn: 'Keep reading the record', followDone: 'The whole record has been read.',
     followListsBuilding: 'Still reading the record — here is the list so far:',
     toTop: 'Back to top',
+    getDesc: 'A name is how people find you on CAW, and once you get one it is yours for good. It costs qCAW — the price depends on the name and is shown before you pay anything — plus a tiny QOM fee for the record-keepers. You need a wallet app (such as MetaMask or FoxWallet) with qCAW in it.',
+    getPh: 'the name you want', getCheckBtn: 'Check',
+    getInvalid: 'That name cannot be used. Names use small letters and numbers only.',
+    getTaken: 'That name is already taken.', getSeeProfile: 'See that name’s page',
+    getAvailable: 'This name is available!', getPrice: 'Price',
+    getCheckFail: 'Could not check that name. Please check your connection and try again.',
+    getPreviewLbl: 'This is how the name will look',
+    noWallet: 'No wallet app was found yet. To get a name, open this page in a wallet app’s browser (such as MetaMask or FoxWallet). Reading works anywhere.',
+    recheckBtn: 'Check again',
+    connectBtn: 'Connect wallet', connectFail: 'The wallet did not connect.',
+    connectedLbl: 'Connected',
+    wrongChain: 'Your wallet is set to a different network.', switchBtn: 'Switch to QL1',
+    switchFail: 'The network could not be switched.',
+    yourQcaw: 'Your qCAW', yourQom: 'QOM (for the small fees)',
+    needWalletForName: 'Connect your wallet above to get this name.',
+    notEnoughQcaw: 'You do not have enough qCAW for this name.',
+    noGasQom: 'This wallet holds no QOM. A little QOM is needed for the small fees, so sending stays paused until some is there.',
+    step1: 'Step 1 of 2 — let this site use your qCAW to pay for the name',
+    approveBtn: 'OK, allow it',
+    step2: 'Step 2 of 2 — one more tap and the name is yours',
+    mintBtn: 'Get this name',
+    sendingWallet: 'Check your wallet…', recording: 'Recording it…',
+    sendFail: 'That did not go through.',
+    mintDone: 'Done — this name is yours!', viewProfileBtn: 'See your new name’s page',
+    mintChanged: 'Just now, that name was taken or stopped being available. Please check it again.',
+    priceChanged: 'The price changed to {p} qCAW. Look it over, and try again when you are ready.',
+    sentUnconfirmed: 'Your wallet sent it, but the record is slow to settle. Give it a moment, then look at your names below.',
+    myNamesTitle: 'Your names', noNames: 'This wallet has no CAW names yet.',
+    myNamesConnect: 'Connect your wallet to see the names you own.',
   },
   ja: {
     loading: '読み込み中…', loadFail: '読み込めませんでした。しばらくしてからお試しください。',
     empty: 'まだ投稿がありません。', viewTx: '記録を見る', moreBtn: 'もっと見る',
-    noticeTitle: 'ウェブ版は閲覧専用です',
-    noticeText: 'QL1 の CAW のタイムラインを読んでいます。閲覧は無料で、ウォレットもアカウントも要りません。投稿・いいね・フォローは Android アプリからできます。',
+    noticeTitle: '閲覧は無料 — 名前もここで取れます',
+    noticeText: 'QL1 の CAW のタイムラインを読んでいます。閲覧は無料で、ウォレットもアカウントも要りません。名前はここで、自分のウォレットで取れます。投稿・いいね・フォローは Android アプリからできます。',
     appBtn: 'Android アプリを入れる',
     lookupTitle: '名前をさがす', lookupPh: '例：neptune', lookupBtn: 'さがす',
     checking: '調べています…', notFound: 'その名前は見つかりませんでした。',
@@ -124,6 +160,35 @@ const T = {
     followKeepBtn: '続きを読み込む', followDone: '記録を全部読みました。',
     followListsBuilding: '記録を読み途中です — ここまでの一覧：',
     toTop: '上へ戻る',
+    getDesc: '名前は、CAW であなたを見つけてもらうためのものです。一度取れば、ずっとあなたのものです。料金は qCAW で、名前によって変わります（払う前に金額を表示します）。ほかに、記録のための小さな手数料として QOM が少し必要です。qCAW の入ったウォレットアプリ（MetaMask や FoxWallet など）をご用意ください。',
+    getPh: 'ほしい名前', getCheckBtn: '調べる',
+    getInvalid: 'その名前は使えません。名前は小文字と数字だけです。',
+    getTaken: 'その名前はすでに使われています。', getSeeProfile: 'その名前のページを見る',
+    getAvailable: 'この名前は取れます！', getPrice: '価格',
+    getCheckFail: '調べられませんでした。通信を確認してもう一度お試しください。',
+    getPreviewLbl: '名前の見た目です',
+    noWallet: 'ウォレットアプリがまだ見つかりません。名前を取るには、ウォレットアプリ（MetaMask や FoxWallet など）のブラウザでこのページを開いてください。読むだけならどこでもできます。',
+    recheckBtn: 'もう一度確認',
+    connectBtn: 'ウォレットをつなぐ', connectFail: 'ウォレットがつながりませんでした。',
+    connectedLbl: '接続中',
+    wrongChain: 'ウォレットが別のネットワークになっています。', switchBtn: 'QL1 に切り替える',
+    switchFail: 'ネットワークを切り替えられませんでした。',
+    yourQcaw: 'あなたの qCAW', yourQom: 'QOM（手数料用）',
+    needWalletForName: 'この名前を取るには、上のボタンでウォレットをつないでください。',
+    notEnoughQcaw: 'この名前を取るには qCAW が足りません。',
+    noGasQom: 'このウォレットに QOM がありません。手数料用に少しの QOM が必要なので、入るまで送信は止めています。',
+    step1: 'ステップ 1/2：名前の料金に、あなたの qCAW を使う許可を出します',
+    approveBtn: '許可する',
+    step2: 'ステップ 2/2：あと1タップで名前が取れます',
+    mintBtn: 'この名前を取る',
+    sendingWallet: 'ウォレットで確認してください…', recording: '記録しています…',
+    sendFail: '送信できませんでした。',
+    mintDone: 'できました — この名前はあなたのものです！', viewProfileBtn: '新しい名前のページを見る',
+    mintChanged: 'たった今、その名前が取られてしまったか、取れなくなりました。もう一度調べてください。',
+    priceChanged: '価格が {p} qCAW に変わりました。確認してから、もう一度どうぞ。',
+    sentUnconfirmed: 'ウォレットからは送られましたが、記録の確定が遅れています。少し待ってから、下の「あなたの名前」を見てください。',
+    myNamesTitle: 'あなたの名前', noNames: 'このウォレットには、まだ CAW の名前がありません。',
+    myNamesConnect: 'ウォレットをつなぐと、あなたの名前が表示されます。',
   },
 }[LANG];
 
@@ -532,6 +597,63 @@ async function resolveNameId(rawName) {
    card read that resolveName uses (see cardFor above). */
 function avatarFor(idIn) {
   return cardFor(idIn).then(c => c.image);
+}
+
+/* ---------- getting a name: the check + the calldata (v11) ----------
+   The ONE write feature of this site. Minting a name is ordinary
+   contract calls sent through the visitor's own wallet — it needs
+   no signature scheme at all (that is what separates it from
+   posting, which stays in the Android app). checkName mirrors the
+   app's exactly: the contract's own validity gate, taken-ness
+   through the same card-verified resolver the lookup uses, and
+   the contract's own price. Names are normalised the way the app
+   normalises its input field: trimmed and lowercased. The two
+   calldata builders are the whole write vocabulary of the site —
+   the wallet UI further down can only ever send these. */
+function normalizeNameInput(s) {
+  return String(s || '').trim().toLowerCase().replace(/^@/, '');
+}
+async function checkName(rawName) {
+  const name = normalizeNameInput(rawName);
+  const enc = encStr(name);
+  const [valid, res, cost] = await Promise.all([
+    readUint(MINTER, SEL.isValidUsername + enc).then(v => v !== 0n),
+    resolveNameId(name).catch(() => ({ status: 'error' })),
+    readUint(MINTER, SEL.costOfName + enc),
+  ]);
+  if (valid && res.status === 'error') throw new Error('name lookup reads failed');
+  return { name, valid, taken: res.status === 'ok', cost };
+}
+/* SEL selectors carry their own 0x prefix (the file's convention),
+   so the builders concatenate directly — the result is the full
+   0x-prefixed calldata, exactly what the wallet is handed. */
+const buildApproveCalldata = cost => SEL.approve + encAddr(MINTER) + word(cost);
+const buildMintCalldata = name => SEL.mint + encStr(name);
+
+/* ---------- name NFT preview (v11) ----------
+   The REAL name-card design, reproduced locally for any name
+   before it is minted — ported from the Android app's
+   nameNftPreview.ts, which was verified against the chain: the
+   card image a token carries is built from this template with
+   one text element holding the name itself, at a font size set
+   by the name's length (3->99, 4->77, 5->64, 6->55, 7->49,
+   8->44, 9->40, 10->36, 11->33, 12->31, 13->29, 14->27, 15->25,
+   16->23, 17 and longer -> 22). The harness checks this port
+   against token 190's real on-chain card. */
+const NFT_FONT_SIZE = {"3":99,"4":77,"5":64,"6":55,"7":49,"8":44,"9":40,"10":36,"11":33,"12":31,"13":29,"14":27,"15":25,"16":23};
+function nameNftFontSize(name) {
+  const len = [...String(name)].length;
+  if (len >= 17) return 22;
+  return NFT_FONT_SIZE[len] || 99;
+}
+const NFT_SVG_PRE = "<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"270\" height=\"270\" viewBox=\"0 0 270 270\" fill=\"none\" data-ember-extension=\"1\"> <rect width=\"270\" height=\"270\" fill=\"url(#paint0_linear)\"/> <defs> <filter id=\"dropShadow\" color-interpolation-filters=\"sRGB\" filterUnits=\"userSpaceOnUse\" height=\"270\" width=\"270\"> <feDropShadow dx=\"0\" dy=\"1\" stdDeviation=\"2\" flood-opacity=\"0.225\" width=\"200%\" height=\"200%\"/> </filter> </defs><path d=\"M30.36,35.15l15.28,1.29a7.47,7.47,0,0,0,5.29-3l-1.84-7.27a33,33,0,0,1,8.77,0L56,33.42s1.69,3.13,6.6,2.94c.75,0,14-1.25,14-1.25L69.15,45.52l-5.73.54a9.57,9.57,0,0,1-4.11-.29,10.59,10.59,0,0,1-3-1.63L53.47,50.6l-2.73-6.45a10.13,10.13,0,0,0-1.52.88c-2,1.36-5.49,1.08-5.49,1.08l-5.82-.48Z\" style=\"fill:#000000\" filter=\"url(#dropShadow)\"/><path d=\"M48.32,84.39,41.8,70.51a7.45,7.45,0,0,0-5.25-3.07l-5.39,5.22a33.26,33.26,0,0,1-4.4-7.58L34,63s1.86-3-.75-7.18c-.4-.63-8.06-11.48-8.06-11.48l12.72,1.23,3.33,4.69A9.54,9.54,0,0,1,43.05,54a10.71,10.71,0,0,1,.09,3.41l7-.76-4.22,5.59a10.44,10.44,0,0,0,1.52.86c2.19,1.08,3.67,4.22,3.67,4.22l2.5,5.28Z\" style=\"fill:#000000\" filter=\"url(#dropShadow)\"/><path d=\"M82,44.21,73.25,56.8a7.46,7.46,0,0,0,0,6.09l7.22,2a32.65,32.65,0,0,1-4.36,7.6l-5.39-5.26s-3.55-.1-5.85,4.25c-.35.66-5.9,12.72-5.9,12.72l-5.3-11.64L56,67.39A9.69,9.69,0,0,1,58.34,64a10.82,10.82,0,0,1,2.9-1.78L57.07,56.5l6.95.86a11.11,11.11,0,0,0,0-1.76c-.17-2.43,1.81-5.29,1.81-5.29l3.32-4.8Z\" style=\"fill:#000000\" filter=\"url(#dropShadow)\"/>";
+const NFT_SVG_POST = " <defs> <style> text { font-family: monospace; font-style: normal; font-weight: bold; line-height: 34px; } </style> <linearGradient id=\"paint0_linear\" x1=\"110.5\" y1=\"140\" x2=\"-30\" gradientUnits=\"userSpaceOnUse\" y42=\"37.5\"> <stop stop-color=\"#000000\"/> <stop offset=\"0.25\" stop-color=\"#ECc052\"/> <stop offset=\"1\" stop-color=\"#ECc052\"/> </linearGradient> <linearGradient id=\"paint1_linear\" x1=\"0\" y1=\"0\" x2=\"269.553\" y2=\"285.527\" gradientUnits=\"userSpaceOnUse\"> <stop stop-color=\"#000000\"/> <stop offset=\"1\" stop-color=\"#22222\"/> </linearGradient> </defs> </svg>";
+const nftXmlEscape = s => String(s)
+  .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+function nameNftSvg(name) {
+  return NFT_SVG_PRE +
+    '<text y="231" font-size="' + nameNftFontSize(name) + 'px" fill="white" filter="url(#dropShadow)" style="text-anchor: end;" x="90%">' +
+    nftXmlEscape(name) + '</text>' + NFT_SVG_POST;
 }
 
 /* ---------- the feed: pages, indexes, walks ----------
@@ -1557,6 +1679,354 @@ async function doLookup() {
   }
 }
 
+/* ---------- wallet + getting a name (v11) ----------
+   The ONLY write path on this site. Every send goes through the
+   sendTx helper below — the single place in this file that asks
+   the visitor's wallet to send a transaction — and the only two
+   payloads it can ever carry are the approve and mint calldata
+   built above. This page never asks the wallet for any kind of
+   signature and never sees a key or a phrase: the wallet app
+   holds those and shows its own confirmation for each step.
+   Amounts are never trusted from an earlier render: the price is
+   re-read at click time before either send, and sending stops
+   with the new price shown if it moved. */
+let injectedProvider = (typeof window !== 'undefined' && window.ethereum) || null;
+const boundProviders = new WeakSet();
+let walletAccount = null, walletChainId = null;
+const onQl1 = () => walletChainId === CHAIN_ID_HEX;
+function bindProvider(p) {
+  if (!p || boundProviders.has(p)) return;
+  boundProviders.add(p);
+  if (typeof p.on === 'function') {
+    p.on('accountsChanged', () => refreshWallet());
+    p.on('chainChanged', () => refreshWallet());
+  }
+}
+function noteProvider(p) {
+  if (!p) return;
+  if (!injectedProvider) { injectedProvider = p; bindProvider(p); refreshWallet(); }
+  else bindProvider(injectedProvider);
+}
+if (injectedProvider) bindProvider(injectedProvider);
+window.addEventListener('eip6963:announceProvider', e => {
+  try { noteProvider(e.detail && e.detail.provider); } catch (err) {}
+});
+try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch (err) {}
+{ /* Wallets can inject after the page loads: keep looking for
+     about 12 seconds, like the earlier site learned to. */
+  let tries = 0;
+  const iv = setInterval(() => {
+    if (window.ethereum) noteProvider(window.ethereum);
+    if (injectedProvider || ++tries >= 24) clearInterval(iv);
+  }, 500);
+}
+async function walletRequest(method, params) {
+  if (!injectedProvider) throw new Error('no wallet app');
+  return injectedProvider.request({ method, params });
+}
+/* The wallet's own words, in small print under the plain words. */
+const errDetailHtml = e => {
+  const m = (e && e.message) ? String(e.message) : (e ? String(e) : '');
+  return m ? '<div class="errdetail">' + esc(m) + '</div>' : '';
+};
+function showWalletStatus(plain, e) {
+  const el = $('walletStatus');
+  if (el) el.innerHTML = '<span class="err">' + esc(plain) + '</span>' + errDetailHtml(e);
+}
+
+async function refreshWallet() {
+  const area = $('walletArea');
+  if (!area) return;
+  if (!injectedProvider) {
+    walletAccount = null; walletChainId = null;
+    area.innerHTML = '<p class="small">' + esc(T.noWallet) + '</p>' +
+      '<p><button id="walletRecheck" class="ghost" type="button">' + esc(T.recheckBtn) + '</button></p>';
+    const rb = $('walletRecheck');
+    if (rb) rb.onclick = () => { if (window.ethereum) noteProvider(window.ethereum); refreshWallet(); };
+    renderMintArea(); renderMyNames();
+    return;
+  }
+  try {
+    const accts = await walletRequest('eth_accounts');
+    walletAccount = accts && accts[0] ? accts[0] : null;
+    walletChainId = await walletRequest('eth_chainId');
+  } catch (e) { walletAccount = null; }
+  if (!walletAccount) {
+    area.innerHTML = '<button id="connectBtn" class="big-connect" type="button">' + esc(T.connectBtn) + '</button>' +
+      '<p id="walletStatus"></p>';
+    $('connectBtn').onclick = connectWallet;
+  } else if (!onQl1()) {
+    area.innerHTML = '<div class="addrline"><span class="dot dot-warn"></span><span>' + esc(shortAddr(walletAccount)) + '</span></div>' +
+      '<p class="warn">' + esc(T.wrongChain) + '</p>' +
+      '<p><button id="switchBtn" type="button">' + esc(T.switchBtn) + '</button></p>' +
+      '<p id="walletStatus"></p>';
+    $('switchBtn').onclick = switchChain;
+  } else {
+    area.innerHTML = '<div class="addrline"><span class="dot dot-ok"></span><span>' + esc(shortAddr(walletAccount)) + '</span>' +
+      '<span class="chainbadge">QL1</span></div>' +
+      '<p id="walletStatus"></p>';
+  }
+  renderMintArea();
+  renderMyNames();
+}
+async function connectWallet() {
+  let err = null;
+  try { await walletRequest('eth_requestAccounts'); } catch (e) { err = e; }
+  await refreshWallet();
+  if (err) showWalletStatus(T.connectFail, err);
+}
+async function switchChain() {
+  let err = null;
+  try {
+    await walletRequest('wallet_switchEthereumChain', [{ chainId: CHAIN_ID_HEX }]);
+  } catch (e) {
+    if (e && (e.code === 4902 || /unrecognized chain/i.test(e.message || ''))) {
+      try {
+        await walletRequest('wallet_addEthereumChain', [{
+          chainId: CHAIN_ID_HEX, chainName: 'QL1',
+          nativeCurrency: { name: 'QOM', symbol: 'QOM', decimals: 18 },
+          rpcUrls: [RPC], blockExplorerUrls: [EXPLORER],
+        }]);
+      } catch (e2) { err = e2; }
+    } else err = e;
+  }
+  await refreshWallet();
+  if (err) showWalletStatus(T.switchFail, err);
+}
+/* Send ONE ordinary contract call through the visitor's wallet
+   and wait until the public record confirms it. A mined failure
+   throws; a record that stays unconfirmed for minutes throws
+   with `unconfirmed` set and the hash attached, so the caller can
+   say honestly that it was sent but is slow to settle. */
+async function sendTx(to, data, onHash) {
+  const hash = await walletRequest('eth_sendTransaction', [{ from: walletAccount, to, data }]);
+  if (onHash) onHash(hash);
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 2500));
+    const rc = await rpc('eth_getTransactionReceipt', [hash]).catch(() => null);
+    if (rc) {
+      if (rc.status !== '0x1') { const e = new Error('the record says this one failed'); e.txHash = hash; throw e; }
+      return hash;
+    }
+  }
+  const e = new Error('no confirmation yet');
+  e.txHash = hash; e.unconfirmed = true;
+  throw e;
+}
+const txLinkHtml = hash => hash
+  ? ' <a href="' + EXPLORER + '/tx/' + hash + '" target="_blank" rel="noopener">' + esc(T.viewTx) + ' ↗</a>' : '';
+
+/* ----- the name check (mint section) ----- */
+let mintCheckState = null; // {name, valid, taken, cost}
+function mintPreviewHtml(name) {
+  return '<div class="mint-preview"><img class="nft-preview" alt="" src="data:image/svg+xml;charset=utf-8,' +
+    encodeURIComponent(nameNftSvg(name)) + '">' +
+    '<div class="small">' + esc(T.getPreviewLbl) + '</div></div>';
+}
+function paintMintCheck() {
+  const out = $('mintCheckResult');
+  if (!out) return;
+  const r = mintCheckState;
+  if (!r) { out.innerHTML = ''; return; }
+  if (!r.valid) out.innerHTML = '<p class="err">' + esc(T.getInvalid) + '</p>';
+  else if (r.taken) out.innerHTML = '<p class="warn">' + esc(T.getTaken) + '</p>' + mintPreviewHtml(r.name) +
+    '<p><a class="chip name-chip" href="' + profUrl(r.name) + '">' + esc(T.getSeeProfile) + '</a></p>';
+  else out.innerHTML = '<p class="ok">' + esc(T.getAvailable) + '</p>' +
+    '<p>' + esc(T.getPrice) + ': <b>' + esc(fmtQcaw(r.cost)) + '</b> qCAW</p>' + mintPreviewHtml(r.name);
+}
+async function doMintCheck() {
+  const input = $('mintNameInput'), out = $('mintCheckResult');
+  if (!input || !out) return;
+  if (!input.value.trim()) { mintCheckState = null; paintMintCheck(); renderMintArea(); return; }
+  out.innerHTML = '<p class="small">' + esc(T.checking) + '</p>';
+  try {
+    mintCheckState = await checkName(input.value);
+    input.value = mintCheckState.name;
+    paintMintCheck();
+  } catch (e) {
+    mintCheckState = null;
+    out.innerHTML = '<p class="err">' + esc(T.getCheckFail) + '</p>' + errDetailHtml(e);
+  }
+  renderMintArea();
+}
+
+/* ----- the two steps (approve, then mint) ----- */
+let mintBusy = false, mintRenderSeq = 0;
+function setMintStatus(html) { const el = $('mintStatus'); if (el) el.innerHTML = html; }
+async function renderMintArea() {
+  const area = $('mintArea');
+  if (!area) return;
+  const seq = ++mintRenderSeq;
+  const st = mintCheckState;
+  if (!st || !st.valid || st.taken) { area.innerHTML = ''; return; }
+  if (!injectedProvider || !walletAccount || !onQl1()) {
+    area.innerHTML = '<p class="small">' + esc(T.needWalletForName) + '</p>';
+    return;
+  }
+  let bal, allow, qom;
+  try {
+    [bal, allow, qom] = await Promise.all([
+      readUint(QCAW, SEL.balanceOf + encAddr(walletAccount)),
+      readUint(QCAW, SEL.allowance + encAddr(walletAccount) + encAddr(MINTER)),
+      rpc('eth_getBalance', [walletAccount, 'latest']).then(h => BigInt(h)),
+    ]);
+  } catch (e) {
+    if (seq !== mintRenderSeq) return;
+    area.innerHTML = '<p class="err">' + esc(T.getCheckFail) + '</p>' + errDetailHtml(e);
+    return;
+  }
+  if (seq !== mintRenderSeq) return;
+  let html = '<p class="small">' + esc(T.yourQcaw) + ': <b>' + esc(fmtQcaw(bal)) + '</b> qCAW · ' +
+    esc(T.yourQom) + ': <b>' + esc(fmtQcaw(qom)) + '</b> QOM</p>';
+  if (qom === 0n) html += '<p class="warn">' + esc(T.noGasQom) + '</p>';
+  else if (bal < st.cost) html += '<p class="err">' + esc(T.notEnoughQcaw) + '</p>';
+  else if (allow < st.cost) {
+    html += '<p>' + esc(T.step1) + '</p>' +
+      '<p><button id="approveBtn" type="button">' + esc(T.approveBtn) + ' (' + esc(fmtQcaw(st.cost)) + ' qCAW)</button></p>';
+  } else {
+    html += '<p>' + esc(T.step2) + '</p>' +
+      '<p><button id="mintBtn" type="button">' + esc(T.mintBtn) + '</button></p>';
+  }
+  html += '<p id="mintStatus"></p>';
+  area.innerHTML = html;
+  const ab = $('approveBtn'); if (ab) ab.onclick = doApprove;
+  const mb = $('mintBtn'); if (mb) mb.onclick = doMint;
+}
+/* Re-check a name at click time. Returns the fresh check when the
+   send may proceed, or null after updating the page to show what
+   changed (taken meanwhile, or a moved price). */
+async function mintGuard(st) {
+  const fresh = await checkName(st.name);
+  if (!fresh.valid || fresh.taken) {
+    mintCheckState = fresh; paintMintCheck(); await renderMintArea();
+    setMintStatus('<span class="warn">' + esc(T.mintChanged) + '</span>');
+    return null;
+  }
+  if (fresh.cost !== st.cost) {
+    mintCheckState = fresh; paintMintCheck(); await renderMintArea();
+    setMintStatus('<span class="warn">' + esc(T.priceChanged.replace('{p}', fmtQcaw(fresh.cost))) + '</span>');
+    return null;
+  }
+  return fresh;
+}
+async function doApprove() {
+  if (mintBusy || !mintCheckState) return;
+  mintBusy = true;
+  const btn = $('approveBtn'); if (btn) btn.disabled = true;
+  setMintStatus('<span class="small">' + esc(T.sendingWallet) + '</span>');
+  try {
+    const fresh = await mintGuard(mintCheckState);
+    if (!fresh) return;
+    setMintStatus('<span class="small">' + esc(T.sendingWallet) + '</span>');
+    await sendTx(QCAW, buildApproveCalldata(fresh.cost),
+      h => setMintStatus('<span class="small">' + esc(T.recording) + '</span>' + txLinkHtml(h)));
+    /* The record confirmed: re-read everything (the allowance
+       included) and let the area advance to step 2 on its own. */
+    await renderMintArea();
+  } catch (e) {
+    if (e && e.unconfirmed) {
+      setMintStatus('<span class="warn">' + esc(T.sentUnconfirmed) + '</span>' + txLinkHtml(e.txHash));
+      renderMintArea();
+    } else {
+      setMintStatus('<span class="err">' + esc(T.sendFail) + '</span>' + txLinkHtml(e && e.txHash) + errDetailHtml(e));
+      const b = $('approveBtn'); if (b) b.disabled = false;
+    }
+  } finally { mintBusy = false; }
+}
+/* Did the name land under this account? The card-verified
+   resolver first, then the desk's own id record as a fallback. */
+async function verifyMinted(name) {
+  try {
+    const res = await resolveNameId(name);
+    if (res.status === 'ok') {
+      const owner = await readAddr(CAW_NAME, SEL.ownerOf + word(res.id));
+      if (owner.toLowerCase() === String(walletAccount).toLowerCase()) return true;
+    }
+  } catch (e) { /* fall through to the direct read */ }
+  try {
+    const id0 = await readUint(MINTER, SEL.idByUsername + encStr(name));
+    if (id0 === 0n) return false;
+    const owner = await readAddr(CAW_NAME, SEL.ownerOf + word(id0));
+    return owner.toLowerCase() === String(walletAccount).toLowerCase();
+  } catch (e) { return false; }
+}
+async function doMint() {
+  if (mintBusy || !mintCheckState) return;
+  mintBusy = true;
+  const btn = $('mintBtn'); if (btn) btn.disabled = true;
+  setMintStatus('<span class="small">' + esc(T.sendingWallet) + '</span>');
+  try {
+    const fresh = await mintGuard(mintCheckState);
+    if (!fresh) return;
+    /* Fresh money reads, one last time: enough qCAW, the OK from
+       step 1 still covering the price, and some QOM for fees. */
+    const [bal, allow, qom] = await Promise.all([
+      readUint(QCAW, SEL.balanceOf + encAddr(walletAccount)),
+      readUint(QCAW, SEL.allowance + encAddr(walletAccount) + encAddr(MINTER)),
+      rpc('eth_getBalance', [walletAccount, 'latest']).then(h => BigInt(h)),
+    ]);
+    if (qom === 0n || bal < fresh.cost || allow < fresh.cost) { await renderMintArea(); return; }
+    setMintStatus('<span class="small">' + esc(T.sendingWallet) + '</span>');
+    const hash = await sendTx(MINTER, buildMintCalldata(fresh.name),
+      h => setMintStatus('<span class="small">' + esc(T.recording) + '</span>' + txLinkHtml(h)));
+    ownerTokensCache.delete(walletAccount);
+    const landed = await verifyMinted(fresh.name);
+    mintCheckState = { ...fresh, taken: true };
+    if (landed) {
+      const out = $('mintCheckResult');
+      if (out) out.innerHTML = '<p class="ok">' + esc(T.mintDone) + '</p>' + mintPreviewHtml(fresh.name) +
+        '<p><a class="chip name-chip" href="' + profUrl(fresh.name) + '">' + esc(T.viewProfileBtn) + '</a></p>' +
+        '<p class="small">' + txLinkHtml(hash) + '</p>';
+      $('mintArea').innerHTML = '';
+    } else {
+      paintMintCheck();
+      await renderMintArea();
+      const out = $('mintCheckResult');
+      if (out) out.innerHTML = '<p class="warn">' + esc(T.sentUnconfirmed) + '</p>' +
+        '<p class="small">' + txLinkHtml(hash) + '</p>';
+    }
+    refreshWallet();
+  } catch (e) {
+    if (e && e.unconfirmed) {
+      setMintStatus('<span class="warn">' + esc(T.sentUnconfirmed) + '</span>' + txLinkHtml(e.txHash));
+    } else {
+      setMintStatus('<span class="err">' + esc(T.sendFail) + '</span>' + txLinkHtml(e && e.txHash) + errDetailHtml(e));
+      const b = $('mintBtn'); if (b) b.disabled = false;
+    }
+  } finally { mintBusy = false; }
+}
+
+/* ----- my names (compact) ----- */
+async function renderMyNames() {
+  const box = $('myNames'), title = $('myNamesTitle');
+  if (!box) return;
+  if (!injectedProvider || !walletAccount || !onQl1()) {
+    if (title) title.style.display = 'none';
+    box.innerHTML = '<p class="small">' + esc(T.myNamesConnect) + '</p>';
+    return;
+  }
+  if (title) title.style.display = '';
+  box.innerHTML = '<p class="small">' + esc(T.loading) + '</p>';
+  try {
+    const toks = await tokensOf(walletAccount);
+    if (!toks.length) { box.innerHTML = '<p class="small">' + esc(T.noNames) + '</p>'; return; }
+    const rows = await Promise.all(toks.map(async t => {
+      const img = await avatarFor(t.id);
+      const div = document.createElement('div');
+      div.className = 'namecard';
+      div.innerHTML = '<a class="plink" href="' + profUrl(t.username) + '">' + avatarHtml(img, t.username) + '</a>' +
+        '<div class="grow"><div class="n"><a class="plink" href="' + profUrl(t.username) + '">@' + esc(t.username) + '</a></div>' +
+        '<div class="small">#' + t.id.toString() + '</div>' +
+        '<div class="small">' + esc(T.inName) + ': <b>' + esc(fmtQcaw(t.balance)) + '</b> qCAW</div></div>';
+      return div;
+    }));
+    box.innerHTML = '';
+    for (const r of rows) box.appendChild(r);
+  } catch (e) {
+    box.innerHTML = '<p class="err">' + esc(T.loadFail) + '</p>';
+  }
+}
+
 /* ---------- init ---------- */
 const postQuery = new URLSearchParams(location.search).get('post');
 const searchQuery = new URLSearchParams(location.search).get('q');
@@ -1639,6 +2109,11 @@ const sb = $('searchBtn');
 if (sb) sb.onclick = doPostSearch;
 const si = $('searchInput');
 if (si) si.addEventListener('keydown', e => { if (e.key === 'Enter') doPostSearch(); });
+const mcb = $('mintCheckBtn');
+if (mcb) mcb.onclick = doMintCheck;
+const mni = $('mintNameInput');
+if (mni) mni.addEventListener('keydown', e => { if (e.key === 'Enter') doMintCheck(); });
+refreshWallet();
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
@@ -1657,6 +2132,9 @@ if (typeof module !== 'undefined' && module.exports) {
     FOLLOW_CHUNK_PAGES, followBuildState,
     fetchPage, findPostByCawId, findPostDeep, collectPostContext,
     postIndex, refIndex, refChildren, indexItem, likesOf, isVisibleRow,
-    rpc, readUint, readStr, SEL, CAW_NAME, CAW_ACTIONS, MINTER, word,
+    rpc, readUint, readStr, readAddr, encStr, encAddr,
+    checkName, normalizeNameInput, buildApproveCalldata, buildMintCalldata,
+    nameNftSvg, nameNftFontSize,
+    SEL, CAW_NAME, CAW_ACTIONS, MINTER, QCAW, CHAIN_ID_HEX, word,
   };
 }

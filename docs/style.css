@@ -368,6 +368,18 @@ mark { background: #ffe58f; color: inherit; padding: 0 1px; border-radius: 2px; 
   .post { transition: none; }
 }
 
+/* ---- v11: get a name (name check, NFT preview, wallet, steps) ---- */
+#walletArea { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px; }
+#mintArea { margin-top: 4px; }
+.mint-preview { margin: 12px 0; }
+.nft-preview {
+  width: 180px; height: 180px; display: block;
+  border-radius: 14px; border: 1px solid var(--line2);
+}
+.mint-preview .small { margin-top: 6px; }
+#myNamesTitle { margin: 20px 0 4px; font-size: 1.05rem; font-weight: 800; }
+#mintStatus a, #walletStatus a { color: var(--accent-dark); }
+
 /* ---- v9: clickable cards, linkified text, skeletons, follow lists ---- */
 .post.clickable { cursor: pointer; }
 .ptext a, .qtext a { color: var(--accent-dark); text-decoration: none; }
