@@ -12,6 +12,11 @@
    6. reply/quote markers on real posts: stripped from the body,
       classified, and collectPostContext finds the child under its
       parent (thread order oldest-first).
+   v9 adds: the signing core rebuilding a real batch byte-for-byte,
+   the single tokenURI read per card, linkify, relative time.
+   v10 adds: the persistent card cache (a stored card costs zero
+   tokenURI reads in a fresh session), the new-head comparison
+   helper, keyword highlighting, and the follow-build chunk cap.
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -253,9 +258,63 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v9: version guards —');
-ok(enHtml.includes('?v=9') && jaHtml.includes('?v=9'), 'shells reference ?v=9 assets');
-ok(swSrc.includes("caw-view-v9"), 'sw.js cache name is caw-view-v9');
+console.log('— v10: version guards —');
+ok(enHtml.includes('?v=10') && jaHtml.includes('?v=10'), 'shells reference ?v=10 assets');
+ok(swSrc.includes("caw-view-v10"), 'sw.js cache name is caw-view-v10');
+ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
+ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
+
+console.log('— v10: new-head comparison helper —');
+{
+  const base = { block: 100, txIndex: 5, ts: 1700000000, cawId: '0xaaa' };
+  ok(V.isNewerItem({ ...base, txIndex: 6 }, base) === true, 'head compare: higher txIndex in the same block is newer');
+  ok(V.isNewerItem({ ...base, block: 101, txIndex: 0 }, base) === true, 'head compare: higher block is newer');
+  ok(V.isNewerItem({ ...base }, base) === false, 'head compare: the same item is not newer');
+  ok(V.isNewerItem({ ...base, block: 99, txIndex: 99 }, base) === false, 'head compare: older block is not newer');
+}
+
+console.log('— v10: keyword highlight —');
+{
+  const hl = V.highlightKeyword(V.linkify('I love CAW, see https://a.example/caw please'), 'caw');
+  ok(hl.includes('<mark>CAW</mark>'), 'highlight wraps matches in <mark> (case-insensitive)');
+  ok(hl.includes('href="https://a.example/caw"'), 'highlight does not corrupt link URLs');
+  const esc = V.highlightKeyword(V.linkify('<b>hi</b> caw'), 'caw');
+  ok(!esc.includes('<b>') && esc.includes('&lt;b&gt;'), 'highlight input stays escaped (no raw HTML from post text)');
+}
+
+console.log('— v10: follow build chunk cap —');
+ok(V.FOLLOW_CHUNK_PAGES === 25, 'follow build walks at most 25 pages per activation', 'cap=' + V.FOLLOW_CHUNK_PAGES);
+ok(typeof V.followBuildState === 'function' && typeof V.followBuildState().complete === 'boolean',
+  'follow build state is inspectable (complete flag)');
+
+console.log('— v10: persistent card cache —');
+{
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: k => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+    removeItem: k => store.delete(k),
+  };
+  try {
+    const fresh = all.find(i => i.type === 0 &&
+      i.senderId.toString() !== '190' && !senderIds.includes(i.senderId.toString()));
+    ok(!!fresh, 'found a fresh sender id for the persistence check');
+    if (fresh) {
+      const fid = fresh.senderId;
+      V.resetCardCacheForTest(); // memory only — the store must survive
+      const n1 = await V.resolveName(fid);
+      ok(!!n1 && V.cardStats.tokenUriReads === 1, 'first resolve of a fresh id reads its card once',
+        'reads=' + V.cardStats.tokenUriReads + ' name=' + n1);
+      ok(store.has('caw-cards-v1'), 'resolved card persisted under caw-cards-v1');
+      V.resetCardCacheForTest(); // simulate a new session: memory gone, store kept
+      const [n2] = await Promise.all([V.resolveName(fid), V.avatarFor(fid)]);
+      ok(n2 === n1 && V.cardStats.tokenUriReads === 0,
+        'persisted card costs ZERO tokenURI reads in a new session', 'reads=' + V.cardStats.tokenUriReads);
+    }
+  } finally {
+    delete globalThis.localStorage;
+  }
+}
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
 process.exit(fail ? 1 : 0);

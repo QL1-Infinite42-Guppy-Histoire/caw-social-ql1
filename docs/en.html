@@ -5,21 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CAW Social — QL1 (web viewer)</title>
 <meta name="description" content="Read the CAW timeline on QL1 from your browser — PC or phone. The web version is for viewing only; posting is in the Android app.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CAW Social — QL1 (web viewer)">
+<meta property="og:description" content="Read the CAW timeline on QL1 from your browser — PC or phone. The web version is for viewing only; posting is in the Android app.">
+<meta property="og:image" content="https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/icon-512.png">
+<link rel="preconnect" href="https://evm-rpc-ql1.mschihuahua.org">
+<link rel="preconnect" href="https://scan.qom.network">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png?v=9">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=9">
+<link rel="icon" type="image/png" href="icon-192.png?v=10">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=10">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
 <div class="topbar">
   <div class="topbar-inner">
-    <img class="logo" src="icon-192.png?v=9" alt="">
+    <img class="logo" src="icon-192.png?v=10" alt="">
     <div>
       <div class="title">CAW Social</div>
       <div class="tag">on QL1 · web viewer</div>
@@ -40,6 +46,10 @@
       <p>CAW is a social network where posts are kept on a shared public record (a blockchain) instead of one company's computers — so anyone can read them, and nobody can quietly rewrite them later.</p>
       <p>This site is a community-made window into the QL1 version of CAW. It is <b>not</b> run by the official CAW team.</p>
       <p class="small">Add this page to your home screen and it opens like an app.</p>
+    </section>
+    <section class="railcard stats-card hidden" id="statsCard">
+      <h3>CAW right now</h3>
+      <div class="statsBody"><p class="small">Loading…</p></div>
     </section>
     <section class="railcard">
       <h3>On QL1</h3>
@@ -69,11 +79,16 @@
     </section>
 
     <section class="block" id="viewHome" style="display:none">
+      <div class="railcard stats-card stats-main hidden" id="statsCardMain">
+        <h3>CAW right now</h3>
+        <div class="statsBody"><p class="small">Loading…</p></div>
+      </div>
       <div class="row" style="justify-content:space-between">
         <h2 style="margin:0">Timeline</h2>
         <button id="refreshBtn" class="ghost" type="button">Refresh</button>
       </div>
       <p class="muted">The newest posts on CAW, in order. Anyone can read — no wallet needed.</p>
+      <div id="newPostsPill" class="newpill" style="display:none"><button id="newPostsBtn" type="button">New posts</button></div>
       <div id="timeline"><p>Loading…</p></div>
       <div class="loadmore"><button id="moreBtn" class="ghost" style="display:none">See more</button></div>
     </section>
@@ -81,6 +96,7 @@
     <section class="block" id="viewSearch" style="display:none">
       <p><a class="plink" href="en.html">← Back to the timeline</a></p>
       <h2 id="searchTitle">Search</h2>
+      <div id="searchNameChip" style="margin-bottom:8px"></div>
       <p id="searchProgress" class="small"></p>
       <div id="searchResults"></div>
       <div class="loadmore"><button id="searchMoreBtn" class="ghost" style="display:none">Search further back</button></div>
@@ -89,13 +105,19 @@
     <section class="block" id="viewProfile" style="display:none">
       <p><a class="plink" href="en.html">← Back to the timeline</a></p>
       <div id="profileHead"><p>Loading…</p></div>
+      <div class="row" style="margin-top:10px"><button id="shareProfileBtn" class="ghost sharebtn" type="button">Share</button></div>
       <h3 id="profilePostsTitle">Posts</h3>
+      <div class="ptabs">
+        <button id="profTabPosts" class="ptab on" type="button">Posts</button>
+        <button id="profTabRecaws" class="ptab" type="button">Recaws &amp; follows</button>
+      </div>
       <div id="profilePosts"></div>
       <div class="loadmore"><button id="profileMore" class="ghost" style="display:none">See more</button></div>
     </section>
 
     <section class="block" id="viewPost" style="display:none">
       <p><a class="plink" href="en.html">← Back to the timeline</a></p>
+      <div class="row" style="margin-bottom:8px"><button id="sharePostBtn" class="ghost sharebtn" type="button">Share</button></div>
       <div id="postMain"><p>Loading…</p></div>
       <p id="postCounts" class="counts"></p>
       <p id="postNote" class="small"></p>
@@ -117,12 +139,13 @@
   </main>
 </div>
 
+<button id="toTopBtn" class="to-top" type="button" style="display:none" aria-label="Back to top">↑</button>
 <nav class="bottomnav">
   <a href="en.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a>
   <a href="en.html#lookup"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Look up</span></a>
   <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span>App</span></a>
 </nav>
-<script src="viewer.js?v=9"></script>
+<script src="viewer.js?v=10"></script>
 <script>
 /* If the viewer script was blocked or replaced by an older saved
    copy of this site, say so instead of loading forever. */

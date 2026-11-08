@@ -69,6 +69,16 @@ const T = {
     followNote: 'These lists are rebuilt from the public record, so they can differ a little from the counts.',
     followBuilding: 'Reading the public record… {n} pages so far.',
     followEmpty: 'Nobody here yet.',
+    newPosts: 'New posts',
+    statsTitle: 'CAW right now', statsNames: '{n} names',
+    statsPosts24: '{n} posts in the last 24 hours',
+    statsPosts24Partial: 'At least {n} posts in the last 24 hours (counted from the newest {m} posts)',
+    statsTop: 'Most active now',
+    shareBtn: 'Share', copied: 'Copied',
+    searchNameChip: 'Posts by @{name}',
+    followKeepBtn: 'Keep reading the record', followDone: 'The whole record has been read.',
+    followListsBuilding: 'Still reading the record — here is the list so far:',
+    toTop: 'Back to top',
   },
   ja: {
     loading: '読み込み中…', loadFail: '読み込めませんでした。しばらくしてからお試しください。',
@@ -104,6 +114,16 @@ const T = {
     followNote: 'この一覧は公開の記録から作り直しているため、数と少し違うことがあります。',
     followBuilding: '公開の記録を読んでいます… {n} ページ目まで読みました。',
     followEmpty: 'まだ誰もいません。',
+    newPosts: '新しい投稿があります',
+    statsTitle: 'CAWのいま', statsNames: '名前は {n} 個',
+    statsPosts24: 'この24時間の投稿は {n} 件',
+    statsPosts24Partial: 'この24時間の投稿は {n} 件以上（新しい順に {m} 件から数えました）',
+    statsTop: 'よく投稿している名前',
+    shareBtn: '共有', copied: 'コピーしました',
+    searchNameChip: '@{name} のプロフィール',
+    followKeepBtn: '続きを読み込む', followDone: '記録を全部読みました。',
+    followListsBuilding: '記録を読み途中です — ここまでの一覧：',
+    toTop: '上へ戻る',
   },
 }[LANG];
 
@@ -316,6 +336,38 @@ function fullTimeStr(ts) {
   return new Date((ts || 0) * 1000).toLocaleString(LANG === 'ja' ? 'ja-JP' : 'en-US',
     { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
+/* Wrap keyword matches in <mark> WITHOUT touching tags: the input
+   is already-escaped, already-linkified HTML, and the string is
+   split on tags so a match inside an href (a link URL) is never
+   wrapped or corrupted — only visible text is highlighted. */
+function highlightKeyword(html, q) {
+  const needle = String(q || '').trim();
+  if (!needle) return html;
+  const escNeedle = escapeHtml(needle).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  if (!escNeedle) return html;
+  const re = new RegExp(escNeedle, 'gi');
+  return String(html).split(/(<[^>]+>)/g)
+    .map(part => (part.startsWith('<') ? part : part.replace(re, m => '<mark>' + m + '</mark>')))
+    .join('');
+}
+/* Feed-order comparison for the new-posts pill (v10): is item `a`
+   strictly newer than item `b` in the feed? Ordered by block, then
+   transaction index in the block, then the action timestamp. When
+   every order key ties (two actions from one batched transaction
+   share them all) a different action id still counts as newer —
+   the fresh head is then a different action at the head position. */
+function itemSeq(it) {
+  return [Number(it && it.block) || 0, Number(it && it.txIndex) || 0, Number(it && it.ts) || 0];
+}
+function isNewerItem(a, b) {
+  if (!a) return false;
+  if (!b) return true;
+  const x = itemSeq(a), y = itemSeq(b);
+  for (let i = 0; i < x.length; i++) {
+    if (x[i] !== y[i]) return x[i] > y[i];
+  }
+  return String(a.cawId || '').toLowerCase() !== String(b.cawId || '').toLowerCase();
+}
 
 /* ---------- names: the token's CARD is the truth ----------
    Mint records settled which source is right: Minter.mint("neptune")
@@ -378,12 +430,62 @@ async function readCard(id) {
   }
   return { name, image };
 }
+/* ---------- persistent card cache (v10) ----------
+   A name card never changes: the username is written once at mint
+   and the picture is generated from the name. So a resolved card
+   is also kept in localStorage (key caw-cards-v1, at most ~600
+   entries, oldest evicted first) and a repeat visit serves it
+   with ZERO RPC calls. Only cards with a real name are persisted;
+   transient misses stay uncached, exactly like the in-memory
+   layer. Oversized picture strings (long data URIs) are not
+   stored — the name still is. The layer no-ops gracefully when
+   localStorage is unavailable (private mode, Node harness):
+   nothing is retained in that case, so behaviour matches v9. */
+const CARD_STORE_KEY = 'caw-cards-v1';
+const CARD_STORE_MAX = 600;
+let storedCards = null, storedLoaded = false;
+function storedCardMap() {
+  if (storedLoaded) return storedCards;
+  storedCards = new Map();
+  if (typeof localStorage === 'undefined') return storedCards;
+  try {
+    const j = JSON.parse(localStorage.getItem(CARD_STORE_KEY) || 'null');
+    if (j && Array.isArray(j.entries)) {
+      for (const e of j.entries) {
+        if (Array.isArray(e) && e[1]) storedCards.set(String(e[0]), { name: e[1], image: e[2] || null });
+      }
+    }
+    storedLoaded = true;
+  } catch (e) { /* a broken store just means a fresh read */ }
+  return storedCards;
+}
+function persistCard(id, card) {
+  if (!card || !card.name) return;
+  if (typeof localStorage === 'undefined') return;
+  const m = storedCardMap();
+  const key = id.toString();
+  m.delete(key); // re-insert at the end: eviction drops the oldest
+  const img = (typeof card.image === 'string' && card.image.length <= 8192) ? card.image : null;
+  m.set(key, { name: card.name, image: img });
+  while (m.size > CARD_STORE_MAX) m.delete(m.keys().next().value);
+  try {
+    localStorage.setItem(CARD_STORE_KEY, JSON.stringify({
+      v: 1, entries: [...m].map(([k, v]) => [k, v.name, v.image]),
+    }));
+  } catch (e) { /* quota / private mode: the in-memory cache still works */ }
+}
 function cardFor(idIn) {
   const id = BigInt(idIn);
   if (!cardCache.has(id)) {
+    const stored = storedCardMap().get(id.toString());
+    if (stored) {
+      nameById.set(id, stored.name);
+      cardCache.set(id, Promise.resolve(stored));
+      return cardCache.get(id);
+    }
     const p = readCard(id).then(card => {
       if (!card.name) cardCache.delete(id); // a transient miss must not stick
-      else nameById.set(id, card.name);
+      else { nameById.set(id, card.name); persistCard(id, card); }
       return card;
     }).catch(() => { cardCache.delete(id); return { name: '', image: null }; });
     cardCache.set(id, p);
@@ -394,6 +496,9 @@ async function readCardName(idIn) { return (await cardFor(idIn)).name; }
 function resolveName(idIn) {
   return cardFor(idIn).then(c => c.name || null);
 }
+/* Clears ONLY the in-memory layer (+ the read counter): the
+   harness uses it to simulate a fresh session, where the
+   persistent store must survive untouched. */
 function resetCardCacheForTest() { cardCache.clear(); nameById.clear(); cardStats.tokenUriReads = 0; }
 const ownerTokensCache = new Map();
 function tokensOf(owner) {
@@ -695,7 +800,12 @@ const keccakHex = bytes => scKeccak(bytes);
    (fail-open). The profile header number stays the chain's own
    followerCount — only the lists are reconstructions. */
 const FI_KEY = 'caw-follow-index-v1';
-let fiPairs = new Map(), fiWatermark = 0, fiCursor = null, fiHead = 0, fiHydrated = false, fiBuilding = null, fiPages = 0;
+/* One activation of the follow build walks at most this many feed
+   pages (v10 chunking — v9 walked the whole record in one go,
+   ~40 s cold). The resume cursor + watermark make the next
+   activation continue where the last one stopped. */
+const FOLLOW_CHUNK_PAGES = 25;
+let fiPairs = new Map(), fiWatermark = 0, fiCursor = null, fiHead = 0, fiHydrated = false, fiBuilding = null, fiPages = 0, fiComplete = false;
 const fiZeroVerdicts = new Map();
 const fiStore = {
   get() { try { return typeof localStorage !== 'undefined' ? localStorage.getItem(FI_KEY) : null; } catch (e) { return null; } },
@@ -712,13 +822,17 @@ function fiHydrate() {
       fiWatermark = j.watermark;
       fiPairs = new Map(Object.entries(j.pairs));
       if (j.buildCursor && typeof j.buildCursor === 'object') { fiCursor = j.buildCursor; fiHead = j.buildHead || 0; }
+      /* v9 stores have no explicit flag: a stored walk with no
+         resume cursor and a watermark had finished; anything with
+         a cursor still has pages to read. */
+      fiComplete = j.complete !== undefined ? !!j.complete : (!j.buildCursor && j.watermark > 0);
     }
   } catch (e) { /* a broken cache just means a fresh build */ }
 }
 function fiPersist() {
   const obj = {};
   for (const [k, v] of fiPairs) obj[k] = v;
-  fiStore.set(JSON.stringify({ watermark: fiWatermark, pairs: obj, buildCursor: fiCursor, buildHead: fiHead }));
+  fiStore.set(JSON.stringify({ watermark: fiWatermark, pairs: obj, buildCursor: fiCursor, buildHead: fiHead, complete: fiComplete }));
 }
 function fiMerge(it) {
   if ((it.type !== 3 && it.type !== 4) || it.block === undefined) return;
@@ -727,10 +841,17 @@ function fiMerge(it) {
   if (!cur || !fiNewer(cur, rec)) fiPairs.set(fiKey(it.senderId, it.receiverId), rec);
 }
 /* Walk the feed and merge every follow/unfollow. Stops early once
-   a whole page is at or below the stored watermark. maxPages caps
-   one run; the cursor is persisted so the next run resumes. */
+   a whole page is at or below the stored watermark. One activation
+   walks at most FOLLOW_CHUNK_PAGES pages (maxPages may lower that,
+   never raise it); the cursor is persisted so the next activation
+   resumes. Resolves with the build state (see followBuildState). */
+function followBuildState() {
+  fiHydrate();
+  return { complete: fiComplete, pages: fiPages, walking: !!fiBuilding, pairs: fiPairs.size };
+}
 function buildFollowIndex(onProgress, maxPages) {
   if (fiBuilding) return fiBuilding;
+  const cap = Math.max(1, Math.min(maxPages || FOLLOW_CHUNK_PAGES, FOLLOW_CHUNK_PAGES));
   fiBuilding = (async () => {
     try {
       fiHydrate();
@@ -746,13 +867,13 @@ function buildFollowIndex(onProgress, maxPages) {
         cursor = page.next;
         if (!cursor) break;
         if (pageMax > 0 && pageMax <= fiWatermark) break;
-        if (maxPages && pages >= maxPages) { fiCursor = cursor; fiHead = headBlock; fiPersist(); return; }
+        if (pages >= cap) { fiCursor = cursor; fiHead = headBlock; fiComplete = false; fiPersist(); return followBuildState(); }
         if (pages % 10 === 0) { fiCursor = cursor; fiHead = headBlock; fiPersist(); }
-        if (pages >= 400) { fiCursor = cursor; fiHead = headBlock; fiPersist(); return; } // hard safety cap
       }
       if (headBlock > fiWatermark) fiWatermark = headBlock;
-      fiCursor = null; fiHead = 0;
+      fiCursor = null; fiHead = 0; fiComplete = true;
       fiPersist();
+      return followBuildState();
     } finally { fiBuilding = null; }
   })();
   return fiBuilding;
@@ -873,7 +994,7 @@ async function postCard(a, opts) {
   }
   const whoHtml = profHref ? '<a class="plink" href="' + profHref + '">' + esc(who) + '</a>' : esc(who);
   html += '<div class="meta"><span class="name">' + whoHtml + '</span>' + timeHtml(a.ts) + '</div>';
-  if (parsed.body) html += '<div class="ptext">' + linkify(parsed.body) + '</div>';
+  if (parsed.body) html += '<div class="ptext">' + (opts.highlight ? highlightKeyword(linkify(parsed.body), opts.highlight) : linkify(parsed.body)) + '</div>';
   html += '<div class="frameslot"></div>';
   const replyCount = refChildren(a.cawId, 'reply').length;
   html += '<div class="pfoot">' +
@@ -966,19 +1087,20 @@ function skeletonHtml(n) {
   }
   return s;
 }
-let tlCursor = null, tlDone = false, tlLoading = false;
+let tlCursor = null, tlDone = false, tlLoading = false, tlTopItem = null;
 async function loadTimeline(append) {
   if (tlLoading || (append && tlDone)) return;
   tlLoading = true;
   const box = $('timeline');
   try {
-    if (!append) { box.innerHTML = skeletonHtml(5); tlCursor = null; tlDone = false; }
+    if (!append) { box.innerHTML = skeletonHtml(5); tlCursor = null; tlDone = false; tlTopItem = null; }
     let rendered = 0, pages = 0, cleared = append;
     while (rendered === 0 && pages < 4 && !tlDone) {
       const page = await fetchPage(tlCursor);
       tlCursor = page.next;
       if (!tlCursor) tlDone = true;
       pages++;
+      if (!append && tlTopItem === null && page.items.length) tlTopItem = page.items[0];
       /* Build the whole page's rows in parallel, append in order —
          never await one row at a time (v9 speed rule). */
       const rows = await Promise.all(page.items.map(a => rowFor(a).catch(() => null)));
@@ -989,9 +1111,121 @@ async function loadTimeline(append) {
     if (!box.children.length && tlDone) box.innerHTML = '<p>' + T.empty + '</p>';
     $('moreBtn').style.display = tlDone ? 'none' : '';
   } catch (e) {
-    if (!box.querySelector('.post:not(.skel)')) box.innerHTML = '<p class="err">' + T.loadFail + '</p>';
+    if (!box.querySelector('.post:not(.skel)')) {
+      box.innerHTML = '<p class="err">' + T.loadFail + '</p>' +
+        '<p><button id="tlRetry" type="button">' + T.retryBtn + '</button></p>';
+      const tb = $('tlRetry');
+      if (tb) tb.onclick = () => loadTimeline(false);
+    }
     else $('moreBtn').style.display = '';
   } finally { tlLoading = false; }
+}
+
+/* ---------- new-posts pill (v10) ----------
+   While the home timeline is on screen and the tab is visible,
+   re-check the feed head about once a minute. The head page is
+   never served stale (its cache entry only lives while a fetch is
+   in flight), so this is one light request. Anything newer than
+   the newest item on screen shows a pill — the timeline is NEVER
+   reloaded under the reader; tapping the pill reloads it. */
+let tlPollTimer = null;
+function startNewPostPolling() {
+  if (tlPollTimer) return;
+  tlPollTimer = setInterval(async () => {
+    if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+    if (tlLoading || !tlTopItem) return;
+    try {
+      const page = await fetchPage(null);
+      if (page.items.length && isNewerItem(page.items[0], tlTopItem)) {
+        const pill = $('newPostsPill');
+        if (pill) pill.style.display = '';
+      }
+    } catch (e) { /* a failed check just waits for the next tick */ }
+  }, 60000);
+}
+
+/* ---------- share button (v10) ----------
+   The system share sheet when the browser offers one; otherwise
+   the page URL is copied and the button says so briefly. No
+   external share intents are used. */
+async function shareCurrentPage(btn) {
+  const url = location.href;
+  if (typeof navigator !== 'undefined' && navigator.share) {
+    try { await navigator.share({ title: document.title, url }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  let okCopy = false;
+  try { await navigator.clipboard.writeText(url); okCopy = true; }
+  catch (e) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = url;
+      document.body.appendChild(ta);
+      ta.select();
+      okCopy = document.execCommand('copy');
+      ta.remove();
+    } catch (e2) { /* nothing more to try */ }
+  }
+  if (okCopy && btn) {
+    const old = btn.textContent;
+    btn.textContent = T.copied;
+    setTimeout(() => { btn.textContent = old; }, 1600);
+  }
+}
+
+/* ---------- "CAW right now" stats card (v10) ----------
+   Filled from reads the viewer makes anyway: the name count from
+   totalSupply, and a bounded head walk (at most 12 pages, pages
+   the timeline will reuse from the page cache) for the last-24h
+   post count and the most active names in that window. When the
+   walk hits its cap before covering a full 24 hours, the count is
+   labelled as counted from the newest N posts. Any failure hides
+   the card silently. */
+async function loadStats() {
+  const cards = document.querySelectorAll('.stats-card');
+  if (!cards.length) return;
+  try {
+    const totalP = readUint(CAW_NAME, SEL.totalSupply).catch(() => null);
+    const cutoff = Math.floor(Date.now() / 1000) - 86400;
+    let cursor = null, posts24 = 0, seen = 0, covered = false;
+    const act = new Map();
+    for (let p = 0; p < 12; p++) {
+      const page = await fetchPage(cursor);
+      cursor = page.next;
+      for (const it of page.items) {
+        if (it.type !== 0) continue;
+        seen++;
+        if (it.ts >= cutoff) {
+          posts24++;
+          const k = it.senderId.toString();
+          act.set(k, (act.get(k) || 0) + 1);
+        }
+      }
+      if (!page.items.length) { covered = true; break; }
+      const last = page.items[page.items.length - 1];
+      if (last && last.ts < cutoff) { covered = true; break; }
+      if (!cursor) { covered = true; break; }
+    }
+    const total = await totalP;
+    const top = [...act.entries()].sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const rows = await Promise.all(top.map(async ([sid, count]) => {
+      const [nm, im] = await Promise.all([resolveName(BigInt(sid)), avatarFor(BigInt(sid))]);
+      const label = nm ? '@' + nm : T.unknownName + sid;
+      const inner = avatarHtml(im, nm) + '<span class="n">' + esc(label) + '</span><span class="cnt">' + count + '</span>';
+      return '<div class="stats-row">' + (nm
+        ? '<a class="plink stats-row-link" href="' + profUrl(nm) + '">' + inner + '</a>'
+        : inner) + '</div>';
+    }));
+    const fmt = n => Number(n).toLocaleString(LANG === 'ja' ? 'ja-JP' : 'en-US');
+    let body = '';
+    if (total !== null) body += '<p>' + esc(T.statsNames.replace('{n}', fmt(total))) + '</p>';
+    body += '<p>' + esc((covered ? T.statsPosts24 : T.statsPosts24Partial)
+      .replace('{n}', fmt(posts24)).replace('{m}', fmt(seen))) + '</p>';
+    if (rows.length) body += '<p class="small">' + esc(T.statsTop) + '</p>' + rows.join('');
+    if (!body) return;
+    document.querySelectorAll('.statsBody').forEach(el => { el.innerHTML = body; });
+    cards.forEach(c => c.classList.remove('hidden'));
+  } catch (e) { /* the card stays hidden */ }
 }
 
 /* ---------- post page (?post=<cawId>) ---------- */
@@ -1105,8 +1339,39 @@ async function loadProfile() {
   if (fb) fb.onclick = () => openFollowList('following');
   if (rb2) rb2.onclick = () => openFollowList('followers');
   profCursor = undefined; profDone = false;
+  profBuckets = { posts: [], recaws: [] };
+  profTab = 'posts';
+  paintProfTabs();
   $('profilePosts').innerHTML = '';
   loadProfilePosts();
+}
+/* Profile rows live in two tabs (v10): "Posts" holds the name's
+   own posts (type 0); "Recaws & follows" holds its Recaws and
+   follow/unfollow rows (types 2/3/4). Both buckets are filled by
+   the SAME feed scan, so switching tabs never rescans, and "See
+   more" simply continues the one underlying scan. */
+let profBuckets = { posts: [], recaws: [] }, profTab = 'posts';
+function paintProfTabs() {
+  const a = $('profTabPosts'), b = $('profTabRecaws');
+  if (a) a.classList.toggle('on', profTab === 'posts');
+  if (b) b.classList.toggle('on', profTab === 'recaws');
+}
+function renderProfBucket() {
+  const box = $('profilePosts');
+  if (!box) return;
+  box.innerHTML = '';
+  const rows = profBuckets[profTab];
+  if (!rows.length) {
+    if (profDone) box.innerHTML = '<p>' + T.empty + '</p>';
+    return;
+  }
+  for (const r of rows) box.appendChild(r);
+}
+function switchProfTab(tab) {
+  if (tab !== 'posts' && tab !== 'recaws') return;
+  profTab = tab;
+  paintProfTabs();
+  renderProfBucket();
 }
 /* A profile's posts are found by scanning the contract feed itself
    (most actions arrive through a relay address, so the owner's own
@@ -1123,26 +1388,87 @@ async function loadProfilePosts() {
       profCursor = page.next;
       if (!profCursor) profDone = true;
       pages++;
-      const mine = page.items.filter(a => a.senderId === profileState.id);
-      const rows = await Promise.all(mine.map(a => rowFor(a).catch(() => null)));
-      for (const row of rows) if (row) { box.appendChild(row); found++; }
+      const mine = page.items.filter(a => a.senderId === profileState.id && a.type !== 1);
+      const built = await Promise.all(mine.map(async a => {
+        const row = await rowFor(a).catch(() => null);
+        return row ? { bucket: a.type === 0 ? 'posts' : 'recaws', row } : null;
+      }));
+      let addedActive = false;
+      for (const b of built) {
+        if (!b) continue;
+        profBuckets[b.bucket].push(b.row);
+        if (b.bucket === profTab) addedActive = true;
+        found++;
+      }
+      if (addedActive) renderProfBucket();
       if (!page.items.length) profDone = true;
     }
-    if (!box.children.length && profDone) box.innerHTML = '<p>' + T.empty + '</p>';
+    renderProfBucket();
     $('profileMore').style.display = profDone ? 'none' : '';
   } catch (e) {
-    if (!box.children.length) box.innerHTML = '<p class="err">' + T.loadFail + '</p>';
+    if (!profBuckets.posts.length && !profBuckets.recaws.length) box.innerHTML = '<p class="err">' + T.loadFail + '</p>';
   } finally { profLoading = false; }
 }
 
-/* ---------- profile follow lists (reconstructed, v9) ---------- */
+/* ---------- profile follow lists (reconstructed, v9; chunked v10) ----------
+   The build runs in chunks of FOLLOW_CHUNK_PAGES feed pages per
+   activation. After each chunk the lists render from whatever
+   pairs are known so far (labelled as still being built); while
+   pages remain, a "Keep reading the record" button runs the next
+   chunk. When the walk completes, the area says so plainly. */
 let followOpenKind = null;
-async function openFollowList(kind) {
-  if (!profileState) return;
+async function renderFollowLists(kind) {
+  const box = $('followLists');
+  if (!box || !profileState) return;
+  let lists;
+  try { lists = await refinedFollowListsOf(profileState.id); }
+  catch (e) { lists = followListsOf(profileState.id); }
+  if (followOpenKind !== kind || !profileState) return;
+  const st = followBuildState();
+  const ids = kind === 'following' ? lists.following : lists.followers;
+  const btn = $(kind === 'following' ? 'followingBtn' : 'followersBtn');
+  if (btn && kind === 'following') btn.textContent = T.followingLbl + ': ' + ids.length;
+  box.innerHTML = '';
+  const status = document.createElement('p');
+  status.className = 'small';
+  status.textContent = st.complete ? T.followDone : T.followListsBuilding;
+  box.appendChild(status);
+  if (!ids.length && st.complete) {
+    const e = document.createElement('p');
+    e.className = 'small';
+    e.textContent = T.followEmpty;
+    box.appendChild(e);
+  }
+  if (ids.length) {
+    const rows = await Promise.all(ids.map(async id => {
+      const [nm, im] = await Promise.all([resolveName(id), avatarFor(id)]);
+      const d = document.createElement('div');
+      d.className = 'namecard';
+      const label = nm ? '@' + nm : T.unknownName + id;
+      d.innerHTML = (nm ? '<a class="plink" href="' + profUrl(nm) + '">' + avatarHtml(im, nm) + '</a>' : avatarHtml(im, nm)) +
+        '<div class="grow"><div class="n">' + (nm ? '<a class="plink" href="' + profUrl(nm) + '">' + esc(label) + '</a>' : esc(label)) + '</div>' +
+        '<div class="small">#' + id.toString() + '</div></div>';
+      return d;
+    }));
+    if (followOpenKind !== kind) return;
+    for (const r of rows) box.appendChild(r);
+  }
+  if (!st.complete) {
+    const kb = document.createElement('button');
+    kb.type = 'button';
+    kb.className = 'ghost';
+    kb.textContent = T.followKeepBtn;
+    kb.onclick = () => continueFollowBuild(kind);
+    box.appendChild(kb);
+  }
+  const note = document.createElement('p');
+  note.className = 'small';
+  note.textContent = T.followNote;
+  box.appendChild(note);
+}
+async function continueFollowBuild(kind) {
   const box = $('followLists');
   if (!box) return;
-  if (followOpenKind === kind) { box.innerHTML = ''; followOpenKind = null; return; }
-  followOpenKind = kind;
   box.innerHTML = '<p class="small">' + esc(T.followBuilding.replace('{n}', '0')) + '</p>';
   try {
     await buildFollowIndex(pages => {
@@ -1152,32 +1478,16 @@ async function openFollowList(kind) {
     });
   } catch (e) { /* render whatever was merged */ }
   if (followOpenKind !== kind || !profileState) return;
-  let lists;
-  try { lists = await refinedFollowListsOf(profileState.id); }
-  catch (e) { lists = followListsOf(profileState.id); }
-  const ids = kind === 'following' ? lists.following : lists.followers;
-  const btn = $(kind === 'following' ? 'followingBtn' : 'followersBtn');
-  if (btn && kind === 'following') btn.textContent = T.followingLbl + ': ' + ids.length;
-  if (!ids.length) {
-    box.innerHTML = '<p class="small">' + T.followEmpty + '</p><p class="small">' + T.followNote + '</p>';
-    return;
-  }
-  box.innerHTML = '';
-  const rows = await Promise.all(ids.map(async id => {
-    const [nm, im] = await Promise.all([resolveName(id), avatarFor(id)]);
-    const d = document.createElement('div');
-    d.className = 'namecard';
-    const label = nm ? '@' + nm : T.unknownName + id;
-    d.innerHTML = (nm ? '<a class="plink" href="' + profUrl(nm) + '">' + avatarHtml(im, nm) + '</a>' : avatarHtml(im, nm)) +
-      '<div class="grow"><div class="n">' + (nm ? '<a class="plink" href="' + profUrl(nm) + '">' + esc(label) + '</a>' : esc(label)) + '</div>' +
-      '<div class="small">#' + id.toString() + '</div></div>';
-    return d;
-  }));
-  for (const r of rows) box.appendChild(r);
-  const note = document.createElement('p');
-  note.className = 'small';
-  note.textContent = T.followNote;
-  box.appendChild(note);
+  renderFollowLists(kind);
+}
+async function openFollowList(kind) {
+  if (!profileState) return;
+  const box = $('followLists');
+  if (!box) return;
+  if (followOpenKind === kind) { box.innerHTML = ''; followOpenKind = null; return; }
+  followOpenKind = kind;
+  if (followBuildState().complete) renderFollowLists(kind);
+  else continueFollowBuild(kind);
 }
 
 /* ---------- post text search (?q=keyword, v9) ---------- */
@@ -1210,7 +1520,7 @@ async function runSearch(append) {
         if (postMatchesQuery(a, qLower)) hits.push(a);
       }
       if (hits.length) {
-        const rows = await Promise.all(hits.map(a => postCard(a).catch(() => null)));
+        const rows = await Promise.all(hits.map(a => postCard(a, { highlight: searchState.q }).catch(() => null)));
         if (!append && renderedThisRun === 0) box.innerHTML = '';
         for (const row of rows) if (row) { box.appendChild(row); searchState.found++; renderedThisRun++; }
       } else if (!append && renderedThisRun === 0 && pages === 1) {
@@ -1254,27 +1564,66 @@ document.querySelectorAll('.langs a').forEach(a => {
   const base = a.getAttribute('href').split('?')[0];
   a.href = base + location.search;
 });
+loadStats();
+const toTopBtn = $('toTopBtn');
+if (toTopBtn) {
+  const reduced = typeof window.matchMedia === 'function' &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  toTopBtn.textContent = '↑';
+  toTopBtn.setAttribute('aria-label', T.toTop);
+  toTopBtn.title = T.toTop;
+  window.addEventListener('scroll', () => {
+    toTopBtn.style.display = window.scrollY > 600 ? '' : 'none';
+  }, { passive: true });
+  toTopBtn.onclick = () => window.scrollTo({ top: 0, behavior: reduced ? 'auto' : 'smooth' });
+}
 if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
   document.body.classList.add('post-mode');
   $('viewPost').style.display = '';
   loadPostPage(postQuery);
+  const spb = $('sharePostBtn');
+  if (spb) spb.onclick = () => shareCurrentPage(spb);
 } else if (profileQuery) {
   document.body.classList.add('profile-mode');
   $('viewProfile').style.display = '';
   loadProfile();
   $('profileMore').onclick = loadProfilePosts;
+  const ptp = $('profTabPosts'), ptr = $('profTabRecaws');
+  if (ptp) ptp.onclick = () => switchProfTab('posts');
+  if (ptr) ptr.onclick = () => switchProfTab('recaws');
+  const sprb = $('shareProfileBtn');
+  if (sprb) sprb.onclick = () => shareCurrentPage(sprb);
 } else if (searchQuery) {
   $('viewSearch').style.display = '';
   $('searchTitle').textContent = T.searchTitle.replace('{q}', searchQuery);
   searchState = { q: searchQuery, cursor: null, done: false, running: false, scanned: 0, found: 0 };
   runSearch(false);
   $('searchMoreBtn').onclick = () => runSearch(true);
+  /* If the words are exactly a name that exists, link its profile
+     at the top of the results. */
+  resolveNameId(searchQuery).then(res => {
+    if (res.status !== 'ok') return;
+    const chip = $('searchNameChip');
+    if (chip) {
+      chip.innerHTML = '<a class="chip name-chip" href="' + profUrl(res.username) + '">' +
+        esc(T.searchNameChip.replace('{name}', res.username)) + '</a>';
+    }
+  }).catch(() => {});
 } else {
   $('viewHome').style.display = '';
   loadTimeline(false);
   $('moreBtn').onclick = () => loadTimeline(true);
   const rb = $('refreshBtn');
   if (rb) rb.onclick = () => loadTimeline(false);
+  const npb = $('newPostsBtn');
+  if (npb) npb.onclick = () => {
+    const pill = $('newPostsPill');
+    if (pill) pill.style.display = 'none';
+    loadTimeline(false);
+    const vh = $('viewHome');
+    if (vh) vh.scrollIntoView();
+  };
+  startNewPostPolling();
   /* Auto-load more when the "See more" area scrolls into view;
      the button stays as the manual fallback. */
   if (typeof IntersectionObserver !== 'undefined') {
@@ -1302,8 +1651,10 @@ if (typeof module !== 'undefined' && module.exports) {
     decodeActions, parsePostText, b64UrlToHex, metaFromUri,
     readCardName, resolveName, resolveNameId, avatarFor,
     cardFor, cardStats, resetCardCacheForTest, linkify, escapeHtml, relTime, fullTimeStr,
+    highlightKeyword, isNewerItem,
     actionDigest, encodeBatch, keccakHex,
     buildFollowIndex, followListsOf, refinedFollowListsOf,
+    FOLLOW_CHUNK_PAGES, followBuildState,
     fetchPage, findPostByCawId, findPostDeep, collectPostContext,
     postIndex, refIndex, refChildren, indexItem, likesOf, isVisibleRow,
     rpc, readUint, readStr, SEL, CAW_NAME, CAW_ACTIONS, MINTER, word,

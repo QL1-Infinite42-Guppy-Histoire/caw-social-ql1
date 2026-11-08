@@ -327,6 +327,47 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
 footer a { color: var(--accent-dark); }
 code { background: var(--code-bg); padding: 1px 5px; border-radius: 5px; font-size: .82em; word-break: break-all; }
 
+/* ---- v10: new-posts pill, stats card, profile tabs, share,
+   back-to-top, highlight, focus + reduced-motion polish ---- */
+html { scroll-behavior: smooth; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hidden { display: none !important; }
+.newpill { text-align: center; margin: 10px 0 2px; }
+.newpill button { min-height: 40px; padding: 9px 20px; font-size: .92rem; box-shadow: 0 4px 14px rgba(15,20,25,.22); }
+mark { background: #ffe58f; color: inherit; padding: 0 1px; border-radius: 2px; }
+@media (prefers-color-scheme: dark) { mark { background: #6b5510; } }
+.stats-card { margin-bottom: 16px; }
+.stats-main { margin-bottom: 14px; }
+@media (min-width: 1024px) { .stats-main { display: none !important; } }
+.stats-row { padding: 5px 0; }
+.stats-row-link { display: flex; align-items: center; gap: 10px; }
+.stats-row .avatar { width: 32px; height: 32px; flex-basis: 32px; font-size: .85rem; }
+.stats-row .n { font-weight: 700; }
+.stats-row .cnt { margin-left: auto; color: var(--sub); font-size: .85rem; }
+.ptabs { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 2px; }
+.ptab {
+  background: var(--surface); color: var(--sub); border: 1px solid var(--line2);
+  min-height: 40px; padding: 8px 18px; font-size: .9rem;
+}
+.ptab:hover { background: var(--hover); }
+.ptab.on { background: var(--pill-bg); color: var(--pill-fg); border-color: transparent; }
+.ptab.on:hover { background: var(--pill-hover); }
+.sharebtn { min-height: 40px; padding: 8px 18px; font-size: .9rem; }
+.name-chip { text-decoration: none; font-weight: 700; color: var(--accent-dark); }
+.to-top {
+  position: fixed; right: 16px; bottom: 96px; z-index: 30;
+  width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 50%;
+  background: var(--pill-bg); color: var(--pill-fg);
+  box-shadow: 0 6px 18px rgba(15,20,25,.30);
+}
+.to-top:hover { background: var(--pill-hover); }
+@media (min-width: 861px) { .to-top { bottom: 24px; } }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .skel-line { animation: none; }
+  .post { transition: none; }
+}
+
 /* ---- v9: clickable cards, linkified text, skeletons, follow lists ---- */
 .post.clickable { cursor: pointer; }
 .ptext a, .qtext a { color: var(--accent-dark); text-decoration: none; }

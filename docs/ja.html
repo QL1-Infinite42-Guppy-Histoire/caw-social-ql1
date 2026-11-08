@@ -5,21 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CAW Social — QL1（ウェブ閲覧版）</title>
 <meta name="description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。ウェブ版は閲覧専用です。投稿は Android アプリから。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="CAW Social — QL1（ウェブ閲覧版）">
+<meta property="og:description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。ウェブ版は閲覧専用です。投稿は Android アプリから。">
+<meta property="og:image" content="https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/icon-512.png">
+<link rel="preconnect" href="https://evm-rpc-ql1.mschihuahua.org">
+<link rel="preconnect" href="https://scan.qom.network">
 <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png?v=9">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=9">
+<link rel="icon" type="image/png" href="icon-192.png?v=10">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=10">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
-<link rel="stylesheet" href="style.css?v=9">
+<link rel="stylesheet" href="style.css?v=10">
 </head>
 <body>
 <div class="topbar">
   <div class="topbar-inner">
-    <img class="logo" src="icon-192.png?v=9" alt="">
+    <img class="logo" src="icon-192.png?v=10" alt="">
     <div>
       <div class="title">CAW Social</div>
       <div class="tag">QL1 版・ウェブ閲覧</div>
@@ -40,6 +46,10 @@
       <p>CAW は、投稿を1つの会社のコンピュータではなく、みんなで共有する公開の記録（ブロックチェーン）に残すソーシャルネットワークです。だから誰でも読めて、あとからこっそり書き換えることもできません。</p>
       <p>このサイトは、QL1 版 CAW をのぞくための有志の窓口です。公式の CAW チームが運営しているものでは<b>ありません</b>。</p>
       <p class="small">このページをホーム画面に追加すると、アプリのように開けます。</p>
+    </section>
+    <section class="railcard stats-card hidden" id="statsCard">
+      <h3>CAWのいま</h3>
+      <div class="statsBody"><p class="small">読み込み中…</p></div>
     </section>
     <section class="railcard">
       <h3>QL1 上の場所</h3>
@@ -69,11 +79,16 @@
     </section>
 
     <section class="block" id="viewHome" style="display:none">
+      <div class="railcard stats-card stats-main hidden" id="statsCardMain">
+        <h3>CAWのいま</h3>
+        <div class="statsBody"><p class="small">読み込み中…</p></div>
+      </div>
       <div class="row" style="justify-content:space-between">
         <h2 style="margin:0">タイムライン</h2>
         <button id="refreshBtn" class="ghost" type="button">更新する</button>
       </div>
       <p class="muted">CAW の新しい投稿を順番に表示します。誰でも読めます（ウォレット不要）。</p>
+      <div id="newPostsPill" class="newpill" style="display:none"><button id="newPostsBtn" type="button">新しい投稿があります</button></div>
       <div id="timeline"><p>読み込み中…</p></div>
       <div class="loadmore"><button id="moreBtn" class="ghost" style="display:none">もっと見る</button></div>
     </section>
@@ -81,6 +96,7 @@
     <section class="block" id="viewSearch" style="display:none">
       <p><a class="plink" href="ja.html">← タイムラインへ戻る</a></p>
       <h2 id="searchTitle">さがす</h2>
+      <div id="searchNameChip" style="margin-bottom:8px"></div>
       <p id="searchProgress" class="small"></p>
       <div id="searchResults"></div>
       <div class="loadmore"><button id="searchMoreBtn" class="ghost" style="display:none">もっと昔までさがす</button></div>
@@ -89,13 +105,19 @@
     <section class="block" id="viewProfile" style="display:none">
       <p><a class="plink" href="ja.html">← タイムラインへ戻る</a></p>
       <div id="profileHead"><p>読み込み中…</p></div>
+      <div class="row" style="margin-top:10px"><button id="shareProfileBtn" class="ghost sharebtn" type="button">共有</button></div>
       <h3 id="profilePostsTitle">投稿</h3>
+      <div class="ptabs">
+        <button id="profTabPosts" class="ptab on" type="button">投稿</button>
+        <button id="profTabRecaws" class="ptab" type="button">Recaw・フォロー</button>
+      </div>
       <div id="profilePosts"></div>
       <div class="loadmore"><button id="profileMore" class="ghost" style="display:none">もっと見る</button></div>
     </section>
 
     <section class="block" id="viewPost" style="display:none">
       <p><a class="plink" href="ja.html">← タイムラインへ戻る</a></p>
+      <div class="row" style="margin-bottom:8px"><button id="sharePostBtn" class="ghost sharebtn" type="button">共有</button></div>
       <div id="postMain"><p>読み込み中…</p></div>
       <p id="postCounts" class="counts"></p>
       <p id="postNote" class="small"></p>
@@ -117,12 +139,13 @@
   </main>
 </div>
 
+<button id="toTopBtn" class="to-top" type="button" style="display:none" aria-label="上へ戻る">↑</button>
 <nav class="bottomnav">
   <a href="ja.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>ホーム</span></a>
   <a href="ja.html#lookup"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>さがす</span></a>
   <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span>アプリ</span></a>
 </nav>
-<script src="viewer.js?v=9"></script>
+<script src="viewer.js?v=10"></script>
 <script>
 /* If the viewer script was blocked or replaced by an older saved
    copy of this site, say so instead of loading forever. */

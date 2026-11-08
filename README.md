@@ -19,6 +19,42 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   desktop (rail + reading column), a single column on phones. Also a
   **PWA**: add it to the home screen and it opens standalone.
 
+## What's new in v10 (2026-11-08)
+
+- **Repeat visits are much faster.** A name's card never changes
+  (the name is fixed at mint and the picture is made from it), so
+  resolved cards are now kept in your browser (at most ~600,
+  oldest dropped first) and later visits show names and pictures
+  with **no chain reads at all** for them. The page also opens
+  connections to the chain and the explorer early (preconnect).
+- **New posts pill.** While you are reading the timeline, the
+  newest posts are re-checked about once a minute; when something
+  new has arrived a "New posts" pill appears — nothing ever
+  reloads under you, tapping the pill does.
+- **Follow lists read in pieces.** Building the Following /
+  Followers lists now walks the public record at most 25 feed
+  pages at a time, shows the lists from what is known so far, and
+  offers a "Keep reading the record" button for the next piece —
+  no more single ~40-second wait. When the whole record has been
+  read, it says so.
+- **"CAW right now" card.** Total names, how many posts the last
+  24 hours saw, and the five most active names in that window
+  (counted from a bounded look at the newest posts; if that look
+  cannot cover a full 24 hours, the count says what it was
+  counted from).
+- **Profile tabs.** A profile's rows are split into "Posts" and
+  "Recaws & follows" tabs over the same scan — switching never
+  rescans.
+- **Search polish.** Matched words are highlighted in search
+  results, and when the words are exactly a name that exists, a
+  link to that profile sits at the top of the results.
+- **Small things.** Share buttons on post and profile pages
+  (system share sheet, or copy the link), a retry button when the
+  timeline cannot load, a back-to-top button, keyboard focus
+  outlines, reduced-motion support, and OGP tags for link
+  previews. The signing core from v9 is still present and still
+  **not wired to any UI — nothing in v10 signs or sends.**
+
 ## What's new in v9 (2026-11-08)
 
 - **Faster.** A name's card (`tokenURI`) is now read **once** per
@@ -83,7 +119,10 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   Recaw→original resolution, and marker parsing. v9 adds: the
   signing core rebuilding a real batch byte-for-byte, the
   single-card-read rule (counted), linkify escaping, and the
-  relative-time formatter.
+  relative-time formatter. v10 adds: the persistent card cache
+  (a stored card costs zero card reads in a fresh session), the
+  new-head comparison helper, keyword highlighting, and the
+  follow-build chunk cap.
 
 ## Posting (historical — the retired web write path)
 
