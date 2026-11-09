@@ -1,13 +1,21 @@
 'use strict';
-/* CAW Social (QL1) — web viewer + name minting.
+/* CAW Social (QL1) — web viewer + name minting + posting (v12).
    Reading is free and open: the timeline, post pages and profiles
    are decoded in your browser from the public explorer API and the
-   chain itself. The ONE write on this site is getting a name: an
-   ordinary contract call sent through the visitor's own wallet
-   app, which shows its own confirmation. This page never asks
-   for any kind of signature, never handles a key or a phrase, and
-   cannot send anything else — posting, liking and following live
-   in the Android app, where signing happens inside the app itself.
+   chain itself. Two writes exist, kept strictly separate:
+   - Getting a name: ordinary contract calls sent through the
+     visitor's own wallet app (the v11 mint path — it asks that
+     wallet to send, and the wallet shows its own confirmation).
+   - Posting, liking, Recaws and follows: signed INSIDE this page
+     by the built-in posting wallet (the Android app's model). The
+     posting key is created/imported by the visitor, encrypted
+     under their password, and stored only in this browser; it is
+     never sent anywhere, and this page never asks an external
+     wallet for any kind of signature (the refused raw-sign
+     request the contract's scheme would otherwise need — see the
+     README's "Posting" history). In-page signing uses the signing
+     core ported from the app, so the signature is built from the
+     exact action shown on screen — sign what you see.
    Names come from each name token's CARD (its tokenURI metadata) —
    the mint-proven source. The usernames() getter is shifted by one
    (it returns the NEXT token's name) and is never used directly. */
@@ -37,6 +45,7 @@ const SEL = {
   idByUsername: '0x9ebf19e8', followerCount: '0x9f46a705', likes: '0x14ce3e7d',
   balanceOf: '0x70a08231', allowance: '0xdd62ed3e', approve: '0x095ea7b3',
   costOfName: '0x8c87aa8a', isValidUsername: '0x3b032005', mint: '0xd85d3d27',
+  deposit: '0x6170c4b1', withdraw: '0x43387983',
 };
 
 const LANG = (typeof document !== 'undefined' && document.documentElement.lang === 'ja') ? 'ja' : 'en';
@@ -46,7 +55,7 @@ const T = {
     loading: 'Loading…', loadFail: 'Could not load. Please try again later.',
     empty: 'No posts found yet.', viewTx: 'see the record', moreBtn: 'See more',
     noticeTitle: 'Reading is free — and you can get a name here',
-    noticeText: 'You are reading the CAW timeline on QL1. Viewing is free and needs no wallet or account. You can also get a name here with your own wallet. Posting, likes and follows are in the Android app.',
+    noticeText: 'You are reading the CAW timeline on QL1. Viewing is free and needs no wallet or account. You can get a name here with your wallet app, and post here with the built-in posting wallet — or use the Android app.',
     appBtn: 'Get the Android app',
     lookupTitle: 'Look up a name', lookupPh: 'e.g. neptune', lookupBtn: 'Look up',
     checking: 'Looking…', notFound: 'That name was not found.',
@@ -115,12 +124,76 @@ const T = {
     sentUnconfirmed: 'Your wallet sent it, but the record is slow to settle. Give it a moment, then look at your names below.',
     myNamesTitle: 'Your names', noNames: 'This wallet has no CAW names yet.',
     myNamesConnect: 'Connect your wallet to see the names you own.',
+    pwTitle: 'Posting wallet',
+    pwIntro: 'Posting, liking, Recaws and follows are signed inside this page by this built-in wallet — the same way the Android app works. (Getting a name, further down, uses your wallet app instead.)',
+    pwSafetyCreate: 'Use a separate wallet here, made only for CAW. Never type the recovery phrase of your main wallet.',
+    pwSafetyStore: 'The key is encrypted with your password and stored only in this browser. It is never sent anywhere.',
+    pwSafetyLose: 'If you clear this browser’s data, the wallet here is gone — it only comes back if you saved the recovery phrase.',
+    pwSafetyPhrase: 'Anyone who sees your recovery phrase owns this wallet. Keep it written down, offline, and private.',
+    pwCreateBtn: 'Create a new wallet', pwImportBtn: 'Import a wallet',
+    pwCreateExplain: 'We will make a fresh wallet and show its 12-word recovery phrase once. That phrase is the only way back in if this browser’s data is cleared.',
+    pwShowPhraseTitle: 'Your recovery phrase — write it down now',
+    pwPhraseWarn: 'Write these 12 words on paper, in order, and keep the paper somewhere safe and offline. This is shown once — after you continue, it cannot be shown again.',
+    pwWroteIt: 'I wrote it down and will keep it offline',
+    pwContinueBtn: 'Continue', pwBackBtn: 'Back', pwCancelBtn: 'Cancel',
+    pwSetPasswordTitle: 'Set a password for this browser',
+    pwPasswordPh: 'Password (8 or more characters)', pwPassword2Ph: 'Type the same password again',
+    pwPasswordShort: 'Please use a password of 8 or more characters.',
+    pwPasswordMismatch: 'The two passwords do not match.',
+    pwSaveBtn: 'Save this wallet',
+    pwImportExplain: 'Type a recovery phrase (12 or 24 words) or a private key. It will be encrypted with a password you set next, and stored only in this browser.',
+    pwImportPh: 'recovery phrase, or a private key (0x…)',
+    pwImportInvalid: 'That does not look right — check the words (or the key) and try again.',
+    pwLockedTitle: 'This browser’s posting wallet is locked',
+    pwLockedText: 'Type the password you set for it to unlock. Unlocking stays on for 15 minutes at a time.',
+    pwUnlockBtn: 'Unlock', pwUnlockWrong: 'That password did not open this wallet. Please try again.',
+    pwAddressLbl: 'Posting wallet', pwCopyBtn: 'Copy address',
+    pwQomLbl: 'QOM (for the small fees)', pwQcawLbl: 'qCAW in this wallet',
+    pwActingLbl: 'Posting as', pwNameBalanceLbl: 'qCAW inside this name',
+    pwNoNamesYet: 'This wallet has no CAW name yet, so there is nothing to post as. Get a name in the section further down (it uses your wallet app), and it will appear here.',
+    pwLockBtn: 'Lock', pwRemoveBtn: 'Remove this wallet from this browser',
+    pwRemoveWarn: 'This deletes the encrypted wallet stored in this browser. If you did not save the recovery phrase (or private key), this wallet is gone for good. Names and coins are NOT deleted — they stay on the public record and come back if you import the same phrase or key again.',
+    pwRemoveTypeLbl: 'To remove it, type this word:', pwRemoveWord: 'delete',
+    pwRemoveConfirmBtn: 'Remove it for good',
+    pwDepTitle: 'Put qCAW into this name / take it out',
+    pwDepNote: 'Posting and other actions are paid from the qCAW inside your name, not from the wallet directly.',
+    pwAmountPh: 'Amount of qCAW', pwDepositBtn: 'Put in', pwWithdrawBtn: 'Take out',
+    pwAmountBad: 'Type an amount like 100 or 12.5.',
+    pwApproveFirst: 'One quick allow is needed first, then the amount goes in.',
+    pwBusySending: 'Sending… check the progress below.', pwBusyWaiting: 'Sent — waiting for the record to confirm it…',
+    pwDoneOk: 'Done.', pwSendFailPlain: 'That did not go through.',
+    pwUnconfirmed: 'It was sent, but the record is slow to confirm. Give it a moment and check again.',
+    pwNeedGas: 'This posting wallet holds no QOM, so it cannot pay the small fees. Send a little QOM to the address above first.',
+    compPh: 'What is happening?',
+    compPostBtn: 'Post', compBytes: '{n} / 420 characters’ worth',
+    compTooLong: 'That is too long — posts can be up to 420 in length, counting the marker for replies and quotes.',
+    compZeroBalance: 'This name holds no qCAW, so actions will fail. Put some qCAW into it (in the posting wallet section) first.',
+    compHintLocked: 'Posting needs the built-in wallet.',
+    compHintSetupBtn: 'Set up the posting wallet',
+    compHintNoName: 'You need a CAW name to post. Get one further down this page, then it will appear in the posting wallet.',
+    compReplyingTo: 'Replying to {name}', compQuoting: 'Quoting {name}', compCancelRef: 'Cancel',
+    actLike: 'Like', actRecaw: 'Recaw', actReply: 'Reply', actQuote: 'Quote',
+    actFollow: 'Follow', actUnfollow: 'Unfollow', actFollowing: 'Following',
+    actOwnProfile: 'This is your own name.',
+    confirmTitlePost: 'Post this?', confirmTitleLike: 'Like this post?',
+    confirmTitleRecaw: 'Recaw this post?', confirmTitleFollow: 'Follow this name?',
+    confirmTitleUnfollow: 'Unfollow this name?', confirmTitleDeposit: 'Put qCAW in?',
+    confirmTitleWithdraw: 'Take qCAW out?',
+    confirmAsLbl: 'As', confirmTargetLbl: 'Target', confirmTextLbl: 'Text',
+    confirmAmountLbl: 'Amount', confirmNameLbl: 'Name',
+    confirmSignBtn: 'Sign and send', confirmCancelBtn: 'Cancel',
+    actSending: 'Signing and sending…', actWaiting: 'Sent — waiting for the record…',
+    actDone: 'Done — it is on the record.', actFail: 'That did not go through.',
+    actUnconfirmed: 'Sent, but the record is slow to confirm it.',
+    actNotOwner: 'This name does not belong to the posting wallet right now, so signing stopped.',
+    actSelfFollow: 'That name belongs to this same wallet, so it cannot be followed from here.',
+    mintNote: 'Getting a name uses your wallet app (MetaMask or FoxWallet) — that is separate from the posting wallet higher up, which is only for posting.',
   },
   ja: {
     loading: '読み込み中…', loadFail: '読み込めませんでした。しばらくしてからお試しください。',
     empty: 'まだ投稿がありません。', viewTx: '記録を見る', moreBtn: 'もっと見る',
     noticeTitle: '閲覧は無料 — 名前もここで取れます',
-    noticeText: 'QL1 の CAW のタイムラインを読んでいます。閲覧は無料で、ウォレットもアカウントも要りません。名前はここで、自分のウォレットで取れます。投稿・いいね・フォローは Android アプリからできます。',
+    noticeText: 'QL1 の CAW のタイムラインを読んでいます。閲覧は無料で、ウォレットもアカウントも要りません。名前はウォレットアプリで取れて、投稿はこのページの内蔵ウォレットでも、Android アプリでもできます。',
     appBtn: 'Android アプリを入れる',
     lookupTitle: '名前をさがす', lookupPh: '例：neptune', lookupBtn: 'さがす',
     checking: '調べています…', notFound: 'その名前は見つかりませんでした。',
@@ -189,6 +262,70 @@ const T = {
     sentUnconfirmed: 'ウォレットからは送られましたが、記録の確定が遅れています。少し待ってから、下の「あなたの名前」を見てください。',
     myNamesTitle: 'あなたの名前', noNames: 'このウォレットには、まだ CAW の名前がありません。',
     myNamesConnect: 'ウォレットをつなぐと、あなたの名前が表示されます。',
+    pwTitle: '投稿用ウォレット',
+    pwIntro: '投稿・いいね・Recaw・フォローは、このページ内蔵のウォレットで、このページの中で署名します。Android アプリと同じ方式です。（名前を取る手続きは、下の方でウォレットアプリを使います。）',
+    pwSafetyCreate: 'ここでは CAW 専用の別のウォレットを使ってください。本命ウォレットの復元フレーズは絶対に入力しないでください。',
+    pwSafetyStore: '鍵はあなたのパスワードで暗号化され、このブラウザの中にだけ保存されます。どこにも送信されません。',
+    pwSafetyLose: 'このブラウザのデータを消すと、ここにあるウォレットは消えます。復元フレーズを控えておかないと、元に戻せません。',
+    pwSafetyPhrase: '復元フレーズを見た人は、そのウォレットを使えてしまいます。紙に書いて、オフラインで、大切に保管してください。',
+    pwCreateBtn: '新しいウォレットを作る', pwImportBtn: 'ウォレットを取り込む',
+    pwCreateExplain: '新しいウォレットを作り、12語の復元フレーズを1回だけ表示します。ブラウザのデータを消したときに元に戻す手段は、そのフレーズだけです。',
+    pwShowPhraseTitle: 'あなたの復元フレーズ — 今すぐ書き留めてください',
+    pwPhraseWarn: 'この12語を、順番どおりに紙に書いて、安全な場所にオフラインで保管してください。表示はこの1回だけです。進んだあとは、もう表示できません。',
+    pwWroteIt: '紙に書き留めました。オフラインで保管します',
+    pwContinueBtn: '進む', pwBackBtn: '戻る', pwCancelBtn: 'やめる',
+    pwSetPasswordTitle: 'このブラウザ用のパスワードを決めてください',
+    pwPasswordPh: 'パスワード（8文字以上）', pwPassword2Ph: '同じパスワードをもう一度',
+    pwPasswordShort: 'パスワードは8文字以上にしてください。',
+    pwPasswordMismatch: '2つのパスワードが一致しません。',
+    pwSaveBtn: 'このウォレットを保存する',
+    pwImportExplain: '復元フレーズ（12語または24語）か、秘密鍵を入力してください。次に決めるパスワードで暗号化して、このブラウザの中にだけ保存します。',
+    pwImportPh: '復元フレーズ、または秘密鍵（0x…）',
+    pwImportInvalid: 'うまく読み取れませんでした。語句（または鍵）を確認してもう一度どうぞ。',
+    pwLockedTitle: 'このブラウザの投稿用ウォレットはロック中です',
+    pwLockedText: '設定したパスワードを入力すると開きます。開いた状態は15分まで続きます。',
+    pwUnlockBtn: '開く', pwUnlockWrong: 'そのパスワードでは開けませんでした。もう一度どうぞ。',
+    pwAddressLbl: '投稿用ウォレット', pwCopyBtn: 'アドレスをコピー',
+    pwQomLbl: 'QOM（手数料用）', pwQcawLbl: 'このウォレットの qCAW',
+    pwActingLbl: '投稿する名前', pwNameBalanceLbl: 'この名前の中の qCAW',
+    pwNoNamesYet: 'このウォレットには、まだ CAW の名前がありません。投稿できる名前がありません。下の方の欄で名前を取ると（ウォレットアプリを使います）、ここに出てきます。',
+    pwLockBtn: 'ロックする', pwRemoveBtn: 'このブラウザからウォレットを消す',
+    pwRemoveWarn: 'このブラウザに保存された暗号化ウォレットを消します。復元フレーズ（または秘密鍵）を控えていない場合、このウォレットは二度と戻せません。名前やコインが消えるわけではありません — 公開の記録に残っていて、同じフレーズや鍵を取り込み直せば戻ってきます。',
+    pwRemoveTypeLbl: '消すには、この言葉を入力してください：', pwRemoveWord: '削除',
+    pwRemoveConfirmBtn: '完全に消す',
+    pwDepTitle: 'この名前へ qCAW を入れる／出す',
+    pwDepNote: '投稿などの操作の料金は、ウォレットからではなく、名前の中にある qCAW から払われます。',
+    pwAmountPh: 'qCAW の量', pwDepositBtn: '入れる', pwWithdrawBtn: '出す',
+    pwAmountBad: '100 や 12.5 のように量を入力してください。',
+    pwApproveFirst: '先に一度だけ許可が必要で、そのあと金額が入ります。',
+    pwBusySending: '送信中です… 進み具合は下に出ます。', pwBusyWaiting: '送りました — 記録に確定するのを待っています…',
+    pwDoneOk: 'できました。', pwSendFailPlain: '送信できませんでした。',
+    pwUnconfirmed: '送信はしましたが、記録の確定が遅れています。少し待ってから確認してください。',
+    pwNeedGas: 'この投稿用ウォレットに QOM がありません。手数料が払えないので、先に上のアドレスへ少し QOM を送ってください。',
+    compPh: 'いまどうしてる？',
+    compPostBtn: '投稿する', compBytes: '{n} / 420 文字分',
+    compTooLong: '長すぎます。投稿は、返信や引用の目印を含めて420文字分までです。',
+    compZeroBalance: 'この名前の中に qCAW がありません。このままでは操作が失敗します。先に投稿用ウォレットの欄で qCAW を入れてください。',
+    compHintLocked: '投稿には内蔵ウォレットが必要です。',
+    compHintSetupBtn: '投稿用ウォレットを用意する',
+    compHintNoName: '投稿には CAW の名前が必要です。下の方で名前を取ると、投稿用ウォレットに出てきます。',
+    compReplyingTo: '{name} さんへの返信', compQuoting: '{name} さんを引用', compCancelRef: '取り消し',
+    actLike: 'いいね', actRecaw: 'Recaw', actReply: '返信', actQuote: '引用',
+    actFollow: 'フォロー', actUnfollow: 'フォローをやめる', actFollowing: 'フォロー中',
+    actOwnProfile: 'これはあなた自身の名前です。',
+    confirmTitlePost: 'この内容で投稿しますか？', confirmTitleLike: 'この投稿にいいねしますか？',
+    confirmTitleRecaw: 'この投稿を Recaw しますか？', confirmTitleFollow: 'この名前をフォローしますか？',
+    confirmTitleUnfollow: 'この名前のフォローをやめますか？', confirmTitleDeposit: 'qCAW を入れますか？',
+    confirmTitleWithdraw: 'qCAW を出しますか？',
+    confirmAsLbl: '名前', confirmTargetLbl: '相手', confirmTextLbl: '本文',
+    confirmAmountLbl: '金額', confirmNameLbl: '名前',
+    confirmSignBtn: '署名して送る', confirmCancelBtn: 'やめる',
+    actSending: '署名して送信しています…', actWaiting: '送りました — 記録されるのを待っています…',
+    actDone: 'できました — 記録されました。', actFail: 'うまくいきませんでした。',
+    actUnconfirmed: '送りましたが、記録の確定が遅れています。',
+    actNotOwner: 'この名前は今の投稿用ウォレットのものではないため、署名を止めました。',
+    actSelfFollow: 'その名前は同じウォレットのものなので、ここからはフォローできません。',
+    mintNote: '名前を取る手続きはウォレットアプリ（MetaMask や FoxWallet）を使います。上の投稿用ウォレットとは別で、あちらは投稿専用です。',
   },
 }[LANG];
 
@@ -1045,6 +1182,480 @@ async function refinedFollowListsOf(idIn) {
    Posts, Recaws, follows and unfollows do render. */
 function isVisibleRow(a) { return a.type !== 1; }
 
+/* ---------- v12: byte helpers + WebCrypto plumbing ----------
+   All key work uses the platform WebCrypto (crypto.subtle) for
+   the standard hashes, key stretching and AES — available on
+   every modern browser over https and under Node for the
+   harness. The curve arithmetic below is plain BigInt. */
+const webCryptoObj = (typeof globalThis !== 'undefined' && globalThis.crypto) || null;
+function subtleCrypto() {
+  if (!webCryptoObj || !webCryptoObj.subtle) throw new Error('WebCrypto is not available here');
+  return webCryptoObj.subtle;
+}
+const utf8ToBytes = s => new TextEncoder().encode(s);
+function bytesToHexU(bytes) {
+  let out = '';
+  for (const b of bytes) out += b.toString(16).padStart(2, '0');
+  return out;
+}
+function hexToBytesU(hex) {
+  const h = String(hex || '').replace(/^0x/, '');
+  const out = new Uint8Array(h.length / 2);
+  for (let i = 0; i < out.length; i++) out[i] = parseInt(h.slice(i * 2, i * 2 + 2), 16);
+  return out;
+}
+function concatBytes(parts) {
+  let len = 0;
+  for (const p of parts) len += p.length;
+  const out = new Uint8Array(len);
+  let off = 0;
+  for (const p of parts) { out.set(p, off); off += p.length; }
+  return out;
+}
+const bytesToBig = bytes => bytes.length ? BigInt('0x' + bytesToHexU(bytes)) : 0n;
+const bigToBytes32 = v => hexToBytesU(BigInt(v).toString(16).padStart(64, '0'));
+async function hmacBytes(hash, keyBytes, dataBytes) {
+  const key = await subtleCrypto().importKey('raw', keyBytes, { name: 'HMAC', hash }, false, ['sign']);
+  return new Uint8Array(await subtleCrypto().sign('HMAC', key, dataBytes));
+}
+const sha256Bytes = async bytes => new Uint8Array(await subtleCrypto().digest('SHA-256', bytes));
+async function pbkdf2Bytes(passwordBytes, saltBytes, iterations, hash, bitLen) {
+  const base = await subtleCrypto().importKey('raw', passwordBytes, 'PBKDF2', false, ['deriveBits']);
+  return new Uint8Array(await subtleCrypto().deriveBits(
+    { name: 'PBKDF2', salt: saltBytes, iterations, hash }, base, bitLen));
+}
+
+/* ---------- v12: secp256k1 (BigInt, Jacobian coordinates) ----------
+   The curve every Ethereum key lives on. Points travel in
+   Jacobian form (x, y, z) so scalar multiplication needs no
+   per-step inversion; one inversion converts back to affine.
+   Correctness is pinned by the harness vectors: the well-known
+   Hardhat key and phrase must derive their well-known address,
+   and a fixed transaction signed here must match ethers byte
+   for byte (RFC 6979 makes the signature deterministic). */
+const SEC_P = 0xfffffffffffffffffffffffffffffffffffffffffffffffffffffffefffffc2fn;
+const SEC_N = 0xfffffffffffffffffffffffffffffffebaaedce6af48a03bbfd25e8cd0364141n;
+const SEC_G = {
+  x: 0x79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798n,
+  y: 0x483ada7726a3c4655da4fbfc0e1108a8fd17b448a68554199c47d08ffb10d4b8n,
+};
+const secMod = (a, m) => { const r = a % m; return r >= 0n ? r : r + m; };
+function secPow(base, exp, m) {
+  let result = 1n, b = secMod(base, m), e = exp;
+  while (e > 0n) {
+    if (e & 1n) result = (result * b) % m;
+    b = (b * b) % m;
+    e >>= 1n;
+  }
+  return result;
+}
+const secInv = (a, m) => secPow(a, m - 2n, m); // both moduli here are prime
+const JAC_INF = { x: 0n, y: 1n, z: 0n };
+function jacDouble(Pt) {
+  if (Pt.z === 0n || Pt.y === 0n) return JAC_INF;
+  const yy = secMod(Pt.y * Pt.y, SEC_P);
+  const s = secMod(4n * Pt.x * yy, SEC_P);
+  const m = secMod(3n * Pt.x * Pt.x, SEC_P);
+  const nx = secMod(m * m - 2n * s, SEC_P);
+  const ny = secMod(m * (s - nx) - 8n * yy * yy, SEC_P);
+  const nz = secMod(2n * Pt.y * Pt.z, SEC_P);
+  return { x: nx, y: ny, z: nz };
+}
+function jacAdd(Pt, Qt) {
+  if (Pt.z === 0n) return Qt;
+  if (Qt.z === 0n) return Pt;
+  const z1z1 = secMod(Pt.z * Pt.z, SEC_P), z2z2 = secMod(Qt.z * Qt.z, SEC_P);
+  const u1 = secMod(Pt.x * z2z2, SEC_P), u2 = secMod(Qt.x * z1z1, SEC_P);
+  const s1 = secMod(Pt.y * Qt.z * z2z2, SEC_P), s2 = secMod(Qt.y * Pt.z * z1z1, SEC_P);
+  if (u1 === u2) {
+    if (s1 !== s2) return JAC_INF;
+    return jacDouble(Pt);
+  }
+  const h = secMod(u2 - u1, SEC_P);
+  const r = secMod(s2 - s1, SEC_P);
+  const hh = secMod(h * h, SEC_P), hhh = secMod(h * hh, SEC_P);
+  const v = secMod(u1 * hh, SEC_P);
+  const nx = secMod(r * r - hhh - 2n * v, SEC_P);
+  const ny = secMod(r * (v - nx) - s1 * hhh, SEC_P);
+  const nz = secMod(h * Pt.z * Qt.z, SEC_P);
+  return { x: nx, y: ny, z: nz };
+}
+function jacToAffine(Pt) {
+  if (Pt.z === 0n) return null;
+  const zi = secInv(Pt.z, SEC_P);
+  const zi2 = secMod(zi * zi, SEC_P), zi3 = secMod(zi2 * zi, SEC_P);
+  return { x: secMod(Pt.x * zi2, SEC_P), y: secMod(Pt.y * zi3, SEC_P) };
+}
+/* Scalar multiplication of an affine point; returns affine. */
+function secMul(k, affinePt) {
+  let kMod = secMod(k, SEC_N);
+  if (kMod === 0n || !affinePt) return null;
+  let acc = JAC_INF;
+  let addend = { x: affinePt.x, y: affinePt.y, z: 1n };
+  while (kMod > 0n) {
+    if (kMod & 1n) acc = jacAdd(acc, addend);
+    addend = jacDouble(addend);
+    kMod >>= 1n;
+  }
+  return jacToAffine(acc);
+}
+function secNeg(pt) { return pt ? { x: pt.x, y: secMod(-pt.y, SEC_P) } : null; }
+function pubPointOf(privBytes) { return secMul(bytesToBig(privBytes), SEC_G); }
+function compressedPubOf(privBytes) {
+  const pt = pubPointOf(privBytes);
+  const out = new Uint8Array(33);
+  out[0] = (pt.y & 1n) ? 0x03 : 0x02;
+  out.set(bigToBytes32(pt.x), 1);
+  return out;
+}
+/* EIP-55 checksummed address for a public point. */
+function addressOfPoint(pt) {
+  const raw = concatBytes([bigToBytes32(pt.x), bigToBytes32(pt.y)]);
+  const hash = keccakHex(raw);
+  const lower = hash.slice(-40);
+  const hashHex = keccakHex(utf8ToBytes(lower));
+  let out = '0x';
+  for (let i = 0; i < 40; i++) {
+    const ch = lower[i];
+    out += (ch >= 'a' && parseInt(hashHex[i], 16) >= 8) ? ch.toUpperCase() : ch;
+  }
+  return out;
+}
+function addressOfPriv(privBytes) { return addressOfPoint(pubPointOf(privBytes)); }
+
+/* Sign a 32-byte digest with plain ECDSA — the CAW way: no
+   prefix, no message wrapping. The nonce is RFC 6979
+   deterministic (HMAC-SHA-256), s is normalised low, and the
+   recovery id rides in v as 27/28, matching what ethers'
+   SigningKey produces for the same key and digest (the harness
+   cross-checks the whole transaction built on this). */
+async function signDigestRaw(privBytes, digestHex) {
+  const digest = hexToBytesU(digestHex);
+  const z = bytesToBig(digest);
+  const bh = bigToBytes32(secMod(z, SEC_N)); // RFC 6979 bits2octets
+  let V = new Uint8Array(32).fill(0x01);
+  let K = new Uint8Array(32).fill(0x00);
+  K = await hmacBytes('SHA-256', K, concatBytes([V, new Uint8Array([0]), privBytes, bh]));
+  V = await hmacBytes('SHA-256', K, V);
+  K = await hmacBytes('SHA-256', K, concatBytes([V, new Uint8Array([1]), privBytes, bh]));
+  V = await hmacBytes('SHA-256', K, V);
+  const priv = bytesToBig(privBytes);
+  for (;;) {
+    V = await hmacBytes('SHA-256', K, V);
+    const k = bytesToBig(V);
+    if (k >= 1n && k < SEC_N) {
+      const R = secMul(k, SEC_G);
+      const r = secMod(R.x, SEC_N);
+      if (r !== 0n) {
+        let s = secMod(secInv(k, SEC_N) * secMod(z + r * priv, SEC_N), SEC_N);
+        if (s !== 0n) {
+          let recid = Number(R.y & 1n) | (R.x >= SEC_N ? 2 : 0);
+          if (s > SEC_N / 2n) { s = SEC_N - s; recid ^= 1; }
+          return { v: 27 + recid, r: '0x' + bytesToHexU(bigToBytes32(r)), s: '0x' + bytesToHexU(bigToBytes32(s)) };
+        }
+      }
+    }
+    K = await hmacBytes('SHA-256', K, concatBytes([V, new Uint8Array([0])]));
+    V = await hmacBytes('SHA-256', K, V);
+  }
+}
+/* Recover the signer address of a digest signature — the same
+   ecrecover the CawActions contract performs on-chain, done
+   locally so the harness (and the page) can prove a signature
+   belongs to a key without sending anything. */
+function ecrecoverAddress(digestHex, sig) {
+  const vIn = Number(sig.v);
+  const recid = vIn >= 27 ? vIn - 27 : vIn;
+  const r = BigInt(sig.r), s = BigInt(sig.s);
+  if (r <= 0n || r >= SEC_N || s <= 0n || s >= SEC_N) return null;
+  const x = r + BigInt(recid >> 1) * SEC_N;
+  if (x >= SEC_P) return null;
+  const alpha = secMod(x * x * x + 7n, SEC_P);
+  let y = secPow(alpha, (SEC_P + 1n) / 4n, SEC_P);
+  if (secMod(y * y, SEC_P) !== alpha) return null;
+  if (Number(y & 1n) !== (recid & 1)) y = SEC_P - y;
+  const R = { x, y };
+  const z = secMod(BigInt(digestHex), SEC_N);
+  const rInv = secInv(r, SEC_N);
+  const sR = secMul(s, R);
+  const zG = secMul(z, SEC_G);
+  const diffJac = jacAdd({ x: sR.x, y: sR.y, z: 1n }, { x: zG.x, y: secMod(-zG.y, SEC_P), z: 1n });
+  const diff = jacToAffine(diffJac);
+  if (!diff) return null;
+  const Q = secMul(rInv, diff);
+  return Q ? addressOfPoint(Q) : null;
+}
+
+/* ---------- v12: BIP39 phrases + BIP32 derivation ----------
+   The wordlist itself lives in docs/bip39-words.js (loaded
+   before this file in the shells; the harness requires it the
+   same way). A phrase must open the SAME wallet here as in the
+   Android app, so the derivation is the standard one the app's
+   ethers HDNodeWallet uses: PBKDF2-HMAC-SHA512 seed (no
+   passphrase), BIP32 along m/44'/60'/0'/0/0. */
+let BIP39_WORDS = (typeof globalThis !== 'undefined' && globalThis.__CAW_BIP39_WORDS) || null;
+if (!BIP39_WORDS && typeof require === 'function') {
+  try { BIP39_WORDS = require('./bip39-words.js'); } catch (e) { /* shells pre-load it */ }
+}
+const bip39WordSet = () => new Map(BIP39_WORDS.map((w, i) => [w, i]));
+function normalizePhrase(input) {
+  return String(input || '').normalize('NFKD').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+async function validateMnemonic(phrase) {
+  if (!BIP39_WORDS) return false;
+  const words = normalizePhrase(phrase).split(' ').filter(Boolean);
+  if (![12, 15, 18, 21, 24].includes(words.length)) return false;
+  const set = bip39WordSet();
+  let bits = '';
+  for (const w of words) {
+    const idx = set.get(w);
+    if (idx === undefined) return false;
+    bits += idx.toString(2).padStart(11, '0');
+  }
+  const csLen = bits.length / 33;
+  const entBits = bits.slice(0, bits.length - csLen);
+  const csBits = bits.slice(bits.length - csLen);
+  const ent = new Uint8Array(entBits.length / 8);
+  for (let i = 0; i < ent.length; i++) ent[i] = parseInt(entBits.slice(i * 8, i * 8 + 8), 2);
+  const hash = await sha256Bytes(ent);
+  const expect = hash[0].toString(2).padStart(8, '0').slice(0, csLen);
+  return expect === csBits;
+}
+async function generateMnemonic() {
+  if (!webCryptoObj) throw new Error('no secure random source');
+  const ent = new Uint8Array(16); // 128 bits -> 12 words
+  webCryptoObj.getRandomValues(ent);
+  const hash = await sha256Bytes(ent);
+  let bits = '';
+  for (const b of ent) bits += b.toString(2).padStart(8, '0');
+  bits += hash[0].toString(2).padStart(8, '0').slice(0, 4);
+  const words = [];
+  for (let i = 0; i < 12; i++) words.push(BIP39_WORDS[parseInt(bits.slice(i * 11, i * 11 + 11), 2)]);
+  return words.join(' ');
+}
+async function mnemonicToSeed(phrase) {
+  const norm = normalizePhrase(phrase);
+  return pbkdf2Bytes(utf8ToBytes(norm), utf8ToBytes('mnemonic'), 2048, 'SHA-512', 512);
+}
+async function bip32Master(seedBytes) {
+  const I = await hmacBytes('SHA-512', utf8ToBytes('Bitcoin seed'), seedBytes);
+  return { key: I.slice(0, 32), chain: I.slice(32) };
+}
+async function bip32Child(node, index) {
+  const data = index >= 0x80000000
+    ? concatBytes([new Uint8Array([0]), node.key, new Uint8Array([(index >>> 24) & 0xff, (index >>> 16) & 0xff, (index >>> 8) & 0xff, index & 0xff])])
+    : concatBytes([compressedPubOf(node.key), new Uint8Array([(index >>> 24) & 0xff, (index >>> 16) & 0xff, (index >>> 8) & 0xff, index & 0xff])]);
+  const I = await hmacBytes('SHA-512', node.chain, data);
+  const il = bytesToBig(I.slice(0, 32));
+  if (il >= SEC_N) throw new Error('invalid child key (astronomically unlikely)');
+  const child = secMod(il + bytesToBig(node.key), SEC_N);
+  if (child === 0n) throw new Error('invalid child key (astronomically unlikely)');
+  return { key: bigToBytes32(child), chain: I.slice(32) };
+}
+const WALLET_PATH = "m/44'/60'/0'/0/0";
+async function deriveFromPhrase(phrase, path) {
+  const seed = await mnemonicToSeed(phrase);
+  let node = await bip32Master(seed);
+  const parts = String(path || WALLET_PATH).replace(/^m\/?/, '').split('/').filter(Boolean);
+  for (const part of parts) {
+    const hard = part.endsWith("'");
+    const num = parseInt(hard ? part.slice(0, -1) : part, 10);
+    node = await bip32Child(node, hard ? num + 0x80000000 : num);
+  }
+  return { privateKey: '0x' + bytesToHexU(node.key), address: addressOfPriv(node.key), keyBytes: node.key };
+}
+function privateKeyToAddress(keyHex) {
+  const kb = hexToBytesU(keyHex);
+  if (kb.length !== 32) return null;
+  const v = bytesToBig(kb);
+  if (v === 0n || v >= SEC_N) return null;
+  return addressOfPriv(kb);
+}
+
+/* ---------- v12: the vault (encrypted at rest) ----------
+   The password stretches (PBKDF2-HMAC-SHA256, 210,000 rounds)
+   into an AES-GCM-256 key that encrypts the secret JSON. Only
+   {salt, iv, ciphertext} — all base64 — ever touches storage,
+   under the key caw-vault-v1. A wrong password fails the GCM
+   check, which is exactly the "wrong password" signal. The
+   decrypted secret lives in page memory only (see the wallet
+   UI further down); nothing here logs or transmits it. */
+const VAULT_STORE_KEY = 'caw-vault-v1';
+const VAULT_ITERATIONS = 210000;
+const b64enc = bytes => {
+  let bin = '';
+  for (let i = 0; i < bytes.length; i += 4096) bin += String.fromCharCode(...bytes.slice(i, i + 4096));
+  return btoa(bin);
+};
+const b64dec = s => {
+  const bin = atob(String(s));
+  const out = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) out[i] = bin.charCodeAt(i);
+  return out;
+};
+async function vaultEncrypt(password, secretObj) {
+  const salt = new Uint8Array(16); webCryptoObj.getRandomValues(salt);
+  const iv = new Uint8Array(12); webCryptoObj.getRandomValues(iv);
+  const keyBits = await pbkdf2Bytes(utf8ToBytes(String(password)), salt, VAULT_ITERATIONS, 'SHA-256', 256);
+  const key = await subtleCrypto().importKey('raw', keyBits, { name: 'AES-GCM' }, false, ['encrypt']);
+  const ct = new Uint8Array(await subtleCrypto().encrypt({ name: 'AES-GCM', iv }, key, utf8ToBytes(JSON.stringify(secretObj))));
+  return { v: 1, iters: VAULT_ITERATIONS, salt: b64enc(salt), iv: b64enc(iv), ct: b64enc(ct) };
+}
+async function vaultDecrypt(password, stored) {
+  const salt = b64dec(stored.salt), iv = b64dec(stored.iv), ct = b64dec(stored.ct);
+  const keyBits = await pbkdf2Bytes(utf8ToBytes(String(password)), salt, VAULT_ITERATIONS, 'SHA-256', 256);
+  const key = await subtleCrypto().importKey('raw', keyBits, { name: 'AES-GCM' }, false, ['decrypt']);
+  const pt = await subtleCrypto().decrypt({ name: 'AES-GCM', iv }, key, ct); // throws on a wrong password
+  return JSON.parse(new TextDecoder().decode(pt));
+}
+function vaultLoad() {
+  try {
+    if (typeof localStorage === 'undefined') return null;
+    const j = JSON.parse(localStorage.getItem(VAULT_STORE_KEY) || 'null');
+    return (j && j.v === 1 && j.salt && j.iv && j.ct) ? j : null;
+  } catch (e) { return null; }
+}
+function vaultSave(stored) {
+  try { if (typeof localStorage !== 'undefined') localStorage.setItem(VAULT_STORE_KEY, JSON.stringify(stored)); } catch (e) {}
+}
+function vaultWipe() {
+  try { if (typeof localStorage !== 'undefined') localStorage.removeItem(VAULT_STORE_KEY); } catch (e) {}
+}
+
+/* ---------- v12: RLP + legacy (EIP-155) transactions ----------
+   The built-in wallet broadcasts the old-style signed
+   transaction — the only kind QL1 needs. Fields are RLP-encoded,
+   the sighash is keccak of the EIP-155 preimage (chain id 766
+   with two empty signature slots), and the signature comes from
+   signDigestRaw above, so v becomes chainId*2 + 35 + recid. */
+function rlpEncode(item) {
+  if (Array.isArray(item)) {
+    const payload = concatBytes(item.map(rlpEncode));
+    return concatBytes([rlpLenPrefix(payload.length, 0xc0), payload]);
+  }
+  const bytes = item;
+  if (bytes.length === 1 && bytes[0] < 0x80) return bytes;
+  return concatBytes([rlpLenPrefix(bytes.length, 0x80), bytes]);
+}
+function rlpLenPrefix(len, offset) {
+  if (len < 56) return new Uint8Array([offset + len]);
+  const lenBytes = [];
+  let n = len;
+  while (n > 0) { lenBytes.unshift(n & 0xff); n >>= 8; }
+  return new Uint8Array([offset + 55 + lenBytes.length, ...lenBytes]);
+}
+const bigToMinBytes = v => {
+  v = BigInt(v);
+  if (v === 0n) return new Uint8Array(0);
+  const h = v.toString(16);
+  return hexToBytesU(h.length % 2 ? '0' + h : h);
+};
+async function signLegacyTx(privBytes, tx) {
+  const chainId = BigInt(tx.chainId);
+  const fields = [
+    bigToMinBytes(tx.nonce), bigToMinBytes(tx.gasPrice), bigToMinBytes(tx.gasLimit),
+    hexToBytesU(tx.to), bigToMinBytes(tx.value || 0n), hexToBytesU(tx.data || '0x'),
+  ];
+  const preimage = rlpEncode([...fields, bigToMinBytes(chainId), new Uint8Array(0), new Uint8Array(0)]);
+  const sighash = '0x' + keccakHex(preimage);
+  const sig = await signDigestRaw(privBytes, sighash);
+  const v = chainId * 2n + 35n + BigInt(sig.v - 27);
+  const signed = rlpEncode([...fields, bigToMinBytes(v), hexToBytesU(sig.r), hexToBytesU(sig.s)]);
+  return '0x' + bytesToHexU(signed);
+}
+/* The local wallet's ONLY broadcast path: builds, signs and
+   sends one raw transaction from the in-page key, then waits
+   for the record like the mint path does. Gas comes from the
+   network estimate with a margin, falling back to the caller's
+   sane cap when the estimate is unavailable. Throws with
+   .unconfirmed + .txHash when the record is slow to settle. */
+async function sendLocalTx(privBytes, opts) {
+  const from = addressOfPriv(privBytes);
+  const nonce = BigInt(await rpc('eth_getTransactionCount', [from, 'pending']));
+  const gasPrice = BigInt(await rpc('eth_gasPrice', []));
+  let gasLimit = BigInt(opts.gasFallback || 200000);
+  try {
+    const est = BigInt(await rpc('eth_estimateGas', [{ from, to: opts.to, data: opts.data, value: '0x' + BigInt(opts.value || 0n).toString(16) }]));
+    if (est > 0n) gasLimit = (est * 12n) / 10n + 1000n;
+  } catch (e) { /* keep the fallback */ }
+  const raw = await signLegacyTx(privBytes, {
+    nonce, gasPrice, gasLimit, to: opts.to, data: opts.data,
+    value: BigInt(opts.value || 0n), chainId: 766,
+  });
+  const hash = await rpc('eth_sendRawTransaction', [raw]);
+  for (let i = 0; i < 60; i++) {
+    await new Promise(r => setTimeout(r, 2500));
+    const rc = await rpc('eth_getTransactionReceipt', [hash]).catch(() => null);
+    if (rc) {
+      if (rc.status !== '0x1') { const e = new Error('the record says this one failed'); e.txHash = hash; throw e; }
+      return { hash, receipt: rc };
+    }
+  }
+  const e = new Error('no confirmation yet');
+  e.txHash = hash; e.unconfirmed = true;
+  throw e;
+}
+
+/* Sign + submit one CAW action from the built-in wallet — the
+   app's submitAction rule, fail-closed: a FRESH ownerOf read for
+   the acting name must equal this wallet's address before
+   anything is signed, so an action can never be signed under a
+   name this wallet does not own. The signature is produced in
+   page (signDigestRaw over the ported actionDigest); the batch
+   goes out through the local wallet's one broadcast path. */
+async function submitLocalAction(privBytes, action) {
+  let owner = null;
+  try { owner = await readAddr(CAW_NAME, SEL.ownerOf + word(action.senderId)); }
+  catch (e) { owner = null; /* unreadable = unproven = refuse below */ }
+  const from = addressOfPriv(privBytes);
+  if (!owner || owner.toLowerCase() !== from.toLowerCase()) {
+    throw new Error('not-owner');
+  }
+  const sig = await signDigestRaw(privBytes, actionDigest(action));
+  const data = encodeBatch([action], [sig]);
+  return sendLocalTx(privBytes, { to: CAW_ACTIONS, data, gasFallback: 200000 });
+}
+
+/* ---------- v12: action + money calldata for the local wallet ---------- */
+const buildDepositCalldata = (tokenId, amount) => SEL.deposit + word(tokenId) + word(amount);
+const buildWithdrawCalldata = (tokenId, amount) => SEL.withdraw + word(tokenId) + word(amount);
+const buildApproveToCalldata = (spender, amount) => SEL.approve + encAddr(spender) + word(amount);
+/* Plain decimal amount -> wei (the app's parse rule). */
+function parseAmount(str) {
+  const m = /^(\d+)(?:\.(\d{1,18}))?$/.exec(String(str || '').trim());
+  if (!m) return null;
+  return BigInt(m[1]) * 10n ** 18n + BigInt((m[2] || '').padEnd(18, '0'));
+}
+/* hex cawId -> the 43-char base64url used in reply/quote
+   markers (byte-for-byte the app's codec). */
+function hexToB64Url(cawIdHex) {
+  const bytes = hexToBytesU(cawIdHex);
+  if (bytes.length !== 32) return null;
+  let s = '';
+  for (let i = 0; i < bytes.length; i += 3) {
+    const b0 = bytes[i], b1 = i + 1 < bytes.length ? bytes[i + 1] : 0, b2 = i + 2 < bytes.length ? bytes[i + 2] : 0;
+    s += B64CH[b0 >> 2] + B64CH[((b0 & 3) << 4) | (b1 >> 4)];
+    if (i + 1 < bytes.length) s += B64CH[((b1 & 15) << 2) | (b2 >> 6)];
+    if (i + 2 < bytes.length) s += B64CH[b2 & 63];
+  }
+  return s;
+}
+function postRefMarker(kind, cawIdHex) {
+  const b = hexToB64Url(cawIdHex);
+  return b ? '[caw:' + kind + ':' + b + ']' : null;
+}
+function appendPostRef(text, kind, cawIdHex) {
+  const m = postRefMarker(kind, cawIdHex);
+  if (!m) return text;
+  return String(text || '').replace(/\s+$/, '') + '\n' + m;
+}
+const textBytes = s => utf8ToBytes(String(s || '')).length;
+function randomCawId() {
+  const b = new Uint8Array(32);
+  webCryptoObj.getRandomValues(b);
+  return '0x' + bytesToHexU(b);
+}
+
 /* ================= browser UI (skipped under Node) ================= */
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
 
@@ -1103,6 +1714,7 @@ async function postCard(a, opts) {
   opts = opts || {};
   const div = document.createElement('div');
   div.className = 'post' + (opts.nested ? ' post-nested' : '');
+  div.dataset.cawid = (a.cawId || '').toLowerCase();
   const [name, img] = await Promise.all([resolveName(a.senderId), avatarFor(a.senderId)]);
   const who = name ? '@' + name : T.unknownName + a.senderId;
   const profHref = name ? profUrl(name) : null;
@@ -1124,6 +1736,7 @@ async function postCard(a, opts) {
     (replyCount > 0 ? '<span class="reply-count">' + IC_REPLY + '<span>' + replyCount + '</span></span>' : '') +
     (opts.nested ? '' : '<a href="' + postUrl(a.cawId) + '">' + T.openPost + '</a>') +
     '<a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a>' +
+    actionButtonsHtml(a) +
     '</div>';
   html += '</div>';
   div.innerHTML = html;
@@ -1152,6 +1765,7 @@ async function postCard(a, opts) {
       rctx.innerHTML = '<a class="plink" href="' + postUrl(parent.cawId) + '">' + esc(T.replyingTo.replace('{name}', pn)) + '</a>';
     })();
   }
+  wireActionButtons(div, a);
   return div;
 }
 
@@ -1455,11 +2069,13 @@ async function loadProfile() {
     '<div class="followbar">' +
     '<button type="button" class="ghost follow-open" id="followingBtn">' + T.followingLbl + '</button>' +
     '<button type="button" class="ghost follow-open" id="followersBtn">' + T.followersLbl + (followers !== null ? ': ' + followers.toString() : '') + '</button>' +
-    '</div><div id="followLists"></div>';
+    '</div><div id="followLists"></div><div id="profFollowArea"></div>';
   profileState = { id, username };
+  profileOwner = owner;
   const fb = $('followingBtn'), rb2 = $('followersBtn');
   if (fb) fb.onclick = () => openFollowList('following');
   if (rb2) rb2.onclick = () => openFollowList('followers');
+  renderProfFollow();
   profCursor = undefined; profDone = false;
   profBuckets = { posts: [], recaws: [] };
   profTab = 'posts';
@@ -2027,6 +2643,575 @@ async function renderMyNames() {
   }
 }
 
+/* ---------- v12: the built-in posting wallet (browser side) ----------
+   The decrypted secret and the derived private key live in this
+   module state ONLY — never in any storage. Locking (manual, or
+   after 15 idle minutes) overwrites and drops them. The vault in
+   localStorage holds only the AES-GCM ciphertext (see the vault
+   section above). Nothing in this section logs or transmits the
+   phrase or the key; the only network calls are public chain
+   reads and the wallet's own signed broadcasts. */
+let pwSession = null;      // {kind, secret, keyBytes, address}
+let pwNames = [];          // [{id, balance, username}] for the session address
+let pwActingId = null;     // bigint
+let pwLastTouch = 0;
+let pwView = 'auto';       // auto | create-show | create-password | import | import-password
+let pwDraft = null;        // {kind, secret} while a create/import flow is mid-way
+let pwLoadSeq = 0;
+const PW_ACTING_KEY = addr => 'caw-acting-' + String(addr).toLowerCase();
+const pwUnlocked = () => !!pwSession;
+const pwTouch = () => { pwLastTouch = Date.now(); };
+function pwActing() {
+  if (!pwNames.length) return null;
+  return pwNames.find(t => t.id === pwActingId) || pwNames[0];
+}
+function pwWipeSession() {
+  if (pwSession && pwSession.keyBytes) pwSession.keyBytes.fill(0);
+  pwSession = null; pwNames = []; pwActingId = null;
+}
+function pwLock() {
+  pwWipeSession();
+  pwView = 'auto'; pwDraft = null;
+  renderPw(); renderComposer(); refreshViewsForWallet();
+}
+setInterval(() => {
+  if (pwSession && Date.now() - pwLastTouch > 15 * 60 * 1000) pwLock();
+}, 30000);
+/* After the wallet state changes, the visible view re-renders so
+   action buttons appear/disappear with the lock state. */
+function refreshViewsForWallet() {
+  if (typeof postQuery !== 'undefined' && postQuery) loadPostPage(postQuery);
+  else if (typeof profileQuery !== 'undefined' && profileQuery) loadProfile();
+  else if (typeof searchQuery !== 'undefined' && searchQuery) { /* search rows keep their buttons state; a fresh search re-adds them */ }
+  else loadTimeline(false);
+}
+async function pwLoadNames() {
+  if (!pwSession) return;
+  const seq = ++pwLoadSeq;
+  const addr = pwSession.address;
+  ownerTokensCache.delete(addr);
+  let toks = [];
+  try { toks = await tokensOf(addr); } catch (e) { toks = []; }
+  if (seq !== pwLoadSeq || !pwSession) return;
+  pwNames = toks;
+  let pref = null;
+  try { pref = localStorage.getItem(PW_ACTING_KEY(addr)); } catch (e) {}
+  const hit = pref && toks.find(t => t.id.toString() === pref);
+  pwActingId = hit ? hit.id : (toks.length ? toks[0].id : null);
+}
+function pwSetActing(id) {
+  pwActingId = id;
+  if (pwSession) {
+    try { localStorage.setItem(PW_ACTING_KEY(pwSession.address), id.toString()); } catch (e) {}
+  }
+  renderPw(); renderComposer();
+}
+
+/* ----- wallet section rendering ----- */
+function renderPw() {
+  const area = $('pwArea');
+  if (!area) return;
+  if (pwSession) { renderPwUnlocked(area); return; }
+  if (vaultLoad()) { renderPwLocked(area); return; }
+  if (pwView === 'create-show' && pwDraft) { renderPwCreateShow(area); return; }
+  if (pwView === 'create-password' && pwDraft) { renderPwPassword(area, 'create'); return; }
+  if (pwView === 'import') { renderPwImport(area); return; }
+  if (pwView === 'import-password' && pwDraft) { renderPwPassword(area, 'import'); return; }
+  pwView = 'auto';
+  /* The intro + safety copy lives statically in the page shells
+     above this area (it must be readable before any script runs
+     and the harness checks it there); states only render their
+     own controls. */
+  area.innerHTML =
+    '<div class="row"><button id="pwCreateBtn" type="button">' + esc(T.pwCreateBtn) + '</button>' +
+    '<button id="pwImportBtn" class="ghost" type="button">' + esc(T.pwImportBtn) + '</button></div>' +
+    '<p id="pwStatus"></p>';
+  $('pwCreateBtn').onclick = async () => {
+    const st = $('pwStatus');
+    if (st) st.innerHTML = '<span class="small">' + esc(T.loading) + '</span>';
+    try {
+      const phrase = await generateMnemonic();
+      pwDraft = { kind: 'phrase', secret: phrase };
+      pwView = 'create-show';
+      renderPw();
+    } catch (e) {
+      if (st) st.innerHTML = '<span class="err">' + esc(T.loadFail) + '</span>' + errDetailHtml(e);
+    }
+  };
+  $('pwImportBtn').onclick = () => { pwView = 'import'; renderPw(); };
+}
+function renderPwCreateShow(area) {
+  const words = pwDraft.secret.split(' ');
+  area.innerHTML = '<h3>' + esc(T.pwShowPhraseTitle) + '</h3>' +
+    '<p class="warn">' + esc(T.pwPhraseWarn) + '</p>' +
+    '<div class="phrase-grid">' + words.map((w, i) =>
+      '<span class="phrase-word"><span class="pw-num">' + (i + 1) + '</span>' + esc(w) + '</span>').join('') + '</div>' +
+    '<label class="checkrow"><input type="checkbox" id="pwWrote"> ' + esc(T.pwWroteIt) + '</label>' +
+    '<div class="row"><button id="pwToPassword" type="button" disabled>' + esc(T.pwContinueBtn) + '</button>' +
+    '<button id="pwCreateCancel" class="ghost" type="button">' + esc(T.pwCancelBtn) + '</button></div>';
+  $('pwWrote').onchange = e => { $('pwToPassword').disabled = !e.target.checked; };
+  $('pwToPassword').onclick = () => { pwView = 'create-password'; renderPw(); };
+  $('pwCreateCancel').onclick = () => { pwDraft = null; pwView = 'auto'; renderPw(); };
+}
+function renderPwImport(area) {
+  area.innerHTML = '<p>' + esc(T.pwImportExplain) + '</p>' +
+    '<textarea id="pwImportText" rows="3" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="' + esc(T.pwImportPh) + '"></textarea>' +
+    '<p id="pwImportErr"></p>' +
+    '<div class="row"><button id="pwImportNext" type="button">' + esc(T.pwContinueBtn) + '</button>' +
+    '<button id="pwImportCancel" class="ghost" type="button">' + esc(T.pwCancelBtn) + '</button></div>';
+  $('pwImportNext').onclick = async () => {
+    const raw = $('pwImportText').value.trim();
+    const err = $('pwImportErr');
+    const fail = () => { err.innerHTML = '<span class="err">' + esc(T.pwImportInvalid) + '</span>'; };
+    if (/^0x[0-9a-fA-F]{64}$/.test(raw)) {
+      if (!privateKeyToAddress(raw)) return fail();
+      pwDraft = { kind: 'key', secret: raw.toLowerCase() };
+    } else {
+      const phrase = normalizePhrase(raw);
+      if (!(await validateMnemonic(phrase))) return fail();
+      pwDraft = { kind: 'phrase', secret: phrase };
+    }
+    $('pwImportText').value = '';
+    pwView = 'import-password';
+    renderPw();
+  };
+  $('pwImportCancel').onclick = () => { pwDraft = null; pwView = 'auto'; renderPw(); };
+}
+function renderPwPassword(area, mode) {
+  area.innerHTML = '<h3>' + esc(T.pwSetPasswordTitle) + '</h3>' +
+    (mode === 'create' ? '<p>' + esc(T.pwCreateExplain) + '</p>' : '') +
+    '<input type="password" id="pwPass1" autocomplete="new-password" placeholder="' + esc(T.pwPasswordPh) + '">' +
+    '<input type="password" id="pwPass2" autocomplete="new-password" placeholder="' + esc(T.pwPassword2Ph) + '">' +
+    '<p id="pwPassErr"></p>' +
+    '<div class="row"><button id="pwSaveBtn" type="button">' + esc(T.pwSaveBtn) + '</button>' +
+    '<button id="pwPassCancel" class="ghost" type="button">' + esc(T.pwCancelBtn) + '</button></div>';
+  $('pwSaveBtn').onclick = async () => {
+    const p1 = $('pwPass1').value, p2 = $('pwPass2').value;
+    const err = $('pwPassErr');
+    if (p1.length < 8) { err.innerHTML = '<span class="err">' + esc(T.pwPasswordShort) + '</span>'; return; }
+    if (p1 !== p2) { err.innerHTML = '<span class="err">' + esc(T.pwPasswordMismatch) + '</span>'; return; }
+    const btn = $('pwSaveBtn'); btn.disabled = true;
+    try {
+      const stored = await vaultEncrypt(p1, { kind: pwDraft.kind, secret: pwDraft.secret });
+      vaultSave(stored);
+      await pwStartSession(pwDraft);
+      pwDraft = null; pwView = 'auto';
+      renderPw(); renderComposer(); refreshViewsForWallet();
+    } catch (e) {
+      err.innerHTML = '<span class="err">' + esc(T.loadFail) + '</span>' + errDetailHtml(e);
+      btn.disabled = false;
+    }
+  };
+  $('pwPassCancel').onclick = () => { pwDraft = null; pwView = 'auto'; renderPw(); };
+}
+function renderPwLocked(area) {
+  area.innerHTML = '<h3>' + esc(T.pwLockedTitle) + '</h3>' +
+    '<p>' + esc(T.pwLockedText) + '</p>' +
+    '<input type="password" id="pwUnlockPass" autocomplete="current-password" placeholder="' + esc(T.pwPasswordPh) + '">' +
+    '<p id="pwUnlockErr"></p>' +
+    '<div class="row"><button id="pwUnlockBtn" type="button">' + esc(T.pwUnlockBtn) + '</button>' +
+    '<button id="pwRemoveBtn1" class="ghost" type="button">' + esc(T.pwRemoveBtn) + '</button></div>' +
+    '<div id="pwRemoveArea"></div>';
+  const tryUnlock = async () => {
+    const pw = $('pwUnlockPass').value;
+    const err = $('pwUnlockErr');
+    const btn = $('pwUnlockBtn'); btn.disabled = true;
+    try {
+      const secret = await vaultDecrypt(pw, vaultLoad());
+      $('pwUnlockPass').value = '';
+      await pwStartSession(secret);
+      renderPw(); renderComposer(); refreshViewsForWallet();
+    } catch (e) {
+      err.innerHTML = '<span class="err">' + esc(T.pwUnlockWrong) + '</span>';
+      btn.disabled = false;
+    }
+  };
+  $('pwUnlockBtn').onclick = tryUnlock;
+  $('pwUnlockPass').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+  $('pwRemoveBtn1').onclick = () => renderPwRemove($('pwRemoveArea'));
+}
+async function pwStartSession(secretObj) {
+  let keyBytes, address;
+  if (secretObj.kind === 'key') {
+    keyBytes = hexToBytesU(secretObj.secret);
+    address = addressOfPriv(keyBytes);
+  } else {
+    const d = await deriveFromPhrase(secretObj.secret);
+    keyBytes = d.keyBytes;
+    address = d.address;
+  }
+  pwSession = { kind: secretObj.kind, secret: secretObj.secret, keyBytes, address };
+  pwTouch();
+  await pwLoadNames();
+}
+function renderPwRemove(box) {
+  if (!box) return;
+  box.innerHTML = '<div class="pw-remove">' +
+    '<p class="warn">' + esc(T.pwRemoveWarn) + '</p>' +
+    '<p class="small">' + esc(T.pwRemoveTypeLbl) + ' <b>' + esc(T.pwRemoveWord) + '</b></p>' +
+    '<input type="text" id="pwRemoveType" autocomplete="off" autocapitalize="none" spellcheck="false">' +
+    '<div class="row"><button id="pwRemoveConfirm" class="secondary" type="button" disabled>' + esc(T.pwRemoveConfirmBtn) + '</button>' +
+    '<button id="pwRemoveCancel" class="ghost" type="button">' + esc(T.pwCancelBtn) + '</button></div></div>';
+  $('pwRemoveType').addEventListener('input', e => {
+    $('pwRemoveConfirm').disabled = e.target.value.trim() !== T.pwRemoveWord;
+  });
+  $('pwRemoveCancel').onclick = () => { box.innerHTML = ''; };
+  $('pwRemoveConfirm').onclick = () => {
+    vaultWipe();
+    pwWipeSession();
+    pwDraft = null; pwView = 'auto';
+    renderPw(); renderComposer(); refreshViewsForWallet();
+  };
+}
+function renderPwUnlocked(area) {
+  const s = pwSession;
+  const acting = pwActing();
+  let html = '<div class="addrline"><span class="dot dot-ok"></span><span>' + esc(shortAddr(s.address)) + '</span>' +
+    '<span class="chainbadge">QL1</span>' +
+    '<button id="pwCopyAddr" class="ghost sharebtn" type="button">' + esc(T.pwCopyBtn) + '</button></div>' +
+    '<div class="small">' + esc(T.pwAddressLbl) + ': ' + esc(s.address) + '</div>' +
+    '<p class="small">' + esc(T.pwQomLbl) + ': <b id="pwQomBal">…</b> QOM · ' +
+    esc(T.pwQcawLbl) + ': <b id="pwQcawBal">…</b> qCAW</p>' +
+    '<p id="pwGasWarn"></p>';
+  if (!pwNames.length) {
+    html += '<p class="warn">' + esc(T.pwNoNamesYet) + '</p>';
+  } else {
+    html += '<label class="small" for="pwActingSel">' + esc(T.pwActingLbl) + '</label>' +
+      '<select id="pwActingSel">' + pwNames.map(t =>
+        '<option value="' + t.id.toString() + '"' + (acting && t.id === acting.id ? ' selected' : '') + '>@' +
+        esc(t.username) + ' — ' + esc(T.pwNameBalanceLbl) + ': ' + esc(fmtQcaw(t.balance)) + ' qCAW</option>').join('') + '</select>';
+    if (acting) {
+      html += '<h3 class="detail-h">' + esc(T.pwDepTitle) + '</h3>' +
+        '<p class="small">' + esc(T.pwDepNote) + '</p>' +
+        '<input type="text" id="pwAmount" inputmode="decimal" autocomplete="off" placeholder="' + esc(T.pwAmountPh) + '">' +
+        '<div class="row"><button id="pwDepBtn" type="button">' + esc(T.pwDepositBtn) + '</button>' +
+        '<button id="pwWdBtn" class="ghost" type="button">' + esc(T.pwWithdrawBtn) + '</button></div>' +
+        '<p id="pwDepStatus"></p>';
+    }
+  }
+  html += '<div class="row" style="margin-top:12px"><button id="pwLockBtn" class="ghost" type="button">' + esc(T.pwLockBtn) + '</button>' +
+    '<button id="pwRemoveBtn2" class="ghost" type="button">' + esc(T.pwRemoveBtn) + '</button></div>' +
+    '<div id="pwRemoveArea"></div><p id="pwStatus"></p>';
+  area.innerHTML = html;
+  $('pwCopyAddr').onclick = async ev => {
+    try { await navigator.clipboard.writeText(s.address); ev.target.textContent = T.copied; setTimeout(() => { const b = $('pwCopyAddr'); if (b) b.textContent = T.pwCopyBtn; }, 1600); } catch (e) {}
+  };
+  const sel = $('pwActingSel');
+  if (sel) sel.onchange = () => pwSetActing(BigInt(sel.value));
+  const dep = $('pwDepBtn'); if (dep) dep.onclick = () => pwDoDepWd('deposit');
+  const wd = $('pwWdBtn'); if (wd) wd.onclick = () => pwDoDepWd('withdraw');
+  $('pwLockBtn').onclick = () => pwLock();
+  $('pwRemoveBtn2').onclick = () => renderPwRemove($('pwRemoveArea'));
+  /* balances fill in async */
+  (async () => {
+    try {
+      const [qom, qc] = await Promise.all([
+        rpc('eth_getBalance', [s.address, 'latest']).then(h => BigInt(h)),
+        readUint(QCAW, SEL.balanceOf + encAddr(s.address)),
+      ]);
+      const a = $('pwQomBal'), b = $('pwQcawBal'), w = $('pwGasWarn');
+      if (a) a.textContent = fmtQcaw(qom);
+      if (b) b.textContent = fmtQcaw(qc);
+      if (w && qom === 0n) w.innerHTML = '<span class="warn">' + esc(T.pwNeedGas) + '</span>';
+    } catch (e) { /* balances are a nicety; the sends re-read anyway */ }
+  })();
+}
+async function pwDoDepWd(kind) {
+  const acting = pwActing();
+  if (!pwSession || !acting) return;
+  const amt = parseAmount($('pwAmount').value);
+  const st = $('pwDepStatus');
+  if (amt === null || amt <= 0n) { if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>'; return; }
+  if (kind === 'withdraw' && amt > acting.balance) { if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>'; return; }
+  openConfirmPanel({
+    title: kind === 'deposit' ? T.confirmTitleDeposit : T.confirmTitleWithdraw,
+    lines: [
+      [T.confirmNameLbl, '@' + acting.username],
+      [T.confirmAmountLbl, fmtQcaw(amt) + ' qCAW'],
+    ],
+    onSign: async setStatus => {
+      pwTouch();
+      if (kind === 'deposit') {
+        const allow = await readUint(QCAW, SEL.allowance + encAddr(pwSession.address) + encAddr(CAW_NAME));
+        if (allow < amt) {
+          setStatus('<span class="small">' + esc(T.pwApproveFirst) + '</span>');
+          await sendLocalTx(pwSession.keyBytes, { to: QCAW, data: buildApproveToCalldata(CAW_NAME, amt), gasFallback: 60000 });
+        }
+        setStatus('<span class="small">' + esc(T.actWaiting) + '</span>');
+        await sendLocalTx(pwSession.keyBytes, { to: CAW_NAME, data: buildDepositCalldata(acting.id, amt), gasFallback: 100000 });
+      } else {
+        await sendLocalTx(pwSession.keyBytes, { to: CAW_NAME, data: buildWithdrawCalldata(acting.id, amt), gasFallback: 100000 });
+      }
+    },
+    afterSuccess: async () => {
+      await pwLoadNames();
+      renderPw(); renderComposer();
+    },
+  });
+}
+
+/* ----- confirm panel: sign what you see ----- */
+function confirmErrHtml(e) {
+  if (e && e.message === 'not-owner') return '<span class="err">' + esc(T.actNotOwner) + '</span>';
+  if (e && e.message === 'self-follow') return '<span class="err">' + esc(T.actSelfFollow) + '</span>';
+  if (e && e.unconfirmed) return '<span class="warn">' + esc(T.actUnconfirmed) + '</span>' + txLinkHtml(e.txHash);
+  return '<span class="err">' + esc(T.actFail) + '</span>' + txLinkHtml(e && e.txHash) + errDetailHtml(e);
+}
+function openConfirmPanel(opts) {
+  const ov = $('confirmOverlay');
+  if (!ov) return;
+  $('confirmTitle').textContent = opts.title;
+  $('confirmLines').innerHTML = (opts.lines || []).map(([k, v]) =>
+    '<div class="confirm-line"><span class="ck">' + esc(k) + '</span><span class="cv">' + esc(v) + '</span></div>').join('');
+  const status = $('confirmStatus');
+  status.innerHTML = '';
+  const sign = $('confirmSignBtn'), cancel = $('confirmCancelBtn');
+  sign.textContent = T.confirmSignBtn; sign.style.display = ''; sign.disabled = false;
+  cancel.textContent = T.confirmCancelBtn; cancel.disabled = false;
+  ov.style.display = '';
+  const close = () => { ov.style.display = 'none'; sign.onclick = null; cancel.onclick = null; };
+  cancel.onclick = close;
+  sign.onclick = async () => {
+    sign.disabled = true; cancel.disabled = true;
+    status.innerHTML = '<span class="small">' + esc(T.actSending) + '</span>';
+    try {
+      await opts.onSign(html => { status.innerHTML = html; });
+      status.innerHTML = '<span class="ok">' + esc(T.actDone) + '</span>';
+      if (opts.afterSuccess) { try { await opts.afterSuccess(); } catch (e) {} }
+    } catch (e) {
+      status.innerHTML = confirmErrHtml(e);
+    }
+    sign.style.display = 'none';
+    cancel.disabled = false;
+    cancel.textContent = LANG === 'ja' ? '閉じる' : 'Close';
+    cancel.onclick = close;
+  };
+}
+
+/* ----- composer (home view) ----- */
+let composerRef = null;        // {kind, post} for reply/quote mode
+let pendingComposeRef = null;  // resolved from the ?compose= link
+let compDraft = '';
+function setComposerRef(kind, post) {
+  const homeVisible = $('viewHome') && $('viewHome').style.display !== 'none';
+  if (!homeVisible) {
+    location.href = pageFile + '?compose=' + kind + ':' + post.cawId;
+    return;
+  }
+  composerRef = { kind, post };
+  renderComposer();
+  const ta = $('compText');
+  if (ta) { ta.focus(); ta.scrollIntoView({ block: 'center' }); }
+}
+function renderComposer() {
+  const area = $('composerArea');
+  if (!area) return;
+  if (!pwUnlocked()) {
+    area.innerHTML = '<div class="composer-hint"><span>' + esc(T.compHintLocked) + '</span>' +
+      '<button type="button" class="ghost" id="compSetupBtn">' + esc(T.compHintSetupBtn) + '</button></div>';
+    const b = $('compSetupBtn');
+    if (b) b.onclick = () => { const s = $('pwallet'); if (s) s.scrollIntoView(); };
+    return;
+  }
+  if (pendingComposeRef && !composerRef) {
+    composerRef = pendingComposeRef; pendingComposeRef = null;
+    setTimeout(() => { const ta = $('compText'); if (ta) ta.scrollIntoView({ block: 'center' }); }, 60);
+  }
+  const acting = pwActing();
+  if (!acting) {
+    area.innerHTML = '<div class="composer-hint"><span>' + esc(T.compHintNoName) + '</span></div>';
+    return;
+  }
+  const ref = composerRef;
+  let html = '<div class="composer-card">';
+  html += '<div class="meta"><span class="name">@' + esc(acting.username) + '</span>' +
+    '<span class="small">' + esc(T.pwNameBalanceLbl) + ': ' + esc(fmtQcaw(acting.balance)) + ' qCAW</span></div>';
+  if (acting.balance === 0n) html += '<p class="warn">' + esc(T.compZeroBalance) + '</p>';
+  if (ref) {
+    const lbl = ref.kind === 'reply' ? T.compReplyingTo : T.compQuoting;
+    html += '<div class="ctx comp-ref">' + esc(lbl.replace('{name}', '@…')) +
+      ' <button type="button" class="actbtn" id="compRefCancel">' + esc(T.compCancelRef) + '</button></div>';
+  }
+  html += '<textarea id="compText" rows="3" placeholder="' + esc(T.compPh) + '">' + esc(compDraft) + '</textarea>' +
+    '<div class="row" style="justify-content:space-between"><span class="charcount" id="compCount"></span>' +
+    '<button type="button" id="compPostBtn">' + esc(T.compPostBtn) + '</button></div>' +
+    '<p id="compStatus"></p></div>';
+  area.innerHTML = html;
+  if (ref) {
+    (async () => {
+      const nm = await resolveName(ref.post.senderId).catch(() => null);
+      const el = area.querySelector('.comp-ref');
+      if (el && composerRef === ref) {
+        el.firstChild.textContent = (ref.kind === 'reply' ? T.compReplyingTo : T.compQuoting)
+          .replace('{name}', nm ? '@' + nm : T.unknownName + ref.post.senderId) + ' ';
+      }
+    })();
+    $('compRefCancel').onclick = () => { composerRef = null; renderComposer(); };
+  }
+  const ta = $('compText'), count = $('compCount'), postBtn = $('compPostBtn');
+  const overhead = ref ? 1 + postRefMarker(ref.kind, ref.post.cawId).length : 0;
+  const update = () => {
+    compDraft = ta.value;
+    const bytes = textBytes(ta.value.trim()) + overhead;
+    count.textContent = T.compBytes.replace('{n}', String(bytes));
+    count.classList.toggle('err', bytes > 420);
+    postBtn.disabled = !ta.value.trim() || bytes > 420;
+  };
+  ta.addEventListener('input', update);
+  update();
+  postBtn.onclick = () => {
+    const body = ta.value.trim();
+    const finalText = ref ? appendPostRef(body, ref.kind, ref.post.cawId) : body;
+    if (textBytes(finalText) > 420) {
+      $('compStatus').innerHTML = '<span class="err">' + esc(T.compTooLong) + '</span>';
+      return;
+    }
+    const actingNow = pwActing();
+    openConfirmPanel({
+      title: T.confirmTitlePost,
+      lines: [
+        [T.confirmAsLbl, '@' + actingNow.username],
+        [T.confirmTextLbl, parsePostText(finalText).body],
+      ],
+      onSign: async () => {
+        pwTouch();
+        const action = {
+          type: 0, senderId: actingNow.id, receiverId: 0n,
+          ts: Math.floor(Date.now() / 1000), sender: pwSession.address,
+          cawId: randomCawId(), text: finalText,
+        };
+        await submitLocalAction(pwSession.keyBytes, action);
+      },
+      afterSuccess: async () => {
+        compDraft = ''; composerRef = null;
+        await pwLoadNames(); /* the action spent a little of the name's qCAW */
+        renderComposer();
+        loadTimeline(false);
+      },
+    });
+  };
+}
+
+/* ----- action buttons on post cards + profile follow ----- */
+async function doSimpleAction(kind, target) {
+  const acting = pwActing();
+  if (!pwSession || !acting) return;
+  const authorName = await resolveName(target.senderId).catch(() => null);
+  const targetLabel = (authorName ? '@' + authorName : T.unknownName + target.senderId) +
+    ' — ' + parsePostText(target.text).body.slice(0, 80);
+  openConfirmPanel({
+    title: kind === 1 ? T.confirmTitleLike : T.confirmTitleRecaw,
+    lines: [
+      [T.confirmAsLbl, '@' + acting.username],
+      [T.confirmTargetLbl, targetLabel],
+    ],
+    onSign: async () => {
+      pwTouch();
+      const action = {
+        type: kind, senderId: acting.id, receiverId: target.senderId,
+        ts: Math.floor(Date.now() / 1000), sender: pwSession.address,
+        cawId: target.cawId, text: kind === 1 ? 'LIKE' : 'REPOST',
+      };
+      const res = await submitLocalAction(pwSession.keyBytes, action);
+      return res;
+    },
+    afterSuccess: kind === 1 ? (() => {
+      const el = document.querySelector('[data-cawid="' + target.cawId.toLowerCase() + '"] .like-count');
+      if (el) {
+        const cur = parseInt((el.textContent || '').replace(/[^0-9]/g, ''), 10) || 0;
+        el.innerHTML = IC_HEART + '<span>' + (cur + 1) + '</span>';
+      }
+      pwLoadNames().then(() => renderComposer()).catch(() => {});
+    }) : undefined,
+  });
+}
+function actionButtonsHtml(a) {
+  if (!pwUnlocked() || !pwActing() || a.type !== 0) return '';
+  return '<span class="act-btns">' +
+    '<button type="button" class="actbtn" data-act="like">' + IC_HEART + esc(T.actLike) + '</button>' +
+    '<button type="button" class="actbtn" data-act="recaw">' + IC_REPEAT + esc(T.actRecaw) + '</button>' +
+    '<button type="button" class="actbtn" data-act="reply">' + IC_REPLY + esc(T.actReply) + '</button>' +
+    '<button type="button" class="actbtn" data-act="quote">' + esc(T.actQuote) + '</button></span>';
+}
+function wireActionButtons(div, a) {
+  /* A card can contain a nested original (quote/Recaw frame)
+     with its own buttons — only wire the wrap that belongs to
+     THIS card, never the nested one. */
+  const wrap = [...div.querySelectorAll('.act-btns')].find(w => w.closest('.post') === div);
+  if (!wrap) return;
+  wrap.addEventListener('click', e => e.stopPropagation());
+  const btn = name => wrap.querySelector('[data-act="' + name + '"]');
+  const like = btn('like'); if (like) like.onclick = () => doSimpleAction(1, a);
+  const rec = btn('recaw'); if (rec) rec.onclick = () => doSimpleAction(2, a);
+  const rep = btn('reply'); if (rep) rep.onclick = () => setComposerRef('reply', a);
+  const quo = btn('quote'); if (quo) quo.onclick = () => setComposerRef('quote', a);
+}
+let profileOwner = null;
+async function renderProfFollow() {
+  const box = $('profFollowArea');
+  if (!box || !profileState) return;
+  if (!pwUnlocked()) { box.innerHTML = ''; return; }
+  const acting = pwActing();
+  if (!acting) { box.innerHTML = ''; return; }
+  if ((profileOwner && profileOwner.toLowerCase() === pwSession.address.toLowerCase()) ||
+      pwNames.some(t => t.id === profileState.id)) {
+    box.innerHTML = '<p class="small">' + esc(T.actOwnProfile) + '</p>';
+    return;
+  }
+  box.innerHTML = '<p class="small">' + esc(T.loading) + '</p>';
+  let isFollowing = false;
+  try {
+    if (!followBuildState().complete) { try { await buildFollowIndex(null); } catch (e) {} }
+    const lists = await refinedFollowListsOf(acting.id);
+    isFollowing = lists.following.includes(profileState.id);
+  } catch (e) { isFollowing = followListsOf(acting.id).following.includes(profileState.id); }
+  if (!profileState) return;
+  const targetId = profileState.id, targetName = profileState.username;
+  box.innerHTML = '<button type="button" class="' + (isFollowing ? 'ghost' : '') + '" id="profFollowBtn">' +
+    esc(isFollowing ? T.actUnfollow : T.actFollow) + '</button>' +
+    (isFollowing ? ' <span class="small">' + esc(T.actFollowing) + '</span>' : '');
+  $('profFollowBtn').onclick = () => {
+    const actingNow = pwActing();
+    openConfirmPanel({
+      title: isFollowing ? T.confirmTitleUnfollow : T.confirmTitleFollow,
+      lines: [
+        [T.confirmAsLbl, '@' + actingNow.username],
+        [T.confirmTargetLbl, '@' + targetName],
+      ],
+      onSign: async () => {
+        pwTouch();
+        if (!isFollowing) {
+          /* Self-follow guard (app rule): the local name list
+             first; then the ownerOf pair — a failed read leaves
+             the local verdict standing. */
+          if (pwNames.some(t => t.id === targetId)) throw new Error('self-follow');
+          try {
+            const [so, ro] = await Promise.all([
+              readAddr(CAW_NAME, SEL.ownerOf + word(actingNow.id)),
+              readAddr(CAW_NAME, SEL.ownerOf + word(targetId)),
+            ]);
+            if (so && ro && so.toLowerCase() === ro.toLowerCase()) throw new Error('self-follow');
+          } catch (e) { if (e && e.message === 'self-follow') throw e; }
+        }
+        const action = {
+          type: isFollowing ? 4 : 3, senderId: actingNow.id, receiverId: targetId,
+          ts: Math.floor(Date.now() / 1000), sender: pwSession.address,
+          cawId: randomCawId(), text: isFollowing ? 'UNFOLLOW' : 'FOLLOW',
+        };
+        await submitLocalAction(pwSession.keyBytes, action);
+        /* Optimistically record the pair so the button, the
+           counts and the lists agree right away. */
+        try {
+          const head = BigInt(await rpc('eth_blockNumber', []));
+          fiPairs.set(fiKey(actingNow.id, targetId), { t: isFollowing ? 4 : 3, b: Number(head), x: 0, k: 0 });
+          fiPersist();
+        } catch (e) { /* the next build will find it on the record */ }
+      },
+      afterSuccess: () => renderProfFollow(),
+    });
+  };
+}
+
 /* ---------- init ---------- */
 const postQuery = new URLSearchParams(location.search).get('post');
 const searchQuery = new URLSearchParams(location.search).get('q');
@@ -2114,6 +3299,21 @@ if (mcb) mcb.onclick = doMintCheck;
 const mni = $('mintNameInput');
 if (mni) mni.addEventListener('keydown', e => { if (e.key === 'Enter') doMintCheck(); });
 refreshWallet();
+renderPw();
+renderComposer();
+/* Reply/Quote links from other views land here as
+   ?compose=reply:<cawId> / ?compose=quote:<cawId>; resolve the
+   target post now so the composer can open in that mode as soon
+   as the posting wallet is unlocked. */
+const composeParam = new URLSearchParams(location.search).get('compose');
+if (composeParam) {
+  const cm = /^(reply|quote):(0x[0-9a-fA-F]{64})$/.exec(composeParam);
+  if (cm) {
+    findPostDeep(cm[2]).then(post => {
+      if (post) { pendingComposeRef = { kind: cm[1], post }; renderComposer(); }
+    }).catch(() => {});
+  }
+}
 if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
   navigator.serviceWorker.register('sw.js').catch(() => {});
 }
@@ -2135,6 +3335,14 @@ if (typeof module !== 'undefined' && module.exports) {
     rpc, readUint, readStr, readAddr, encStr, encAddr,
     checkName, normalizeNameInput, buildApproveCalldata, buildMintCalldata,
     nameNftSvg, nameNftFontSize,
+    signDigestRaw, ecrecoverAddress, addressOfPriv, privateKeyToAddress,
+    validateMnemonic, generateMnemonic, deriveFromPhrase, WALLET_PATH,
+    vaultEncrypt, vaultDecrypt, vaultLoad, vaultSave, vaultWipe,
+    VAULT_STORE_KEY, VAULT_ITERATIONS, BIP39_WORDS,
+    signLegacyTx, rlpEncode, sendLocalTx,
+    buildDepositCalldata, buildWithdrawCalldata, buildApproveToCalldata,
+    parseAmount, hexToB64Url, postRefMarker, appendPostRef, textBytes,
+    randomCawId, submitLocalAction,
     SEL, CAW_NAME, CAW_ACTIONS, MINTER, QCAW, CHAIN_ID_HEX, word,
   };
 }

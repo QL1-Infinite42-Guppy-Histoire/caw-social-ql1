@@ -1,5 +1,6 @@
 /* CAW Social — web viewer (reading for everyone, name minting
-   through the visitor's own wallet).
+   through the visitor's own wallet, posting through the built-in
+   posting wallet whose key never leaves the visitor's browser).
    Fresh cache name per release; old caches are deleted on activate.
    Strategy is NETWORK FIRST for same-origin pages and assets, with
    the cache only as an offline fallback — a fresh visitor always
@@ -15,10 +16,10 @@
    users on 2026-11-08). viewer.js is in no old cache and matches no
    stub rule, so it reaches the network untouched; once this worker
    installs (skipWaiting + clients.claim) it takes over cleanly. */
-const CACHE = 'caw-view-v11';
+const CACHE = 'caw-view-v12';
 const SHELL = [
   './', 'index.html', 'en.html', 'ja.html',
-  'style.css', 'viewer.js', 'manifest.webmanifest',
+  'style.css', 'viewer.js', 'bip39-words.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
 ];
 

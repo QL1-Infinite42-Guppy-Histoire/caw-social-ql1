@@ -435,3 +435,57 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
 .followbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .follow-open { min-height: 40px; padding: 8px 18px; font-size: .9rem; }
 #followLists { margin-top: 6px; }
+
+/* ---- v12: posting wallet, composer, confirm panel, action buttons ---- */
+.pw-safety {
+  border: 1px solid var(--line2); border-left: 4px solid var(--warn);
+  background: var(--surface2); border-radius: 12px; padding: 10px 14px; margin: 12px 0;
+}
+.pw-safety p { margin: 6px 0; font-size: .92rem; }
+#pwallet input[type="password"], #pwallet input[type="text"], #pwallet select, #pwallet textarea {
+  width: 100%; box-sizing: border-box; margin: 6px 0; padding: 10px 12px;
+  border: 1px solid var(--line2); border-radius: 10px; background: var(--surface); color: var(--ink);
+  font-size: 1rem;
+}
+.phrase-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin: 12px 0; }
+.phrase-word {
+  background: var(--surface2); border: 1px solid var(--line2); border-radius: 10px;
+  padding: 8px 10px; font-weight: 600;
+}
+.phrase-word .pw-num { color: var(--muted); font-weight: 400; margin-right: 6px; font-size: .85rem; }
+.checkrow { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; font-size: .95rem; }
+.checkrow input { margin-top: 3px; width: 18px; height: 18px; flex: none; }
+.pw-remove { border: 1px solid var(--warn); border-radius: 12px; padding: 12px 14px; margin-top: 12px; }
+.composer-card {
+  border: 1px solid var(--line2); border-radius: 14px; padding: 12px 14px;
+  background: var(--surface); margin-bottom: 14px;
+}
+.composer-card textarea { width: 100%; box-sizing: border-box; }
+.composer-card .meta { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 6px; }
+.composer-hint {
+  display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+  border: 1px dashed var(--line2); border-radius: 14px; padding: 10px 14px; margin-bottom: 14px;
+}
+.comp-ref { margin-bottom: 8px; }
+.charcount.err { color: var(--warn); font-weight: 700; }
+.act-btns { display: inline-flex; gap: 4px; flex-wrap: wrap; margin-left: 6px; }
+.actbtn {
+  background: var(--surface2); color: var(--ink); border: 1px solid var(--line2);
+  border-radius: 999px; padding: 4px 10px; font-size: .8rem; min-height: 30px; cursor: pointer;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.actbtn:hover { background: var(--hover); }
+.actbtn svg { width: 14px; height: 14px; }
+.overlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 60;
+  display: flex; align-items: flex-end; justify-content: center;
+}
+.overlay .sheet {
+  background: var(--surface); color: var(--ink); width: 100%; max-width: 560px;
+  border-radius: 16px 16px 0 0; padding: 18px; max-height: 85vh; overflow: auto;
+}
+@media (min-width: 700px) { .overlay { align-items: center; } .overlay .sheet { border-radius: 16px; } }
+.confirm-line { display: flex; gap: 12px; margin: 8px 0; }
+.confirm-line .ck { color: var(--muted); flex: none; min-width: 64px; font-size: .9rem; }
+.confirm-line .cv { word-break: break-word; white-space: pre-wrap; }
+#profFollowArea { margin-top: 10px; }

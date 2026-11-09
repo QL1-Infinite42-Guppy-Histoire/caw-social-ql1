@@ -4,28 +4,28 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CAW Social — QL1（ウェブ版）</title>
-<meta name="description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。名前は自分のウォレットでここで取れます。投稿は Android アプリから。">
+<meta name="description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。名前はウォレットアプリで取り、投稿はこのページの内蔵ウォレットでも Android アプリでもできます。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="CAW Social — QL1（ウェブ版）">
-<meta property="og:description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。名前は自分のウォレットでここで取れます。投稿は Android アプリから。">
+<meta property="og:description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。名前はウォレットアプリで取り、投稿はこのページの内蔵ウォレットでも Android アプリでもできます。">
 <meta property="og:image" content="https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/icon-512.png">
 <link rel="preconnect" href="https://evm-rpc-ql1.mschihuahua.org">
 <link rel="preconnect" href="https://scan.qom.network">
 <meta name="theme-color" id="themeColorMeta" content="#f7f8fa">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png?v=11">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=11">
+<link rel="icon" type="image/png" href="icon-192.png?v=12">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=12">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
 <script>(function(){try{var t=localStorage.getItem('guppy-theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){document.documentElement.dataset.theme='light';}})();</script>
-<link rel="stylesheet" href="style.css?v=11">
+<link rel="stylesheet" href="style.css?v=12">
 </head>
 <body>
 <div class="topbar">
   <div class="topbar-inner">
-    <img class="logo" src="icon-192.png?v=11" alt="">
+    <img class="logo" src="icon-192.png?v=12" alt="">
     <div>
       <div class="title">CAW Social</div>
       <div class="tag">QL1 版・ウェブ閲覧</div>
@@ -37,8 +37,8 @@
 <div class="layout">
   <aside class="rail">
     <section class="railcard app-cta">
-      <h3>投稿はアプリから</h3>
-      <p>このウェブ版では、読むことと、自分のウォレットで名前を取ることができます。投稿・いいね・フォローは Android アプリからどうぞ。署名はアプリの中で安全に行われます。</p>
+      <h3>投稿 — ここでも、アプリでも</h3>
+      <p>このウェブ版では、読むことと、ウォレットアプリで名前を取ることと、内蔵の投稿用ウォレットで投稿することができます。署名はこのページの中で安全に行われます。Android アプリも同じ方式です。</p>
       <p><a class="cta-btn" href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Android アプリを入れる</a></p>
     </section>
     <section class="railcard">
@@ -63,8 +63,20 @@
 
   <main class="maincol">
     <section class="block notice">
-      <h2>閲覧は無料 — 名前もここで取れます</h2>
-      <p>QL1 の CAW のタイムラインを読んでいます。閲覧は無料で、ウォレットもアカウントも要りません。名前はここで、自分のウォレットで取れます。投稿・いいね・フォローは <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Android アプリ</a> からできます。</p>
+      <h2>閲覧は無料 — 名前も取れて、投稿もできます</h2>
+      <p>QL1 の CAW のタイムラインを読んでいます。閲覧は無料で、ウォレットもアカウントも要りません。名前はウォレットアプリで取れて、投稿はこのページの内蔵ウォレットでも、<a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Android アプリ</a>でもできます。</p>
+    </section>
+
+    <section class="block" id="pwallet">
+      <h2>投稿用ウォレット</h2>
+      <p>投稿・いいね・Recaw・フォローは、このページ内蔵の小さなウォレットで、このページの中で署名します。Android アプリと同じ方式です。名前を取る手続きは、下の方でウォレットアプリを使います。</p>
+      <div class="pw-safety">
+        <p>ここでは CAW 専用の別のウォレットを使ってください。本命ウォレットの復元フレーズは絶対に入力しないでください。</p>
+        <p>鍵はあなたのパスワードで暗号化され、このブラウザの中にだけ保存されます。どこにも送信されません。</p>
+        <p>このブラウザのデータを消すと、ここにあるウォレットは消えます。復元フレーズを控えておかないと、元に戻せません。</p>
+        <p>復元フレーズを見た人は、そのウォレットを使えてしまいます。紙に書いて、オフラインで、大切に保管してください。</p>
+      </div>
+      <div id="pwArea"></div>
     </section>
 
     <section class="block" id="lookup">
@@ -81,6 +93,7 @@
     <section class="block" id="getname">
       <h2>名前を取る</h2>
       <p>名前は、CAW であなたを見つけてもらうためのものです。一度取れば、ずっとあなたのものです。料金は qCAW で、名前によって変わります（払う前に金額を表示します）。ほかに、記録のための小さな手数料として QOM が少し必要です。qCAW の入ったウォレットアプリ（MetaMask や FoxWallet など）をご用意ください。</p>
+      <p class="small">名前を取る手続きはウォレットアプリを使います。上の投稿用ウォレット（投稿専用）とは別です。</p>
       <input type="text" id="mintNameInput" placeholder="ほしい名前" autocomplete="off" spellcheck="false" autocapitalize="none">
       <div class="row"><button id="mintCheckBtn">調べる</button></div>
       <div id="mintCheckResult"></div>
@@ -95,6 +108,7 @@
         <h3>CAWのいま</h3>
         <div class="statsBody"><p class="small">読み込み中…</p></div>
       </div>
+      <div id="composerArea"></div>
       <div class="row" style="justify-content:space-between">
         <h2 style="margin:0">タイムライン</h2>
         <button id="refreshBtn" class="ghost" type="button">更新する</button>
@@ -151,13 +165,25 @@
   </main>
 </div>
 
+<div id="confirmOverlay" class="overlay" style="display:none">
+  <div class="sheet">
+    <h3 id="confirmTitle"></h3>
+    <div id="confirmLines"></div>
+    <p id="confirmStatus"></p>
+    <div class="row">
+      <button id="confirmSignBtn" type="button">署名して送る</button>
+      <button id="confirmCancelBtn" class="ghost" type="button">やめる</button>
+    </div>
+  </div>
+</div>
 <button id="toTopBtn" class="to-top" type="button" style="display:none" aria-label="上へ戻る">↑</button>
 <nav class="bottomnav">
   <a href="ja.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>ホーム</span></a>
   <a href="ja.html#lookup"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>さがす</span></a>
   <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span>アプリ</span></a>
 </nav>
-<script src="viewer.js?v=11"></script>
+<script src="bip39-words.js?v=12"></script>
+<script src="viewer.js?v=12"></script>
 <script>
 /* If the viewer script was blocked or replaced by an older saved
    copy of this site, say so instead of loading forever. */

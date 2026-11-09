@@ -1,4 +1,4 @@
-/* Verification for the read-only web viewer (docs/viewer.js), run
+/* Verification for the CAW Social web viewer (docs/viewer.js), run
    against LIVE QL1 data. Checks:
    1. the feed decodes (posts + likes present in the raw walk);
    2. the row rule: likes never render (isVisibleRow), everything
@@ -22,6 +22,18 @@
    calldata, the NFT preview byte-compared with token 190's real
    on-chain card, and the write-path guards (exactly one send
    site in viewer.js, no signing method named anywhere).
+   v12 adds: the built-in posting wallet, verified offline —
+   the BIP39/BIP32 derivation against the public Hardhat vector
+   (wordlist + PBKDF2 + CKD + secp256k1 + keccak together), the
+   private-key vector, an action signature whose ecrecover equals
+   the signer (the contract's own check), the vault roundtrip +
+   wrong-password rejection, a fixed legacy transaction
+   byte-compared with an ethers-generated expectation, the
+   deposit/withdraw calldata, and the rewritten write-path
+   guards (no raw-sign request strings anywhere, exactly one
+   injected-provider send site for mint, exactly one raw send
+   site for the local wallet, the safety copy in both shells,
+   the wordlist file holding exactly 2048 words).
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -263,9 +275,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v11: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=11') && jaHtml.includes('?v=11'), 'shells reference ?v=11 assets');
-ok(swSrc.includes("caw-view-v11"), 'sw.js cache name is caw-view-v11');
+console.log('— v12: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=12') && jaHtml.includes('?v=12'), 'shells reference ?v=12 assets');
+ok(swSrc.includes("caw-view-v12"), 'sw.js cache name is caw-view-v12');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -371,18 +383,133 @@ console.log('— v11: NFT preview port —');
   ok(svg === onchainSvg, 'nameNftSvg("neptune") is byte-identical to token 190\'s on-chain card');
 }
 
-console.log('— v11: write-path guards —');
+console.log('— v12: built-in wallet crypto vectors (offline) —');
+const HK_PHRASE = 'test test test test test test test test test test test junk';
+const HK_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+const HK_ADDR = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 {
+  const derived = await V.deriveFromPhrase(HK_PHRASE);
+  ok(derived.address === HK_ADDR,
+    'BIP39 vector: the Hardhat phrase derives the Hardhat address (wordlist+PBKDF2+BIP32+secp256k1+keccak)',
+    derived.address);
+  ok((await V.validateMnemonic(HK_PHRASE)) === true, 'BIP39 checksum accepts the vector phrase');
+  ok((await V.validateMnemonic(HK_PHRASE.replace('junk', 'zoo'))) === false,
+    'BIP39 checksum rejects a tampered phrase');
+  ok(V.privateKeyToAddress(HK_KEY) === HK_ADDR,
+    'private-key vector: the Hardhat key maps to the same address');
+  const made = await V.generateMnemonic();
+  ok(made.split(' ').length === 12 && (await V.validateMnemonic(made)) === true,
+    'generated recovery phrase is 12 words and checksum-valid');
+}
+{
+  /* A sample post action, signed the in-page way; ecrecover over
+     the ported digest must return the signer — exactly what the
+     contract checks on submission. */
+  const d = await V.deriveFromPhrase(HK_PHRASE);
+  const action = {
+    type: 0, senderId: 190n, receiverId: 0n, ts: 1700000000,
+    sender: d.address, cawId: V.randomCawId(), text: 'hello CAW from the web',
+  };
+  const sig = await V.signDigestRaw(d.keyBytes, V.actionDigest(action));
+  ok(sig.v === 27 || sig.v === 28, 'action signature carries v in {27,28}', 'v=' + sig.v);
+  ok(V.ecrecoverAddress(V.actionDigest(action), sig) === d.address,
+    'ecrecover(actionDigest) == signer (the contract-side check)');
+  const other = { ...action, text: 'a different post' };
+  ok(V.ecrecoverAddress(V.actionDigest(other), sig) !== d.address,
+    'the same signature does NOT recover the signer for a different action');
+}
+{
+  const secret = { kind: 'phrase', secret: HK_PHRASE };
+  const stored = await V.vaultEncrypt('correct horse battery', secret);
+  ok(stored.iters >= 210000, 'vault PBKDF2 runs at least 210,000 iterations', 'iters=' + stored.iters);
+  const back = await V.vaultDecrypt('correct horse battery', stored);
+  ok(back.kind === 'phrase' && back.secret === HK_PHRASE, 'vault roundtrip returns the stored secret');
+  let wrongThrew = false;
+  try { await V.vaultDecrypt('not the password', stored); } catch (e) { wrongThrew = true; }
+  ok(wrongThrew, 'vault rejects a wrong password (GCM authentication)');
+  ok(!JSON.stringify(stored).includes('test test'),
+    'the stored vault holds no plaintext phrase');
+}
+{
+  /* Fixed legacy transaction, byte-compared. The expectation was
+     generated during development with the ethers bundled in the
+     Android app repo (signTransaction of the same fields with
+     the Hardhat key); deterministic RFC6979 signing makes the
+     bytes identical, so this pins RLP, the secp256k1 signer,
+     EIP-155 v and the key->address path all at once. */
+  const EXPECTED_TX = '0xf8ac038504a817c80083030d4094d2140e16adf37194036865e90bbca1139b739d0d80b844095ea7b3000000000000000000000000fc2f8743e3b09a6c973b114c3a082433e974ed9f00000000000000000000000000000000000000000000000000000000000f4240820620a0255ae7c4e5f50789bf243db664aa6d6e0a085f32a244b9d4536c4174efe13075a01aef3b8fe9ea19aad81724a726bcecedf47d42ee0c3ba9deba411fde849f8ac0';
+  const d = await V.deriveFromPhrase(HK_PHRASE);
+  const raw = await V.signLegacyTx(d.keyBytes, {
+    nonce: 3n, gasPrice: 20000000000n, gasLimit: 200000n,
+    to: V.QCAW, value: 0n,
+    data: V.buildApproveCalldata(1000000n), chainId: 766,
+  });
+  ok(raw === EXPECTED_TX, 'fixed legacy tx is byte-identical to the ethers expectation');
+}
+{
+  const expDep = '0x6170c4b1' +
+    '00000000000000000000000000000000000000000000000000000000000000be' +
+    '00000000000000000000000000000000000000000000000000000000000f4240';
+  ok(V.buildDepositCalldata(190n, 1000000n) === expDep,
+    'deposit calldata = deposit selector + token word + amount word');
+  const expWd = '0x43387983' +
+    '00000000000000000000000000000000000000000000000000000000000000be' +
+    '00000000000000000000000000000000000000000000000000000000000f4240';
+  ok(V.buildWithdrawCalldata(190n, 1000000n) === expWd,
+    'withdraw calldata = withdraw selector + token word + amount word');
+  const acting = { type: 1, senderId: 190n, receiverId: 7n, ts: 1700000000, sender: HK_ADDR, cawId: '0x' + '11'.repeat(32), text: 'LIKE' };
+  const batch = V.encodeBatch([acting], [{ r: '0x' + '22'.repeat(32), s: '0x' + '33'.repeat(32), v: 28 }]);
+  /* 868 bytes for this fixed sample: the selector + 27 words
+     (action words, the text tail, the signature words) — the
+     same layout the v9 check rebuilds byte-for-byte from a real
+     on-chain batch. */
+  ok(batch.startsWith('0x84e33f2f') && batch.length === 2 + 868 * 2,
+    'processAction calldata = action selector + the batch layout (868 bytes for the fixed sample)');
+  const marker = V.postRefMarker('reply', '0x' + 'ab'.repeat(32));
+  const parsed = V.parsePostText('body text\n' + marker);
+  ok(parsed.ref && parsed.ref.kind === 'reply' && parsed.ref.parentCawId === '0x' + 'ab'.repeat(32) &&
+     parsed.body === 'body text',
+    'reply marker encode -> parsePostText decode round-trips');
+  ok(V.parseAmount('100') === 100n * 10n ** 18n && V.parseAmount('12.5') === 125n * 10n ** 17n &&
+     V.parseAmount('1.0000000000000000001') === null && V.parseAmount('x') === null,
+    'parseAmount honours the whole-qCAW decimal rule (18 places max)');
+}
+
+console.log('— v12: write-path guards (rewritten for the two-write design) —');
+{
+  /* v12 has exactly two writes, kept apart: minting sends through
+     the visitor's injected wallet (one helper), and everything
+     else is signed in-page by the built-in wallet and broadcast
+     raw (one sender). Raw-sign REQUESTS to an external wallet are
+     never made — the refused method names must not even appear. */
   const sendSites = (viewerSrc.match(/eth_sendTransaction/g) || []).length;
-  ok(sendSites === 1, 'viewer.js has exactly ONE send site (the sendTx helper)', 'sites=' + sendSites);
+  ok(sendSites === 1, 'viewer.js has exactly ONE injected-provider send site (the mint helper)', 'sites=' + sendSites);
+  const rawSites = (viewerSrc.match(/eth_sendRawTransaction/g) || []).length;
+  ok(rawSites === 1, 'viewer.js has exactly ONE raw broadcast site (the local wallet sender)', 'sites=' + rawSites);
   ok(!/eth_sign/.test(viewerSrc) && !/personal_sign/.test(viewerSrc),
-    'viewer.js never names a signing method anywhere');
+    'viewer.js never names a raw-sign method anywhere (nothing is ever requested)');
   for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
     ok(html.includes('id="getname"') && html.includes('id="mintNameInput"') &&
        html.includes('id="mintCheckBtn"') && html.includes('id="walletArea"') &&
        html.includes('id="mintArea"') && html.includes('id="myNames"'),
        label + ' carries the get-a-name section and its controls');
+    ok(html.includes('id="pwallet"') && html.includes('id="pwArea"') &&
+       html.includes('id="composerArea"') && html.includes('id="confirmOverlay"'),
+       label + ' carries the posting wallet, the composer and the confirm panel');
   }
+  ok(enHtml.includes('Never type the recovery phrase of your main wallet') &&
+     enHtml.includes('Anyone who sees your recovery phrase owns this wallet'),
+     'en.html carries the posting-wallet safety copy');
+  ok(jaHtml.includes('本命ウォレットの復元フレーズは絶対に入力しないでください') &&
+     jaHtml.includes('復元フレーズを見た人は、そのウォレットを使えてしまいます'),
+     'ja.html carries the posting-wallet safety copy');
+  ok(enHtml.includes('bip39-words.js') && jaHtml.includes('bip39-words.js') &&
+     swSrc.includes('bip39-words.js'),
+     'the wordlist script is loaded by both shells and the service worker shell');
+  ok(Array.isArray(V.BIP39_WORDS) && V.BIP39_WORDS.length === 2048 &&
+     V.BIP39_WORDS[0] === 'abandon' && V.BIP39_WORDS[2047] === 'zoo' &&
+     new Set(V.BIP39_WORDS).size === 2048,
+     'the wordlist file holds exactly the 2048 BIP39 English words');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

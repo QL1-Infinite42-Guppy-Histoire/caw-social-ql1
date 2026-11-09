@@ -3,27 +3,85 @@
 A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
 
 - Site: https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/
-- Status: **live as a web viewer — plus name minting** (viewer
-  revived 2026-11-08; minting added in v11, 2026-11-08). The
-  timeline, post pages and profiles are decoded in your browser
-  from the public explorer API and the chain itself, and reading
-  needs no wallet. Getting a name connects your own wallet and
-  sends two ordinary transactions (a qCAW allowance, then the
-  mint) — the only sends this site can make. It never asks for
-  any kind of signature and never handles keys.
-- Posting, likes, re-caws and follows live in the **Android app**
-  ([download page](https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/)),
-  where signing happens inside the app. The web posting features
-  were retired in November 2026: the scheme needs a raw-digest
-  signature (`eth_sign`) that common wallet apps refuse, and the
-  app made the whole question moot. Minting needs no such
-  signature, which is why it — alone — could come back. The
-  verified research behind the posting scheme is kept below
-  under "Posting" as a historical record.
+- Status: **live — reading, name minting, and posting** (viewer
+  revived 2026-11-08; minting added in v11, 2026-11-08; posting
+  added in v12, 2026-11-09). The timeline, post pages and
+  profiles are decoded in your browser from the public explorer
+  API and the chain itself, and reading needs no wallet.
+  Getting a name connects your own wallet app and sends two
+  ordinary transactions (a qCAW allowance, then the mint).
+  Posting, likes, re-caws and follows are signed **inside this
+  page** by a small built-in posting wallet — the same model as
+  the **Android app**
+  ([download page](https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/)):
+  the key lives only in your browser, encrypted with a password
+  you set, and is never sent anywhere. The site never asks an
+  external wallet for any kind of signature: the posting scheme
+  needs a raw-digest signature that wallet apps refuse, so the
+  built-in wallet produces it in-page instead. See "What's new
+  in v12" for the safety model, and "Posting" below for the
+  verified scheme itself.
 - Design: white, X-style timeline (round avatars, light borders),
   plain everyday wording, one accent colour. A two-pane layout on
   desktop (rail + reading column), a single column on phones. Also a
   **PWA**: add it to the home screen and it opens standalone.
+
+## What's new in v12 (2026-11-09)
+
+- **Posting is back — through a built-in wallet, not a wallet
+  app.** The posting scheme needs a raw-digest signature
+  (`eth_sign`), which wallet apps refuse or have removed; that
+  is why web posting was retired. v12 takes the Android app's
+  route instead: a small **posting wallet lives inside this
+  page**. You create one (a fresh 12-word recovery phrase, shown
+  once) or import one (a phrase or a private key). It is
+  encrypted with a password you set (PBKDF2, 210,000 rounds,
+  AES-GCM) and stored **only in this browser**; the decrypted
+  key exists only in page memory, locks itself after 15 idle
+  minutes, and is wiped by the Lock and Remove controls. Nothing
+  about the key ever leaves the browser — the only network
+  traffic is public chain reads and the wallet's own signed
+  broadcasts. The safety rules are printed on the wallet section
+  itself: use a separate CAW-only wallet, never type your main
+  wallet's recovery phrase, save the phrase offline, and know
+  that clearing the browser's data deletes the wallet.
+- **Everything the app does, in the page.** A composer on the
+  home view (420-byte limit, counting the reply/quote marker,
+  exactly like the app), Like / Recaw / Reply / Quote buttons on
+  posts, and Follow / Unfollow on profiles. Every action first
+  shows a **confirm panel** — the acting name, the target, the
+  text — so you sign what you see. Before signing, the page
+  re-reads the name's owner on the record and refuses if the
+  name is not this wallet's (the app's fail-closed rule), and a
+  follow of your own other name is refused. Actions are paid
+  from the acting name's internal qCAW balance, shown next to
+  the composer; the wallet section carries the deposit /
+  withdraw controls for it (an allowance send first when
+  needed, then the deposit — each a local signed transaction),
+  plus the wallet's own QOM (fee) and qCAW balances.
+- **The crypto is written from scratch, in the page, and pinned
+  by vectors.** secp256k1 over BigInt with RFC6979 deterministic
+  signing, BIP39 + BIP32 (the 2048-word list ships as its own
+  file, `bip39-words.js`, extracted from the same ethers wordlist
+  the app uses) deriving the app's path `m/44'/60'/0'/0/0`, and
+  an RLP legacy-transaction sender (EIP-155, chain 766). The
+  harness proves it all offline: the public Hardhat phrase
+  derives the Hardhat address; a sample action signature
+  recovers its signer over the real digest (the contract's own
+  check); the vault round-trips and rejects a wrong password; a
+  fixed transaction is **byte-identical** to the same
+  transaction signed by ethers. A phrase imported here derives
+  the same address as in the app.
+- **Two writes, kept apart, both guarded.** Minting still goes
+  through your wallet app (exactly one send site in the code);
+  everything else is signed in-page and broadcast raw (exactly
+  one raw-send site). The harness counts both and also checks
+  that no raw-sign request is ever named, the safety copy is
+  present in both languages, and the wordlist holds exactly
+  2048 words. **No real post has been sent from this site yet**
+  (the harness holds no funded named key): **the first real
+  post from a visitor's own built-in wallet is the end-to-end
+  check.**
 
 ## What's new in v11 (2026-11-08)
 
@@ -132,11 +190,17 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
 
 ## What works
 
-- **Getting a name (the one write)** — check a name against the
-  contract's rules, taken-ness and price; preview the real NFT
-  card; then mint it through your own wallet in two confirmed
-  steps (qCAW allowance, then the mint), with your owned names
-  listed below. See "What's new in v11".
+- **Getting a name (through your wallet app)** — check a name
+  against the contract's rules, taken-ness and price; preview
+  the real NFT card; then mint it through your own wallet in two
+  confirmed steps (qCAW allowance, then the mint), with your
+  owned names listed below. See "What's new in v11".
+- **Posting (through the built-in wallet)** — create or import
+  the posting wallet in the page, pick which of its names to act
+  as, put qCAW into that name, then post / like / Recaw / reply /
+  quote / follow from the composer, the post buttons and the
+  profile pages, each behind a see-what-you-sign confirm panel.
+  See "What's new in v12".
 - **Timeline** — posts, re-caws and follows recorded by the QL1
   `CawActions` contract, decoded in your browser (batch-aware
   decoder). Like actions never render as rows — they only feed the
@@ -174,13 +238,20 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   follow-build chunk cap. v11 adds: the live name check, the
   hand-computed mint calldata, the NFT preview byte-compared
   with a real minted card, and the single-send-site guards.
+  v12 adds: the Hardhat derivation + key vectors, the action
+  signature recovery check, the vault roundtrip + wrong-password
+  rejection, the fixed-transaction byte comparison against
+  ethers, the deposit/withdraw calldata, and the two-write
+  guards (one injected send site, one raw send site, no raw-sign
+  request named, safety copy in both shells, 2048-word list).
 
-## Posting (historical — the retired web write path)
+## Posting (the scheme — now live in the app and, since v12, here)
 
-> The web version does not post: this section is kept as the
-> research record behind the scheme the Android app now uses.
-> The viewer never asks for a signature; its only send is name
-> minting (see "What's new in v11").
+> This is the research record behind the posting scheme. The
+> Android app signs it in-app; since v12 the web version signs
+> it in-page with the built-in posting wallet, because external
+> wallet apps refuse the raw-digest signature it needs. Minting
+> stays with the wallet app (see "What's new in v11").
 
 Verified 2026-11-07. The QL1 `CawActions` contract checks an EIP-712
 style digest per action:
@@ -225,9 +296,11 @@ in an EVM against a real transaction and the hash inputs were read from
 the trace; the resulting construction was then checked off-chain
 against **all 264 actions** in 300 sampled real transactions — every
 signature recovered its sender — and the site's calldata builder
-rebuilt **every real batch byte for byte**. No real-money send test was
-done from this site (no keys are handled here); the first post from a
-visitor's own wallet is the end-to-end check.
+rebuilt **every real batch byte for byte**. The v12 in-page signer
+is checked the same way (signature recovery over the digest, plus
+the byte-identical fixed transaction). No real post has been sent
+from this site yet — the first post from a visitor's own built-in
+wallet is the end-to-end check.
 
 ## Profile pictures and bios
 
@@ -287,9 +360,10 @@ owner.)
   `usernames()` getter is shifted by one — the viewer always prefers
   the card.
 - Static site, no build step: everything lives in `docs/`.
-  Reading never handles keys, and the site never asks for a
-  signature; the only send it can make is minting a name through
-  the visitor's own wallet (v11).
+  Reading never handles keys. The site has exactly two writes:
+  minting a name through the visitor's own wallet app (v11), and
+  actions signed in-page by the built-in posting wallet, whose
+  encrypted key never leaves the visitor's browser (v12).
 
 Part of [Guppy's Guide](https://ql1-infinite42-guppy-histoire.github.io/links/) — Don't Panic.
 
