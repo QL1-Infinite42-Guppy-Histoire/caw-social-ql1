@@ -136,13 +136,13 @@ button { font-family: inherit; }
     overflow-y: auto; overflow-x: hidden;
   }
   .sidebar .nav-label, .sidebar .side-name, .sidebar .side-sub,
-  .sidebar .side-post-label { display: none; }
+  .sidebar .side-follow, .sidebar .side-post-label { display: none; }
   .sidebar .nav-it, .sidebar .side-summary { justify-content: center; }
 }
 @media (min-width: 1100px) {
   .sidebar { flex-basis: 260px; width: 260px; padding: 4px 12px 12px; }
   .sidebar .nav-label, .sidebar .side-name, .sidebar .side-sub,
-  .sidebar .side-post-label { display: block; }
+  .sidebar .side-follow, .sidebar .side-post-label { display: block; }
   .sidebar .nav-it, .sidebar .side-summary { justify-content: flex-start; }
 }
 .side-logo {
@@ -162,6 +162,14 @@ button { font-family: inherit; }
 .side-summary .avatar { width: 44px; height: 44px; flex-basis: 44px; }
 .side-name { font-size: 16px; font-weight: 800; line-height: 1.25; }
 .side-sub { color: var(--sub); font-size: 13px; }
+.side-follow { color: var(--sub); font-size: 13px; }
+.side-follow b { color: var(--ink); font-weight: 800; }
+/* v15: the drawer's Settings group header — a plain label row,
+   not a control; the theme and language rows under it keep
+   their own wiring. */
+.nav-settings { cursor: default; font-weight: 800; }
+.nav-settings:hover { background: none; }
+.drawer .nav-settings { font-size: 17px; }
 .nav-it {
   display: flex; align-items: center; gap: 18px;
   padding: 13px 12px; border-radius: 999px;

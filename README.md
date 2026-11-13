@@ -28,6 +28,40 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   drawer on phones. Also a **PWA**: add it to the home screen
   and it opens standalone.
 
+## What's new in v15 (2026-11-13)
+
+- **The home view is the timeline alone.** The posting
+  wallet, the name/post lookup desk and the get-a-name desk
+  no longer stack above the timeline — each is a view of its
+  own now (`?wallet=1`, `?lookup=1`, `?getname=1`), opened
+  from the drawer / sidebar rows exactly like the Android
+  app, and the composer's "set up the wallet" guidance and
+  the name chip route to the wallet view instead of
+  scrolling down the home page. The intro notice and the
+  in-home stats card left the home view too: the same honest
+  wording lives on in the right rail's About / app cards,
+  and the stats in the rail's stats card. Links saved before
+  v15 (`#pwallet` / `#lookup` / `#getname`) still land on
+  the matching view. Display and routing only — every
+  element id, both send sites and all read / signing /
+  minting / Super logic are untouched.
+- **The drawer and sidebar now hold exactly the app's
+  rows, in the app's order:** your summary (avatar, name,
+  `@handle · #id`, following / follower counts — the
+  sidebar summary gained the counts line too), then
+  Profile, Wallet, My names, Get a name, Bookmarks, a
+  separator, and a Settings group holding the existing
+  theme and language rows. "My names" and "Get a name" are
+  separate rows landing on the names side and the mint side
+  of the one name-desk view. With no acting name, the
+  Profile and My names rows are not shown (the summary
+  leads to the wallet, as before). The web has no
+  HuntersExchange or notifications, so those app rows are
+  NOT mirrored — no dead buttons; the old Home / Search /
+  Android-app rows left the drawer and sidebar (search
+  lives on in the phone tab bar and the rail pill, the app
+  in the rail's app card). The harness now runs 183 checks.
+
 ## What's new in v14 (2026-11-13)
 
 - **SuperLike and SuperRecaw work on the web too** — the

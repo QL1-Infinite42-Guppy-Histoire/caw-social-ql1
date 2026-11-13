@@ -13,92 +13,49 @@
 <link rel="preconnect" href="https://scan.qom.network">
 <meta name="theme-color" id="themeColorMeta" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png?v=14">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=14">
+<link rel="icon" type="image/png" href="icon-192.png?v=15">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=15">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
 <script>(function(){try{var t=localStorage.getItem('guppy-theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){document.documentElement.dataset.theme='light';}})();</script>
-<link rel="stylesheet" href="style.css?v=14">
+<link rel="stylesheet" href="style.css?v=15">
 </head>
 <body>
 <header class="topbar">
   <div class="topbar-inner">
     <div class="mt-side">
-      <button id="drawerBtn" class="mt-avatar-btn" type="button" aria-label="Menu"><span id="mtAvatar"><img class="avatar" src="icon-192.png?v=14" alt=""></span></button>
+      <button id="drawerBtn" class="mt-avatar-btn" type="button" aria-label="Menu"><span id="mtAvatar"><img class="avatar" src="icon-192.png?v=15" alt=""></span></button>
     </div>
-    <div class="mt-mark"><img src="icon-192.png?v=14" alt=""><span class="word">CAW</span></div>
+    <div class="mt-mark"><img src="icon-192.png?v=15" alt=""><span class="word">CAW</span></div>
     <div class="mt-side end"></div>
   </div>
 </header>
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <a class="side-logo" href="en.html" aria-label="CAW Social home"><img src="icon-192.png?v=14" alt=""></a>
-    <a class="side-summary" id="sideSummary" href="en.html#pwallet">
-      <span id="sideAvatar"><img class="avatar" src="icon-192.png?v=14" alt=""></span>
-      <span><span class="side-name" id="sideName">CAW Social</span><br><span class="side-sub" id="sideSub">on QL1 · web</span></span>
+    <a class="side-logo" href="en.html" aria-label="CAW Social home"><img src="icon-192.png?v=15" alt=""></a>
+    <a class="side-summary" id="sideSummary" href="en.html?wallet=1">
+      <span id="sideAvatar"><img class="avatar" src="icon-192.png?v=15" alt=""></span>
+      <span><span class="side-name" id="sideName">CAW Social</span><br><span class="side-sub" id="sideSub">on QL1 · web</span><br><span class="side-follow" id="sideFollow" style="display:none"></span></span>
     </a>
     <nav>
-      <a class="nav-it" data-nav="home" href="en.html"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
-      <a class="nav-it" data-nav="search" href="en.html#lookup"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span class="nav-label">Search</span></a>
       <a class="nav-it" data-nav="profile" id="sideProfileRow" href="en.html" style="display:none"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
-      <a class="nav-it" data-nav="wallet" href="en.html#pwallet"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="nav-label">Wallet</span></a>
-      <a class="nav-it" data-nav="mynames" href="en.html#getname"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">My names</span></a>
-      <a class="nav-it" data-nav="getname" href="en.html#getname"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></span><span class="nav-label">Get a name</span></a>
+      <a class="nav-it" data-nav="wallet" href="en.html?wallet=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="nav-label">Wallet</span></a>
+      <a class="nav-it" data-nav="mynames" href="en.html?getname=1#myNames" style="display:none"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">My names</span></a>
+      <a class="nav-it" data-nav="getname" href="en.html?getname=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></span><span class="nav-label">Get a name</span></a>
       <a class="nav-it" data-nav="bookmarks" href="en.html?bookmarks=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><span class="nav-label">Bookmarks</span></a>
-      <a class="nav-it" data-nav="app" href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span><span class="nav-label">Android app</span></a>
     </nav>
     <button id="sidePostBtn" class="side-post" type="button"><span class="side-post-label">Post</span><span aria-hidden="true">＋</span></button>
     <div class="side-sep"></div>
+    <div class="nav-it nav-settings" role="presentation"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label">Settings</span></div>
     <button id="themeToggle" class="nav-it" type="button"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label" id="themeLabel">🌙 Dark</span></button>
     <a class="nav-it" data-nav="lang" href="ja.html"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="nav-label">日本語</span></a>
     <div class="side-foot">CAW Social (QL1) — made by the community. Not run by the official CAW team.<br>Part of <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> — Don't Panic.</div>
   </aside>
 
   <main class="maincol">
-    <section class="block notice">
-      <h2>Reading is free — and you can get a name and post here</h2>
-      <p>You are reading the CAW timeline on QL1. Viewing is free and needs no wallet or account. You can get a name here with your wallet app, and post here with the built-in posting wallet — or use the <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Android app</a>.</p>
-    </section>
-
-    <section class="block" id="pwallet">
-      <h2>Posting wallet</h2>
-      <p>Posting, liking, Recaws and follows are signed inside this page by a small built-in wallet — the same way the Android app works. Getting a name, further down, uses your wallet app instead.</p>
-      <div class="pw-safety">
-        <p>Use a separate wallet here, made only for CAW. Never type the recovery phrase of your main wallet.</p>
-        <p>The key is encrypted with your password and stored only in this browser. It is never sent anywhere.</p>
-        <p>If you clear this browser’s data, the wallet here is gone — it only comes back if you saved the recovery phrase.</p>
-        <p>Anyone who sees your recovery phrase owns this wallet. Keep it written down, offline, and private.</p>
-      </div>
-      <div id="pwArea"></div>
-    </section>
-
-    <section class="block" id="lookup">
-      <h2>Look up a name</h2>
-      <input type="text" id="lookupInput" placeholder="e.g. neptune" autocomplete="off" spellcheck="false">
-      <div class="row"><button id="lookupBtn">Look up</button></div>
-      <div id="lookupResult"></div>
-      <h2 style="margin-top:22px">Search posts</h2>
-      <p class="muted">Find posts by the words in them.</p>
-      <input type="text" id="searchInput" placeholder="Words in a post…" autocomplete="off" spellcheck="false">
-      <div class="row"><button id="searchBtn" class="secondary">Search posts</button></div>
-    </section>
-
-    <section class="block" id="getname">
-      <h2>Get a name</h2>
-      <p>A name is how people find you on CAW, and once you get one it is yours for good. It costs qCAW — the price depends on the name and is shown before you pay anything — plus a tiny QOM fee for the record-keepers. You need a wallet app (such as MetaMask or FoxWallet) with qCAW in it.</p>
-      <p class="small">Getting a name uses your wallet app — that is separate from the posting wallet higher up, which is only for posting.</p>
-      <input type="text" id="mintNameInput" placeholder="the name you want" autocomplete="off" spellcheck="false" autocapitalize="none">
-      <div class="row"><button id="mintCheckBtn">Check</button></div>
-      <div id="mintCheckResult"></div>
-      <div id="walletArea"></div>
-      <div id="mintArea"></div>
-      <h3 id="myNamesTitle" style="display:none">Your names</h3>
-      <div id="myNames"></div>
-    </section>
-
     <section id="viewHome" style="display:none">
       <div class="view-head">
         <h2>Home</h2>
@@ -106,13 +63,6 @@
         <button id="refreshBtn" class="ghost" type="button">Refresh</button>
       </div>
       <div id="composerArea"></div>
-      <div style="padding:10px 16px 0">
-        <div class="railcard stats-card stats-main hidden" id="statsCardMain">
-          <h3>CAW right now</h3>
-          <div class="statsBody"><p class="small">Loading…</p></div>
-        </div>
-      </div>
-      <p class="muted" style="padding:0 16px">The newest posts on CAW, in order. Anyone can read — no wallet needed.</p>
       <div id="newPostsPill" class="newpill" style="display:none"><button id="newPostsBtn" type="button">New posts</button></div>
       <div id="timeline"><p style="padding:0 16px">Loading…</p></div>
       <div class="loadmore"><button id="moreBtn" class="ghost" style="display:none">See more</button></div>
@@ -185,6 +135,61 @@
       <div id="bmList"></div>
     </section>
 
+    <section id="viewWallet" style="display:none">
+      <div class="view-head">
+        <a class="back-link" href="en.html" aria-label="Back">←</a>
+        <h2>Wallet</h2>
+      </div>
+    <section class="block" id="pwallet">
+      <h2>Posting wallet</h2>
+      <p>Posting, liking, Recaws and follows are signed inside this page by a small built-in wallet — the same way the Android app works. Getting a name (in the menu) uses your wallet app instead.</p>
+      <div class="pw-safety">
+        <p>Use a separate wallet here, made only for CAW. Never type the recovery phrase of your main wallet.</p>
+        <p>The key is encrypted with your password and stored only in this browser. It is never sent anywhere.</p>
+        <p>If you clear this browser’s data, the wallet here is gone — it only comes back if you saved the recovery phrase.</p>
+        <p>Anyone who sees your recovery phrase owns this wallet. Keep it written down, offline, and private.</p>
+      </div>
+      <div id="pwArea"></div>
+    </section>
+    </section>
+
+    <section id="viewLookup" style="display:none">
+      <div class="view-head">
+        <a class="back-link" href="en.html" aria-label="Back">←</a>
+        <h2>Search</h2>
+      </div>
+    <section class="block" id="lookup">
+      <h2>Look up a name</h2>
+      <input type="text" id="lookupInput" placeholder="e.g. neptune" autocomplete="off" spellcheck="false">
+      <div class="row"><button id="lookupBtn">Look up</button></div>
+      <div id="lookupResult"></div>
+      <h2 style="margin-top:22px">Search posts</h2>
+      <p class="muted">Find posts by the words in them.</p>
+      <input type="text" id="searchInput" placeholder="Words in a post…" autocomplete="off" spellcheck="false">
+      <div class="row"><button id="searchBtn" class="secondary">Search posts</button></div>
+    </section>
+    </section>
+
+    <section id="viewGetname" style="display:none">
+      <div class="view-head">
+        <a class="back-link" href="en.html" aria-label="Back">←</a>
+        <h2>Get a name</h2>
+      </div>
+      <p class="small" style="padding:12px 16px 0">Want to check a name first? <a href="en.html?lookup=1">Look up a name</a></p>
+    <section class="block" id="getname">
+      <h2>Get a name</h2>
+      <p>A name is how people find you on CAW, and once you get one it is yours for good. It costs qCAW — the price depends on the name and is shown before you pay anything — plus a tiny QOM fee for the record-keepers. You need a wallet app (such as MetaMask or FoxWallet) with qCAW in it.</p>
+      <p class="small">Getting a name uses your wallet app — that is separate from the posting wallet in the menu, which is only for posting.</p>
+      <input type="text" id="mintNameInput" placeholder="the name you want" autocomplete="off" spellcheck="false" autocapitalize="none">
+      <div class="row"><button id="mintCheckBtn">Check</button></div>
+      <div id="mintCheckResult"></div>
+      <div id="walletArea"></div>
+      <div id="mintArea"></div>
+      <h3 id="myNamesTitle" style="display:none">Your names</h3>
+      <div id="myNames"></div>
+    </section>
+    </section>
+
     <footer>
       CAW Social (QL1) — made by the community. Not run by the official CAW team.<br>
       Part of <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> — Don't Panic.
@@ -226,24 +231,22 @@
   <div class="drawer-scrim" id="drawerScrim"></div>
   <div class="drawer-panel" role="dialog" aria-label="Menu">
     <button id="drawerClose" class="drawer-close" type="button" aria-label="Close">✕</button>
-    <a class="drawer-summary" id="drawerSummary" href="en.html#pwallet">
-      <span id="drawerAvatar"><img class="avatar" src="icon-192.png?v=14" alt=""></span>
+    <a class="drawer-summary" id="drawerSummary" href="en.html?wallet=1">
+      <span id="drawerAvatar"><img class="avatar" src="icon-192.png?v=15" alt=""></span>
       <div class="drawer-name" id="drawerName">CAW Social</div>
       <div class="drawer-sub" id="drawerSub">on QL1 · web</div>
       <div class="drawer-follow" id="drawerFollow" style="display:none"></div>
     </a>
     <div class="drawer-sep"></div>
     <nav>
-      <a class="nav-it" data-nav="home" href="en.html"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
       <a class="nav-it" data-nav="profile" id="drawerProfileRow" href="en.html" style="display:none"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
-      <a class="nav-it" data-nav="wallet" href="en.html#pwallet"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="nav-label">Wallet</span></a>
-      <a class="nav-it" data-nav="mynames" href="en.html#getname"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">My names</span></a>
-      <a class="nav-it" data-nav="getname" href="en.html#getname"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></span><span class="nav-label">Get a name</span></a>
+      <a class="nav-it" data-nav="wallet" href="en.html?wallet=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="nav-label">Wallet</span></a>
+      <a class="nav-it" data-nav="mynames" href="en.html?getname=1#myNames" style="display:none"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">My names</span></a>
+      <a class="nav-it" data-nav="getname" href="en.html?getname=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></span><span class="nav-label">Get a name</span></a>
       <a class="nav-it" data-nav="bookmarks" href="en.html?bookmarks=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><span class="nav-label">Bookmarks</span></a>
-      <a class="nav-it" data-nav="search" href="en.html#lookup"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span class="nav-label">Search</span></a>
-      <a class="nav-it" data-nav="app" href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span><span class="nav-label">Android app</span></a>
     </nav>
     <div class="drawer-sep"></div>
+    <div class="nav-it nav-settings" role="presentation"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label">Settings</span></div>
     <button id="themeToggleDrawer" class="nav-it" type="button"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label" id="themeLabelDrawer">🌙 Dark</span></button>
     <a class="nav-it" data-nav="lang" href="ja.html"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="nav-label">日本語</span></a>
   </div>
@@ -275,12 +278,12 @@
 <button id="toTopBtn" class="to-top" type="button" style="display:none" aria-label="Back to top">↑</button>
 <nav class="bottomnav">
   <a href="en.html" data-nav="home" aria-label="Home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
-  <a href="en.html#lookup" data-nav="search" aria-label="Search"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></a>
-  <a href="en.html#pwallet" data-nav="wallet" aria-label="Wallet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></a>
+  <a href="en.html?lookup=1" data-nav="search" aria-label="Search"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></a>
+  <a href="en.html?wallet=1" data-nav="wallet" aria-label="Wallet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></a>
   <a href="en.html?bookmarks=1" data-nav="bookmarks" aria-label="Bookmarks"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></a>
 </nav>
-<script src="bip39-words.js?v=14"></script>
-<script src="viewer.js?v=14"></script>
+<script src="bip39-words.js?v=15"></script>
+<script src="viewer.js?v=15"></script>
 <script>
 /* If the viewer script was blocked or replaced by an older saved
    copy of this site, say so instead of loading forever. */

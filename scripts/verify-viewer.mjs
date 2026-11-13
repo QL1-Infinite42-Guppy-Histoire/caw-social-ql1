@@ -275,9 +275,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v14: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=14') && jaHtml.includes('?v=14'), 'shells reference ?v=14 assets');
-ok(swSrc.includes("caw-view-v14"), 'sw.js cache name is caw-view-v14');
+console.log('— v15: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=15') && jaHtml.includes('?v=15'), 'shells reference ?v=15 assets');
+ok(swSrc.includes("caw-view-v15"), 'sw.js cache name is caw-view-v15');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -667,6 +667,53 @@ console.log('— v14: SuperLike / SuperRecaw (app v0.6.3 spec, ported) —');
   const headAfter = Number(BigInt(await V.rpc('eth_blockNumber', [])));
   ok(V.mbCursor() >= headBefore - 1 && V.mbCursor() <= headAfter,
     'live marked-burn scan reaches the QL1 head', 'cursor=' + V.mbCursor() + ' head=' + headAfter);
+}
+
+console.log('— v15: home is the timeline only; wallet / lookup / name desk are views —');
+{
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    ok(html.includes('id="viewWallet"') && html.includes('id="viewLookup"') && html.includes('id="viewGetname"'),
+      label + ' carries the wallet / lookup / get-a-name views');
+    const seg = (a, b) => { const i = html.indexOf(a); return i < 0 ? '' : html.slice(i, html.indexOf(b, i)); };
+    const home = seg('id="viewHome"', 'id="viewSearch"');
+    ok(home.includes('id="composerArea"') && home.includes('id="timeline"') &&
+       !home.includes('id="pwallet"') && !home.includes('id="lookup"') && !home.includes('id="getname"') &&
+       !home.includes('statsCardMain'),
+       label + ': the home view is the composer + timeline only (no stacked blocks)');
+    ok(seg('id="viewWallet"', 'id="viewLookup"').includes('id="pwallet"') &&
+       seg('id="viewWallet"', 'id="viewLookup"').includes('id="pwArea"'),
+       label + ': the posting wallet lives inside the wallet view, not in the home flow');
+    ok(seg('id="viewLookup"', 'id="viewGetname"').includes('id="lookup"'),
+       label + ': the lookup block lives inside the lookup view');
+    ok(seg('id="viewGetname"', '</main>').includes('id="getname"') &&
+       seg('id="viewGetname"', '</main>').includes('id="myNames"'),
+       label + ': mint + my names live inside the get-a-name view');
+    ok(!html.includes('#pwallet') && !html.includes('#lookup') && !html.includes('#getname'),
+       label + ': no link points at a stacked home block any more');
+    ok((html.match(/\?wallet=1/g) || []).length >= 5 && html.includes('?lookup=1'),
+       label + ': the wallet view opens from the summaries, both wallet rows and the tab bar; the lookup view has an entry too',
+       'wallet links=' + (html.match(/\?wallet=1/g) || []).length);
+    ok(html.includes('?getname=1#myNames'),
+       label + ': "My names" lands on the names side of the get-a-name view');
+    const chrome = html.slice(0, html.indexOf('<nav class="bottomnav"'));
+    const order = ['profile', 'wallet', 'mynames', 'getname', 'bookmarks']
+      .map(k => chrome.indexOf('data-nav="' + k + '"'));
+    ok(order.every(i => i >= 0) && order.every((v, i) => i === 0 || v > order[i - 1]),
+       label + ': sidebar rows follow the app drawer order (profile / wallet / my names / get a name / bookmarks)');
+    const dr = html.slice(html.indexOf('id="drawer"'));
+    const dOrder = ['profile', 'wallet', 'mynames', 'getname', 'bookmarks']
+      .map(k => dr.indexOf('data-nav="' + k + '"'));
+    ok(dOrder.every(i => i >= 0) && dOrder.every((v, i) => i === 0 || v > dOrder[i - 1]),
+       label + ': drawer rows follow the app order too');
+    ok(!chrome.includes('data-nav="search"') && !chrome.includes('data-nav="app"') && !chrome.includes('data-nav="home"'),
+       label + ': sidebar + drawer hold ONLY the app rows (no home / search / app rows, no dead buttons)');
+    ok(html.includes('class="nav-it nav-settings"'),
+       label + ': the settings group row exists above the theme/language rows');
+  }
+  ok(viewerSrc.includes("pageFile + '?wallet=1'") && !viewerSrc.includes("$('pwallet')"),
+    'viewer.js routes wallet guidance to the wallet VIEW (no scroll-to-block left)');
+  ok(viewerSrc.includes("get('wallet')") && viewerSrc.includes("get('getname')") && viewerSrc.includes("get('lookup')"),
+    'viewer.js opens the new views from their query params');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

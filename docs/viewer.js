@@ -3606,7 +3606,7 @@ function renderComposer() {
     area.innerHTML = '<div class="composer-hint"><span>' + esc(T.compHintLocked) + '</span>' +
       '<button type="button" class="ghost" id="compSetupBtn">' + esc(T.compHintSetupBtn) + '</button></div>';
     const b = $('compSetupBtn');
-    if (b) b.onclick = () => { const s = $('pwallet'); if (s) s.scrollIntoView(); };
+    if (b) b.onclick = () => { location.href = pageFile + '?wallet=1'; };
     return;
   }
   if (pendingComposeRef && !composerRef) {
@@ -3646,7 +3646,7 @@ function renderComposer() {
     if ($('compAva') === slot) slot.innerHTML = avatarHtml(im, acting.username);
   })();
   const chipBtn = $('compNameChip');
-  if (chipBtn) chipBtn.onclick = () => { const s = $('pwallet'); if (s) s.scrollIntoView(); };
+  if (chipBtn) chipBtn.onclick = () => { location.href = pageFile + '?wallet=1'; };
   if (ref) {
     (async () => {
       const nm = await resolveName(ref.post.senderId).catch(() => null);
@@ -3745,10 +3745,11 @@ async function doSimpleAction(kind, target) {
    Quote Recaw — with any unfinished SuperRecaw leg routed
    first (v14). Bookmark is a local-only toggle; Share uses the
    app's text share. Write actions tapped while the posting
-   wallet is locked scroll to the wallet instead of failing. */
+   wallet is locked go to the wallet VIEW instead of failing
+   (v15: the wallet lives behind the drawer/sidebar row, not
+   stacked on the home view). */
 function scrollToWallet() {
-  const s = $('pwallet');
-  if (s) s.scrollIntoView({ block: 'start' });
+  location.href = pageFile + '?wallet=1';
 }
 function wireRowActions(div, a) {
   /* A card can contain a nested original (quote/Recaw frame)
@@ -4298,21 +4299,30 @@ async function syncChrome() {
     } else {
       if (nm) nm.textContent = 'CAW Social';
       if (sub) sub.textContent = LANG === 'ja' ? 'QL1 版・ウェブ' : 'on QL1 · web';
-      if (ava) ava.innerHTML = '<img class="avatar" src="icon-192.png?v=14" alt="">';
+      if (ava) ava.innerHTML = '<img class="avatar" src="icon-192.png?v=15" alt="">';
       const mt = $('mtAvatar');
-      if (mt && avaId === 'drawerAvatar') mt.innerHTML = '<img class="avatar" src="icon-192.png?v=14" alt="">';
+      if (mt && avaId === 'drawerAvatar') mt.innerHTML = '<img class="avatar" src="icon-192.png?v=15" alt="">';
       if (fol) fol.style.display = 'none';
     }
   };
+  /* The "My names" rows follow the same rule as the Profile
+     rows (the app's drawer): with no acting name there is
+     nothing to list, so the row is not shown at all. */
+  document.querySelectorAll('[data-nav="mynames"]').forEach(el => {
+    el.style.display = acting ? '' : 'none';
+  });
   await Promise.all([
-    setSummary('sideAvatar', 'sideName', 'sideSub', null, 'sideProfileRow'),
+    setSummary('sideAvatar', 'sideName', 'sideSub', 'sideFollow', 'sideProfileRow'),
     setSummary('drawerAvatar', 'drawerName', 'drawerSub', 'drawerFollow', 'drawerProfileRow'),
   ]);
   /* current-place highlight */
   const mode = (typeof postQuery !== 'undefined' && postQuery) ? 'post'
     : (typeof profileQuery !== 'undefined' && profileQuery) ? 'profile'
     : (typeof searchQuery !== 'undefined' && searchQuery) ? 'search'
-    : (typeof bmQuery !== 'undefined' && bmQuery) ? 'bookmarks' : 'home';
+    : (typeof bmQuery !== 'undefined' && bmQuery) ? 'bookmarks'
+    : (typeof walletQuery !== 'undefined' && walletQuery) ? 'wallet'
+    : (typeof getnameQuery !== 'undefined' && getnameQuery) ? (location.hash === '#myNames' ? 'mynames' : 'getname')
+    : (typeof lookupQuery !== 'undefined' && lookupQuery) ? 'search' : 'home';
   document.querySelectorAll('[data-nav]').forEach(el => {
     el.classList.toggle('on', el.dataset.nav === mode);
   });
@@ -4322,6 +4332,17 @@ async function syncChrome() {
 const postQuery = new URLSearchParams(location.search).get('post');
 const searchQuery = new URLSearchParams(location.search).get('q');
 const bmQuery = new URLSearchParams(location.search).get('bookmarks');
+/* v15: the posting wallet, the lookup desk and the name desk
+   are views of their own, opened from the drawer / sidebar
+   rows (and the phone tab bar) — the home view is the timeline
+   alone. Links saved before v15 point at the old stacked
+   blocks (#pwallet / #lookup / #getname); treat those hashes
+   as the matching view so old bookmarks still land right. */
+const hashView = (!postQuery && !profileQuery && !bmQuery && !searchQuery)
+  ? { '#pwallet': 'wallet', '#lookup': 'lookup', '#getname': 'getname' }[location.hash] : null;
+const walletQuery = new URLSearchParams(location.search).get('wallet') || (hashView === 'wallet' ? '1' : null);
+const getnameQuery = new URLSearchParams(location.search).get('getname') || (hashView === 'getname' ? '1' : null);
+const lookupQuery = new URLSearchParams(location.search).get('lookup') || (hashView === 'lookup' ? '1' : null);
 document.querySelectorAll('.langs a').forEach(a => {
   const base = a.getAttribute('href').split('?')[0];
   a.href = base + location.search;
@@ -4375,6 +4396,24 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
         esc(T.searchNameChip.replace('{name}', res.username)) + '</a>';
     }
   }).catch(() => {});
+} else if (walletQuery) {
+  document.body.classList.add('wallet-mode');
+  $('viewWallet').style.display = '';
+} else if (getnameQuery) {
+  document.body.classList.add('getname-mode');
+  $('viewGetname').style.display = '';
+  /* "My names" lands on the names list, "Get a name" on the
+     mint form at the top — the saved fragment picks the spot
+     inside the view. */
+  if (location.hash) {
+    try {
+      const t = document.querySelector(location.hash);
+      if (t) setTimeout(() => t.scrollIntoView(), 60);
+    } catch (e) {}
+  }
+} else if (lookupQuery) {
+  document.body.classList.add('lookup-mode');
+  $('viewLookup').style.display = '';
 } else {
   $('viewHome').style.display = '';
   loadTimeline(false);
