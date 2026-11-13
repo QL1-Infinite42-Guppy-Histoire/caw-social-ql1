@@ -1,5 +1,13 @@
 'use strict';
 /* CAW Social (QL1) — web viewer + name minting + posting (v12).
+   v13 restyles the DISPLAY LAYER ONLY to the Android app's
+   X-style overhaul (v0.6.x of caw-social-app): the same design
+   tokens (X blue #1d9bf0, ink #0f1419, secondary #536471,
+   hairline #eff3f4, gold #ffac33 reserved for Super marks),
+   the same post-row anatomy, the app drawer's contents and
+   order for the web sidebar / mobile drawer, the app's
+   profile composition and its MetaMask-style wallet list.
+   No read, signing or sending logic changed in v13.
    Reading is free and open: the timeline, post pages and profiles
    are decoded in your browser from the public explorer API and the
    chain itself. Two writes exist, kept strictly separate:
@@ -188,6 +196,35 @@ const T = {
     actNotOwner: 'This name does not belong to the posting wallet right now, so signing stopped.',
     actSelfFollow: 'That name belongs to this same wallet, so it cannot be followed from here.',
     mintNote: 'Getting a name uses your wallet app (MetaMask or FoxWallet) — that is separate from the posting wallet higher up, which is only for posting.',
+    navHome: 'Home', navSearch: 'Search', navProfile: 'Profile',
+    navWallet: 'Wallet', navMyNames: 'My names', navGetName: 'Get a name',
+    navBookmarks: 'Bookmarks', navSettings: 'Settings',
+    bmEmpty: 'No bookmarks yet. Posts you save will appear here.',
+    bmNeedWallet: 'Bookmarks live with your posting wallet on this device. Unlock the posting wallet above to see the posts you saved.',
+    bmRemove: 'Remove', bmAdd: 'Bookmark', bmMissing: 'This post could not be found in the part of the record we can read.',
+    likedBy: 'Liked by', sharedBy: 'Recawed by',
+    shareLabel: 'Share',
+    depostLbl: 'Put in / take out',
+    slTitle: 'Send a SuperLike?',
+    slTarget: 'Post', slTotal: 'Total', slToAuthor: 'To the author',
+    slBurned: 'Burned (goes to nobody)', slBalance: 'Your O balance',
+    slConfirm: 'Send 25,000,000 O ⭐', slDone: 'SuperLike sent ⭐',
+    slSelf: "You can't SuperLike your own post.",
+    slShortfall: 'Not enough O. A SuperLike costs 25,000,000 O in total (15,000,000 to the author + 10,000,000 burned). Get O on QL1 (for example by swapping on QomSwap), then try again.',
+    slPayPending: 'The burn went through ⭐ — but the 15,000,000 O payment to the author did not. Tap the ⭐ on this post to send just the payment.',
+    srcTitle: 'Send a SuperRecaw?',
+    srcConfirm: 'Recaw + burn O ⭐', srcDone: 'SuperRecaw sent ⭐',
+    srcShortfall: 'Not enough O for a SuperRecaw (25,000,000 O in total: 5,000,000 to the author + 20,000,000 burned). You can still send a normal Recaw.',
+    srcBurnTitle: 'Finish the SuperRecaw burn?',
+    srcBurnConfirm: 'Burn 20,000,000 O', srcBurnDone: 'Burn done — SuperRecaw complete ⭐',
+    srcBurnShortfall: 'Not enough O to finish the burn. Get O on QL1, then tap Recaw on this post again.',
+    srcBurnPending: 'Your Recaw went out ⭐ — but its O burn did not. Tap Recaw on this post to finish just the burn.',
+    srcPayPending: 'Your SuperRecaw went out ⭐ — but the 5,000,000 O payment to the author did not. Tap Recaw on this post to send just the payment.',
+    srcSelfNote: 'This is your own post. Only the burn counts — no author payment is made, because the author is you.',
+    payTitle: 'Finish the author payment?',
+    payConfirm: 'Send {amount} O', payDone: 'Payment sent — all done ⭐',
+    payShortfall: 'Not enough O to finish the payment. Get O on QL1, then try again from the post.',
+    recawChoiceTitle: 'Recaw this post?',
   },
   ja: {
     loading: '読み込み中…', loadFail: '読み込めませんでした。しばらくしてからお試しください。',
@@ -326,6 +363,35 @@ const T = {
     actNotOwner: 'この名前は今の投稿用ウォレットのものではないため、署名を止めました。',
     actSelfFollow: 'その名前は同じウォレットのものなので、ここからはフォローできません。',
     mintNote: '名前を取る手続きはウォレットアプリ（MetaMask や FoxWallet）を使います。上の投稿用ウォレットとは別で、あちらは投稿専用です。',
+    navHome: 'ホーム', navSearch: '検索', navProfile: 'プロフィール',
+    navWallet: 'ウォレット', navMyNames: '自分の名前', navGetName: '名前を取る',
+    navBookmarks: 'ブックマーク', navSettings: '設定',
+    bmEmpty: 'ブックマークはまだありません。保存した投稿がここに表示されます。',
+    bmNeedWallet: 'ブックマークはこの端末の投稿用ウォレットに紐づいています。上の投稿用ウォレットを開くと、保存した投稿が見られます。',
+    bmRemove: '削除', bmAdd: 'ブックマーク', bmMissing: 'この投稿は、読める範囲の記録では見つかりませんでした。',
+    likedBy: 'いいねした人', sharedBy: 'Recaw した人',
+    shareLabel: '共有',
+    depostLbl: '入れる／出す',
+    slTitle: '超いいねを送りますか？',
+    slTarget: '投稿', slTotal: '合計', slToAuthor: '投稿者へ',
+    slBurned: 'バーン（誰にも届きません）', slBalance: 'あなたの O 残高',
+    slConfirm: '25,000,000 O を送る ⭐', slDone: '超いいねを送りました ⭐',
+    slSelf: '自分の投稿には超いいねできません。',
+    slShortfall: 'O が足りません。超いいねには合計 25,000,000 O が必要です（投稿者へ 15,000,000 + バーン 10,000,000）。QL1 で O を用意して（QomSwap で交換するなど）もう一度お試しください。',
+    slPayPending: 'バーンは通りました⭐ ただし投稿者への 15,000,000 O の支払いが終わっていません。この投稿の ⭐ を押すと、支払いだけを送れます。',
+    srcTitle: 'SuperRecaw を送りますか？',
+    srcConfirm: 'Recaw して O をバーン ⭐', srcDone: 'SuperRecaw を送りました ⭐',
+    srcShortfall: 'SuperRecaw に必要な O（合計 25,000,000 O: 投稿者へ 5,000,000 + バーン 20,000,000）が足りません。通常の Recaw なら送れます。',
+    srcBurnTitle: 'SuperRecaw のバーンを仕上げますか？',
+    srcBurnConfirm: '20,000,000 O をバーンする', srcBurnDone: 'バーン完了 — SuperRecaw が成立しました ⭐',
+    srcBurnShortfall: 'バーンに必要な O が足りません。QL1 で O を用意して、この投稿の Recaw をもう一度押してください。',
+    srcBurnPending: 'Recaw は送信されました⭐ ただし O のバーンが終わっていません。この投稿の Recaw を押すと、バーンだけを仕上げられます。',
+    srcPayPending: 'Recaw は送信されました⭐ ただし投稿者への 5,000,000 O の支払いが終わっていません。この投稿の Recaw を押すと、支払いだけを送れます。',
+    srcSelfNote: 'これは自分の投稿です。バーンだけが成立条件で、投稿者への支払いはありません（投稿者はあなた自身です）。',
+    payTitle: '投稿者への支払いを仕上げますか？',
+    payConfirm: '{amount} O を送る', payDone: '支払いを送りました — 完了です ⭐',
+    payShortfall: '支払いに必要な O が足りません。QL1 で O を用意して、もう一度お試しください。',
+    recawChoiceTitle: 'Recaw しますか？',
   },
 }[LANG];
 
@@ -1177,6 +1243,59 @@ async function refinedFollowListsOf(idIn) {
   return { following, followers };
 }
 
+/* ---------- bookmarks (v13; the app's lib/bookmarks.ts rule) ----------
+   CAW has no on-chain bookmark action, so — exactly like the
+   Android app — the list lives only on this device: a
+   localStorage list of post cawIds, newest first, scoped per
+   WALLET ADDRESS (the posting wallet's address here; the app's
+   storage key prefix is kept: caw-bookmarks-v1-<address>). The
+   store keeps cawIds, never post content: the bookmarks view
+   resolves each id against the live readers, and an id that no
+   longer resolves renders an honest placeholder, never a cached
+   copy. Nothing is signed or sent for a bookmark. Pure logic +
+   the localStorage guards used elsewhere in this file, so the
+   harness can verify it in Node. */
+const BOOKMARKS_KEY_PREFIX = 'caw-bookmarks-v1-';
+const bmKeyFor = address => BOOKMARKS_KEY_PREFIX + String(address || '').toLowerCase();
+const normBookmarkId = cawId => String(cawId || '').trim().toLowerCase();
+function bmReadIds(address) {
+  if (!address || typeof localStorage === 'undefined') return [];
+  try {
+    const arr = JSON.parse(localStorage.getItem(bmKeyFor(address)) || 'null');
+    if (!Array.isArray(arr)) return [];
+    const seen = new Set(), out = [];
+    for (const v of arr) {
+      if (typeof v !== 'string') continue;
+      const id = normBookmarkId(v);
+      if (!id || seen.has(id)) continue;
+      seen.add(id); out.push(id);
+    }
+    return out;
+  } catch (e) { return []; }
+}
+function bmWriteIds(address, ids) {
+  if (!address || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(bmKeyFor(address), JSON.stringify(ids)); } catch (e) {}
+}
+function bmList(address) { return bmReadIds(address); }
+function bmHas(address, cawId) {
+  const id = normBookmarkId(cawId);
+  return !!id && bmReadIds(address).includes(id);
+}
+/* Toggle one post; returns the NEW state (true = now saved).
+   Adding puts the id at the head (newest first). */
+function bmToggle(address, cawId) {
+  const id = normBookmarkId(cawId);
+  if (!address || !id) return false;
+  const ids = bmReadIds(address);
+  const at = ids.indexOf(id);
+  let now;
+  if (at >= 0) { ids.splice(at, 1); now = false; }
+  else { ids.unshift(id); now = true; }
+  bmWriteIds(address, ids);
+  return now;
+}
+
 /* Timeline row rule (app v0.4.x semantics): LIKE actions never
    render as rows — they only feed the counts on their target post.
    Posts, Recaws, follows and unfollows do render. */
@@ -1665,6 +1784,27 @@ const svgIc = (paths, size) => '<svg class="ic" width="' + (size || 18) + '" hei
 const IC_HEART = svgIc('<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>');
 const IC_REPEAT = svgIc('<polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/>');
 const IC_REPLY = svgIc('<path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/>');
+const svgIcFill = (paths, size) => '<svg class="ic" width="' + (size || 18) + '" height="' + (size || 18) + '" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + paths + '</svg>';
+/* v13: the app's SuperLike star and the X action-row bookmark /
+   share icons (feather paths, as in the app's ui.tsx). */
+const IC_STAR = svgIc('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>');
+const IC_STAR_FILL = svgIcFill('<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>');
+const IC_BOOKMARK = svgIc('<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>');
+const IC_BOOKMARK_FILL = svgIcFill('<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>');
+const IC_SHARE = svgIc('<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>');
+/* Tip coin (the app's TipGlyph): a gold disc with a white "C"
+   arc. Drawn as one SVG so it survives the icon sizing here. */
+const IC_COIN = '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#FFAC33"/><path d="M15.6 8.7A5.2 5.2 0 1 0 15.6 15.3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>';
+/* Compact counter, the app's formatViewCount shape: 285 stays
+   "285", 1,234 → "1.2K", 12,345 → "12K", 1.2M etc. Applied to the
+   real on-chain counts only; nothing is rounded into existence. */
+function fmtCount(n) {
+  n = Number(n) || 0;
+  if (n < 1000) return String(n);
+  if (n < 10000) return (Math.round(n / 100) / 10).toString().replace(/\.0$/, '') + 'K';
+  if (n < 1000000) return String(Math.floor(n / 1000)) + 'K';
+  return (Math.round(n / 100000) / 10).toString().replace(/\.0$/, '') + 'M';
+}
 const pageFile = LANG === 'ja' ? 'ja.html' : 'en.html';
 const postUrl = cawId => pageFile + '?post=' + cawId;
 const profUrl = name => pageFile + '?name=' + encodeURIComponent(name);
@@ -1709,11 +1849,51 @@ function originalFrame(cawId) {
   return d;
 }
 
-/* One post card (also used nested inside a Recaw, and on post pages). */
+/* Share one post's text with the OS share sheet / clipboard —
+   the app's share: the post text plus "— @handle · CAW Social",
+   never a URL (posts have no canonical public URL to share). */
+async function sharePostText(post, btn) {
+  const nm = await resolveName(post.senderId).catch(() => null);
+  const who = nm ? '@' + nm : T.unknownName + post.senderId;
+  const text = parsePostText(post.text).body + '\n— ' + who + ' · CAW Social';
+  if (typeof navigator !== 'undefined' && navigator.share) {
+    try { await navigator.share({ text }); return; }
+    catch (e) { if (e && e.name === 'AbortError') return; }
+  }
+  let okCopy = false;
+  try { await navigator.clipboard.writeText(text); okCopy = true; }
+  catch (e) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      okCopy = document.execCommand('copy');
+      ta.remove();
+    } catch (e2) { /* nothing more to try */ }
+  }
+  if (okCopy && btn) {
+    const old = btn.innerHTML;
+    btn.innerHTML = '<span class="xcount">' + esc(T.copied) + '</span>';
+    setTimeout(() => { btn.innerHTML = old; }, 1600);
+  }
+}
+
+/* One post card (also used nested inside a Recaw, and on post pages).
+   v13 anatomy, copied from the app's timeline row: avatar on the
+   left; a bold name line; a "@handle · time" line under it; the
+   body; then ONE action row (never wraps): reply count, Recaw
+   count, like (heart + count), the gold SuperLike star + count,
+   bookmark, share — with the record link alone under the row.
+   The row is a VIEW for everyone; the write actions (like /
+   Recaw / SuperLike) check the posting wallet when tapped, and
+   bookmarking is a local-only toggle. No view counter exists —
+   impressions cannot be counted from the chain, so no element
+   is rendered for them. */
 async function postCard(a, opts) {
   opts = opts || {};
   const div = document.createElement('div');
-  div.className = 'post' + (opts.nested ? ' post-nested' : '');
+  div.className = 'post' + (opts.nested ? ' post-nested' : '') + (opts.detail ? ' post-detail' : '');
   div.dataset.cawid = (a.cawId || '').toLowerCase();
   const [name, img] = await Promise.all([resolveName(a.senderId), avatarFor(a.senderId)]);
   const who = name ? '@' + name : T.unknownName + a.senderId;
@@ -1727,27 +1907,42 @@ async function postCard(a, opts) {
     html += '<div class="ctx reply-ctx" data-parent="' + parsed.ref.parentCawId + '">' + esc(T.replyingTo.replace('{name}', '…')) + '</div>';
   }
   const whoHtml = profHref ? '<a class="plink" href="' + profHref + '">' + esc(who) + '</a>' : esc(who);
-  html += '<div class="meta"><span class="name">' + whoHtml + '</span>' + timeHtml(a.ts) + '</div>';
+  html += '<div class="meta"><span class="name">' + whoHtml + '</span></div>';
+  html += '<div class="subline"><span class="handle">' + esc(who) + '</span><span class="time" title="' + esc(fullTimeStr(a.ts)) + '">· ' + esc(whenStr(a.ts)) + '</span></div>';
   if (parsed.body) html += '<div class="ptext">' + (opts.highlight ? highlightKeyword(linkify(parsed.body), opts.highlight) : linkify(parsed.body)) + '</div>';
   html += '<div class="frameslot"></div>';
+  if (opts.detail) {
+    html += '<div class="detail-date">' + esc(fullTimeStr(a.ts)) + '</div>';
+  }
   const replyCount = refChildren(a.cawId, 'reply').length;
+  const recawCount = refChildren(a.cawId, 'share').length;
+  const saved = pwSession ? bmHas(pwSession.address, a.cawId) : false;
   html += '<div class="pfoot">' +
-    '<span class="like-count"></span>' +
-    (replyCount > 0 ? '<span class="reply-count">' + IC_REPLY + '<span>' + replyCount + '</span></span>' : '') +
-    (opts.nested ? '' : '<a href="' + postUrl(a.cawId) + '">' + T.openPost + '</a>') +
-    '<a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a>' +
-    actionButtonsHtml(a) +
+    '<button type="button" class="xact x-reply" data-act="reply" aria-label="' + esc(T.actReply) + '"><span class="icring">' + IC_REPLY + '</span>' +
+    (replyCount > 0 ? '<span class="xcount">' + fmtCount(replyCount) + '</span>' : '') + '</button>' +
+    '<button type="button" class="xact x-recaw" data-act="recaw" aria-label="' + esc(T.actRecaw) + '"><span class="icring">' + IC_REPEAT + '</span>' +
+    (recawCount > 0 ? '<span class="xcount">' + fmtCount(recawCount) + '</span>' : '') + '</button>' +
+    '<button type="button" class="xact x-like" data-act="like" aria-label="' + esc(T.actLike) + '"><span class="icring">' + IC_HEART + '</span><span class="like-count xcount"></span></button>' +
+    '<button type="button" class="xact x-super" data-act="super" aria-label="SuperLike"><span class="icring sl-ic">' + IC_STAR + '</span><span class="sl-count xcount"></span></button>' +
+    '<span class="xspacer"></span>' +
+    '<button type="button" class="xact x-bm' + (saved ? ' on' : '') + '" data-act="bookmark" aria-label="' + esc(T.bmAdd) + '"><span class="icring">' + (saved ? IC_BOOKMARK_FILL : IC_BOOKMARK) + '</span></button>' +
+    '<button type="button" class="xact x-share" data-act="share" aria-label="' + esc(T.shareLabel) + '"><span class="icring">' + IC_SHARE + '</span></button>' +
     '</div>';
+  html += '<div class="recordline"><a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a></div>';
   html += '</div>';
   div.innerHTML = html;
   /* Like count fills in after the card is on screen — it must
      never hold up rendering (v9 speed rule). */
   const likeEl = div.querySelector('.like-count');
   if (likeEl) {
-    likesOf(a).then(n => { if (n > 0n) likeEl.innerHTML = IC_HEART + '<span>' + n.toString() + '</span>'; }).catch(() => {});
+    likesOf(a).then(n => {
+      const v = Number(n);
+      likeEl.dataset.raw = String(v);
+      likeEl.textContent = v > 0 ? fmtCount(v) : '';
+    }).catch(() => {});
   }
   /* Whole-card click opens the post page, except on links/buttons. */
-  if (!opts.nested) {
+  if (!opts.nested && !opts.detail) {
     div.classList.add('clickable');
     div.addEventListener('click', e => {
       if (e.target.closest('a,button')) return;
@@ -1765,23 +1960,28 @@ async function postCard(a, opts) {
       rctx.innerHTML = '<a class="plink" href="' + postUrl(parent.cawId) + '">' + esc(T.replyingTo.replace('{name}', pn)) + '</a>';
     })();
   }
-  wireActionButtons(div, a);
+  wireRowActions(div, a);
+  if (typeof paintSuperRow === 'function') paintSuperRow(div, a);
   return div;
 }
 
-/* A plain Recaw (type 2), X-style: a small header naming the
-   Recawer, and the body is the ORIGINAL post as a nested card. */
+/* A Recaw (type 2), the app's shape: a small attribution line
+   naming the Recawer, then the ORIGINAL post as a nested row,
+   and exactly one record link. When the marked-burn scan proves
+   this Recaw was a SuperRecaw, the attribution turns gold with
+   a star and the WHOLE row takes the app's flat gold wash
+   (paintRecawRow, v14) — no frame, no gradient, no card. */
 async function recawCard(a) {
   const div = document.createElement('div');
-  div.className = 'post';
+  div.className = 'post recaw-row';
+  div.dataset.cawid = (a.cawId || '').toLowerCase();
   const [name, img] = await Promise.all([resolveName(a.senderId), avatarFor(a.senderId)]);
   const who = name ? '@' + name : T.unknownName + a.senderId;
-  let html = avatarHtml(img, name) + '<div class="pbody">' +
-    '<div class="ctx recaw-ctx">' + IC_REPEAT + '<span>' + esc(T.recawedBy.replace('{name}', who)) + '</span>' +
-    timeHtml(a.ts) + '</div>' +
+  let html = '<div class="recaw-attr"><span class="ra-ic">' + IC_REPEAT + '</span><span class="ra-txt">' +
+    esc(T.recawedBy.replace('{name}', who)) + '</span>' +
+    '<span class="time" title="' + esc(fullTimeStr(a.ts)) + '">· ' + esc(whenStr(a.ts)) + '</span></div>' +
     '<div class="frameslot"></div>' +
-    '<div class="pfoot"><a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a></div>' +
-    '</div>';
+    '<div class="recordline"><a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a></div>';
   div.innerHTML = html;
   const slot = div.querySelector('.frameslot');
   (async () => {
@@ -1792,6 +1992,7 @@ async function recawCard(a) {
     }
     slot.appendChild(await postCard(orig, { nested: true }));
   })();
+  if (typeof paintRecawRow === 'function') paintRecawRow(div, a);
   return div;
 }
 
@@ -1975,10 +2176,12 @@ async function loadPostPage(cawId) {
     main.innerHTML = '<p class="err">' + T.postNotFound + '</p>';
     $('threadBlock').style.display = 'none';
     $('quotesBlock').style.display = 'none';
+    $('likedByBlock').style.display = 'none';
+    $('sharedByBlock').style.display = 'none';
     return;
   }
   main.innerHTML = '';
-  main.appendChild(await postCard(post));
+  main.appendChild(await postCard(post, { detail: true }));
   note.textContent = T.stillLooking;
   let ctx = null;
   try { ctx = await collectPostContext(post, 80); } catch (e) {}
@@ -1997,6 +2200,31 @@ async function loadPostPage(cawId) {
     quotesBox.innerHTML = '';
     if (!ctx.quotes.length) quotesBox.innerHTML = '<p class="small">' + T.empty + '</p>';
     for (const row of await Promise.all(ctx.quotes.map(q => postCard(q)))) quotesBox.appendChild(row);
+    /* Liked by / Recawed by (v13, the app's detail sections):
+       the sender name ids the context scan already collected,
+       rendered as name rows; ids whose name cannot be resolved
+       show as #id, never invented. Empty sections hide. */
+    const fillPeople = async (innerId, blockId, senderIds) => {
+      const inner = $(innerId), block = $(blockId);
+      if (!inner || !block) return;
+      if (!senderIds.length) { block.style.display = 'none'; return; }
+      block.style.display = '';
+      inner.innerHTML = '';
+      const rows = await Promise.all(senderIds.map(async sid => {
+        const id = BigInt(sid);
+        const [nm, im] = await Promise.all([resolveName(id).catch(() => null), avatarFor(id).catch(() => null)]);
+        const d = document.createElement('div');
+        d.className = 'namecard';
+        const label = nm ? '@' + nm : T.unknownName + sid;
+        d.innerHTML = (nm ? '<a class="plink" href="' + profUrl(nm) + '">' + avatarHtml(im, nm) + '</a>' : avatarHtml(im, nm)) +
+          '<div class="grow"><div class="n">' + (nm ? '<a class="plink" href="' + profUrl(nm) + '">' + esc(label) + '</a>' : esc(label)) + '</div>' +
+          '<div class="small">#' + sid + '</div></div>';
+        return d;
+      }));
+      for (const r of rows) inner.appendChild(r);
+    };
+    fillPeople('postLikedBy', 'likedByBlock', ctx.likeSenders);
+    fillPeople('postSharedBy', 'sharedByBlock', ctx.shareSenders);
   } else {
     note.textContent = T.loadFail;
   }
@@ -2051,27 +2279,37 @@ async function loadProfile() {
     mintDateOf(id),
   ]);
   const chips = ['#' + id.toString()];
-  if (followers !== null) chips.push(followers.toString() + ' ' + T.followers);
-  if (balance !== null) chips.push(T.inName + ': ' + fmtQcaw(balance) + ' qCAW');
   if (mintTs) {
     const d = new Date(mintTs);
     chips.push(T.nameCreated + ': ' + d.toLocaleDateString(LANG === 'ja' ? 'ja-JP' : 'en-US', { year: 'numeric', month: 'numeric', day: 'numeric' }));
   }
+  if (owner) chips.push(T.ownerLbl + ': ' + shortAddr(owner));
+  /* v13: the app's profile composition — banner, the avatar
+     overlapping it, the follow pill on the same row (rendered by
+     renderProfFollow into #profFollowArea), the big name, the
+     handle line, then the counts band: Following / Followers
+     cells (tappable — they open the reconstructed lists inline,
+     v9 behaviour kept; the Followers number is the chain's own
+     followerCount) and the name's own qCAW balance as a plain
+     display cell. */
   head.innerHTML = '<div class="pband"></div>' +
-    '<div class="prow"><div class="pava">' + avatarHtml(img, username) + '</div></div>' +
+    '<div class="prow"><div class="pava">' + avatarHtml(img, username) + '</div>' +
+    '<div class="pactions" id="profFollowArea"></div></div>' +
     '<div class="pname">@' + esc(username) + '</div>' +
-    (owner ? '<div class="small">' + T.ownerLbl + ': <a class="plink" href="' + EXPLORER + '/address/' + owner + '" target="_blank" rel="noopener">' + esc(shortAddr(owner)) + '</a></div>' : '') +
+    '<div class="phandle">@' + esc(username) + ' · #' + id.toString() + '</div>' +
+    '<div class="counts-row">' +
+    '<button type="button" class="count-cell" id="followingBtn"><span class="cc-num" id="followingCount">—</span><span class="cc-lbl">' + esc(T.followingLbl) + '</span></button>' +
+    '<button type="button" class="count-cell" id="followersBtn"><span class="cc-num">' + (followers !== null ? esc(followers.toString()) : '—') + '</span><span class="cc-lbl">' + esc(T.followersLbl) + '</span></button>' +
+    (balance !== null ? '<div class="count-cell"><span class="cc-num">' + esc(fmtQcaw(balance)) + '</span><span class="cc-lbl">qCAW</span></div>' : '') +
+    '</div>' +
     '<div class="chips">' + chips.map(c => '<span class="chip">' + esc(c) + '</span>').join('') + '</div>' +
-    /* Follow lists (v9): the counts are tappable and open the
-       reconstructed lists inline. The Followers number shown here
-       is the chain's own followerCount; the list itself is the
-       reconstruction (see the small print under it). */
-    '<div class="followbar">' +
-    '<button type="button" class="ghost follow-open" id="followingBtn">' + T.followingLbl + '</button>' +
-    '<button type="button" class="ghost follow-open" id="followersBtn">' + T.followersLbl + (followers !== null ? ': ' + followers.toString() : '') + '</button>' +
-    '</div><div id="followLists"></div><div id="profFollowArea"></div>';
+    '<div id="followLists"></div>';
   profileState = { id, username };
   profileOwner = owner;
+  const fcNow = $('followingCount');
+  if (fcNow && followBuildState().complete) {
+    try { fcNow.textContent = String(followListsOf(id).following.length); } catch (e) {}
+  }
   const fb = $('followingBtn'), rb2 = $('followersBtn');
   if (fb) fb.onclick = () => openFollowList('following');
   if (rb2) rb2.onclick = () => openFollowList('followers');
@@ -2164,8 +2402,8 @@ async function renderFollowLists(kind) {
   if (followOpenKind !== kind || !profileState) return;
   const st = followBuildState();
   const ids = kind === 'following' ? lists.following : lists.followers;
-  const btn = $(kind === 'following' ? 'followingBtn' : 'followersBtn');
-  if (btn && kind === 'following') btn.textContent = T.followingLbl + ': ' + ids.length;
+  const fcEl = $('followingCount');
+  if (fcEl && kind === 'following') fcEl.textContent = String(ids.length);
   box.innerHTML = '';
   const status = document.createElement('p');
   status.className = 'small';
@@ -2682,6 +2920,7 @@ setInterval(() => {
 function refreshViewsForWallet() {
   if (typeof postQuery !== 'undefined' && postQuery) loadPostPage(postQuery);
   else if (typeof profileQuery !== 'undefined' && profileQuery) loadProfile();
+  else if (typeof bmQuery !== 'undefined' && bmQuery) loadBookmarksView();
   else if (typeof searchQuery !== 'undefined' && searchQuery) { /* search rows keep their buttons state; a fresh search re-adds them */ }
   else loadTimeline(false);
 }
@@ -2739,6 +2978,7 @@ function renderPw() {
     }
   };
   $('pwImportBtn').onclick = () => { pwView = 'import'; renderPw(); };
+  syncChrome();
 }
 function renderPwCreateShow(area) {
   const words = pwDraft.secret.split(' ');
@@ -2829,6 +3069,7 @@ function renderPwLocked(area) {
   $('pwUnlockBtn').onclick = tryUnlock;
   $('pwUnlockPass').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
   $('pwRemoveBtn1').onclick = () => renderPwRemove($('pwRemoveArea'));
+  syncChrome();
 }
 async function pwStartSession(secretObj) {
   let keyBytes, address;
@@ -2866,38 +3107,70 @@ function renderPwRemove(box) {
 function renderPwUnlocked(area) {
   const s = pwSession;
   const acting = pwActing();
-  let html = '<div class="addrline"><span class="dot dot-ok"></span><span>' + esc(shortAddr(s.address)) + '</span>' +
-    '<span class="chainbadge">QL1</span>' +
-    '<button id="pwCopyAddr" class="ghost sharebtn" type="button">' + esc(T.pwCopyBtn) + '</button></div>' +
-    '<div class="small">' + esc(T.pwAddressLbl) + ': ' + esc(s.address) + '</div>' +
-    '<p class="small">' + esc(T.pwQomLbl) + ': <b id="pwQomBal">…</b> QOM · ' +
-    esc(T.pwQcawLbl) + ': <b id="pwQcawBal">…</b> qCAW</p>' +
+  /* v13: the app's wallet screen shape (v0.6.2, MetaMask-style):
+     a profile summary row, one action button to the deposit /
+     withdraw card, the balances as an asset list, the acting
+     names as tappable rows, then the deposit card and the menu
+     rows. Every control keeps its v12 id and wiring; only the
+     acting-name picker changed shape (rows instead of a select,
+     the app's own way) — pwSetActing still does the switching. */
+  let html = '<div class="pw-summary">' +
+    (acting
+      ? '<span class="pw-ava-slot" id="pwSummaryAva"></span><span class="pw-sum-name">@' + esc(acting.username) + '</span>'
+      : '<span class="pw-sum-name">' + esc(T.pwAddressLbl) + '</span>') +
+    '<button id="pwCopyAddr" class="addr-chip" type="button" title="' + esc(s.address) + '">' + esc(shortAddr(s.address)) + ' ⧉</button>' +
+    '<span class="chainbadge">QL1</span></div>' +
+    '<div class="pw-actions"><button id="pwDepJump" class="pw-action-btn" type="button">' + esc(T.depostLbl) + '</button></div>' +
+    '<div class="asset-list">' +
+    '<div class="asset-row"><span class="asset-sym">QOM</span><span class="asset-amt" id="pwQomBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">qCAW</span><span class="asset-amt" id="pwQcawBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">O</span><span class="asset-amt" id="pwOBal">…</span></div>' +
+    '</div>' +
     '<p id="pwGasWarn"></p>';
   if (!pwNames.length) {
     html += '<p class="warn">' + esc(T.pwNoNamesYet) + '</p>';
   } else {
-    html += '<label class="small" for="pwActingSel">' + esc(T.pwActingLbl) + '</label>' +
-      '<select id="pwActingSel">' + pwNames.map(t =>
-        '<option value="' + t.id.toString() + '"' + (acting && t.id === acting.id ? ' selected' : '') + '>@' +
-        esc(t.username) + ' — ' + esc(T.pwNameBalanceLbl) + ': ' + esc(fmtQcaw(t.balance)) + ' qCAW</option>').join('') + '</select>';
+    html += '<h3 class="detail-h">' + esc(T.pwActingLbl) + '</h3><div class="acting-list">' +
+      pwNames.map(t =>
+        '<button type="button" class="acting-row' + (acting && t.id === acting.id ? ' on' : '') + '" data-acting="' + t.id.toString() + '">' +
+        '<span class="ar-ava" data-ava="' + t.id.toString() + '"></span>' +
+        '<span class="ar-name">@' + esc(t.username) + '</span>' +
+        '<span class="ar-bal">' + esc(fmtQcaw(t.balance)) + ' qCAW</span></button>').join('') + '</div>';
     if (acting) {
-      html += '<h3 class="detail-h">' + esc(T.pwDepTitle) + '</h3>' +
+      html += '<div class="pw-card" id="pwDepCard"><h3 class="detail-h">' + esc(T.pwDepTitle) + '</h3>' +
         '<p class="small">' + esc(T.pwDepNote) + '</p>' +
         '<input type="text" id="pwAmount" inputmode="decimal" autocomplete="off" placeholder="' + esc(T.pwAmountPh) + '">' +
         '<div class="row"><button id="pwDepBtn" type="button">' + esc(T.pwDepositBtn) + '</button>' +
         '<button id="pwWdBtn" class="ghost" type="button">' + esc(T.pwWithdrawBtn) + '</button></div>' +
-        '<p id="pwDepStatus"></p>';
+        '<p id="pwDepStatus"></p></div>';
     }
   }
-  html += '<div class="row" style="margin-top:12px"><button id="pwLockBtn" class="ghost" type="button">' + esc(T.pwLockBtn) + '</button>' +
-    '<button id="pwRemoveBtn2" class="ghost" type="button">' + esc(T.pwRemoveBtn) + '</button></div>' +
+  html += '<div class="menu-list">' +
+    '<button id="pwLockBtn" class="menu-row" type="button">' + esc(T.pwLockBtn) + '</button>' +
+    '<button id="pwRemoveBtn2" class="menu-row" type="button">' + esc(T.pwRemoveBtn) + '</button></div>' +
     '<div id="pwRemoveArea"></div><p id="pwStatus"></p>';
   area.innerHTML = html;
   $('pwCopyAddr').onclick = async ev => {
-    try { await navigator.clipboard.writeText(s.address); ev.target.textContent = T.copied; setTimeout(() => { const b = $('pwCopyAddr'); if (b) b.textContent = T.pwCopyBtn; }, 1600); } catch (e) {}
+    try { await navigator.clipboard.writeText(s.address); ev.target.textContent = T.copied; setTimeout(() => { const b = $('pwCopyAddr'); if (b) b.textContent = shortAddr(s.address) + ' ⧉'; }, 1600); } catch (e) {}
   };
-  const sel = $('pwActingSel');
-  if (sel) sel.onchange = () => pwSetActing(BigInt(sel.value));
+  area.querySelectorAll('[data-acting]').forEach(row => {
+    row.onclick = () => pwSetActing(BigInt(row.dataset.acting));
+  });
+  area.querySelectorAll('[data-ava]').forEach(async slot => {
+    const id = BigInt(slot.dataset.ava);
+    const [nm, im] = await Promise.all([resolveName(id).catch(() => null), avatarFor(id).catch(() => null)]);
+    slot.innerHTML = avatarHtml(im, nm);
+  });
+  if (acting) {
+    (async () => {
+      const slot = $('pwSummaryAva');
+      if (!slot) return;
+      const im = await avatarFor(acting.id).catch(() => null);
+      slot.innerHTML = avatarHtml(im, acting.username);
+    })();
+  }
+  const jump = $('pwDepJump');
+  if (jump) jump.onclick = () => { const c = $('pwDepCard'); if (c) c.scrollIntoView({ block: 'center' }); };
   const dep = $('pwDepBtn'); if (dep) dep.onclick = () => pwDoDepWd('deposit');
   const wd = $('pwWdBtn'); if (wd) wd.onclick = () => pwDoDepWd('withdraw');
   $('pwLockBtn').onclick = () => pwLock();
@@ -2905,16 +3178,19 @@ function renderPwUnlocked(area) {
   /* balances fill in async */
   (async () => {
     try {
-      const [qom, qc] = await Promise.all([
+      const [qom, qc, ob] = await Promise.all([
         rpc('eth_getBalance', [s.address, 'latest']).then(h => BigInt(h)),
         readUint(QCAW, SEL.balanceOf + encAddr(s.address)),
+        (typeof O_TOKEN !== 'undefined' ? readUint(O_TOKEN, SEL.balanceOf + encAddr(s.address)) : Promise.resolve(null)).catch(() => null),
       ]);
-      const a = $('pwQomBal'), b = $('pwQcawBal'), w = $('pwGasWarn');
+      const a = $('pwQomBal'), b = $('pwQcawBal'), o = $('pwOBal'), w = $('pwGasWarn');
       if (a) a.textContent = fmtQcaw(qom);
       if (b) b.textContent = fmtQcaw(qc);
+      if (o) o.textContent = ob === null ? '—' : fmtQcaw(ob);
       if (w && qom === 0n) w.innerHTML = '<span class="warn">' + esc(T.pwNeedGas) + '</span>';
     } catch (e) { /* balances are a nicety; the sends re-read anyway */ }
   })();
+  syncChrome();
 }
 async function pwDoDepWd(kind) {
   const acting = pwActing();
@@ -2966,7 +3242,7 @@ function openConfirmPanel(opts) {
   const status = $('confirmStatus');
   status.innerHTML = '';
   const sign = $('confirmSignBtn'), cancel = $('confirmCancelBtn');
-  sign.textContent = T.confirmSignBtn; sign.style.display = ''; sign.disabled = false;
+  sign.textContent = opts.signLabel || T.confirmSignBtn; sign.style.display = ''; sign.disabled = false;
   cancel.textContent = T.confirmCancelBtn; cancel.disabled = false;
   ov.style.display = '';
   const close = () => { ov.style.display = 'none'; sign.onclick = null; cancel.onclick = null; };
@@ -2976,7 +3252,7 @@ function openConfirmPanel(opts) {
     status.innerHTML = '<span class="small">' + esc(T.actSending) + '</span>';
     try {
       await opts.onSign(html => { status.innerHTML = html; });
-      status.innerHTML = '<span class="ok">' + esc(T.actDone) + '</span>';
+      status.innerHTML = '<span class="ok">' + esc(opts.doneText || T.actDone) + '</span>';
       if (opts.afterSuccess) { try { await opts.afterSuccess(); } catch (e) {} }
     } catch (e) {
       status.innerHTML = confirmErrHtml(e);
@@ -3006,6 +3282,10 @@ function setComposerRef(kind, post) {
 function renderComposer() {
   const area = $('composerArea');
   if (!area) return;
+  /* The floating compose button (and the sidebar's Post button)
+     only exist when there is a name to post as — the app's rule
+     that chrome follows what the user can actually do. */
+  document.body.classList.toggle('can-compose', pwUnlocked() && !!pwActing());
   if (!pwUnlocked()) {
     area.innerHTML = '<div class="composer-hint"><span>' + esc(T.compHintLocked) + '</span>' +
       '<button type="button" class="ghost" id="compSetupBtn">' + esc(T.compHintSetupBtn) + '</button></div>';
@@ -3023,8 +3303,14 @@ function renderComposer() {
     return;
   }
   const ref = composerRef;
-  let html = '<div class="composer-card">';
-  html += '<div class="meta"><span class="name">@' + esc(acting.username) + '</span>' +
+  /* v13: the app's compose row — the acting name's avatar, its
+     name as a chip that jumps to the wallet (where names are
+     switched), then the input. The cost line, the reply/quote
+     context and every control keep their v12 ids and wiring. */
+  let html = '<div class="composer-card"><div class="composer-row">' +
+    '<span class="comp-ava" id="compAva"></span>' +
+    '<div class="composer-main">' +
+    '<div class="composer-top"><button type="button" class="name-chip-btn" id="compNameChip">@' + esc(acting.username) + ' ▾</button>' +
     '<span class="small">' + esc(T.pwNameBalanceLbl) + ': ' + esc(fmtQcaw(acting.balance)) + ' qCAW</span></div>';
   if (acting.balance === 0n) html += '<p class="warn">' + esc(T.compZeroBalance) + '</p>';
   if (ref) {
@@ -3033,10 +3319,18 @@ function renderComposer() {
       ' <button type="button" class="actbtn" id="compRefCancel">' + esc(T.compCancelRef) + '</button></div>';
   }
   html += '<textarea id="compText" rows="3" placeholder="' + esc(T.compPh) + '">' + esc(compDraft) + '</textarea>' +
-    '<div class="row" style="justify-content:space-between"><span class="charcount" id="compCount"></span>' +
-    '<button type="button" id="compPostBtn">' + esc(T.compPostBtn) + '</button></div>' +
-    '<p id="compStatus"></p></div>';
+    '<div class="composer-foot"><span class="charcount" id="compCount"></span>' +
+    '<button type="button" class="comp-post" id="compPostBtn">' + esc(T.compPostBtn) + '</button></div>' +
+    '<p id="compStatus"></p></div></div></div>';
   area.innerHTML = html;
+  (async () => {
+    const slot = $('compAva');
+    if (!slot) return;
+    const im = await avatarFor(acting.id).catch(() => null);
+    if ($('compAva') === slot) slot.innerHTML = avatarHtml(im, acting.username);
+  })();
+  const chipBtn = $('compNameChip');
+  if (chipBtn) chipBtn.onclick = () => { const s = $('pwallet'); if (s) s.scrollIntoView(); };
   if (ref) {
     (async () => {
       const nm = await resolveName(ref.post.senderId).catch(() => null);
@@ -3118,33 +3412,85 @@ async function doSimpleAction(kind, target) {
     afterSuccess: kind === 1 ? (() => {
       const el = document.querySelector('[data-cawid="' + target.cawId.toLowerCase() + '"] .like-count');
       if (el) {
-        const cur = parseInt((el.textContent || '').replace(/[^0-9]/g, ''), 10) || 0;
-        el.innerHTML = IC_HEART + '<span>' + (cur + 1) + '</span>';
+        const cur = parseInt(el.dataset.raw || '0', 10) || 0;
+        el.dataset.raw = String(cur + 1);
+        el.textContent = fmtCount(cur + 1);
+        const row = el.closest('.x-like');
+        if (row) row.classList.add('on');
       }
       pwLoadNames().then(() => renderComposer()).catch(() => {});
     }) : undefined,
   });
 }
-function actionButtonsHtml(a) {
-  if (!pwUnlocked() || !pwActing() || a.type !== 0) return '';
-  return '<span class="act-btns">' +
-    '<button type="button" class="actbtn" data-act="like">' + IC_HEART + esc(T.actLike) + '</button>' +
-    '<button type="button" class="actbtn" data-act="recaw">' + IC_REPEAT + esc(T.actRecaw) + '</button>' +
-    '<button type="button" class="actbtn" data-act="reply">' + IC_REPLY + esc(T.actReply) + '</button>' +
-    '<button type="button" class="actbtn" data-act="quote">' + esc(T.actQuote) + '</button></span>';
+/* ----- the X action row's taps (v13) -----
+   Reply opens the composer in reply mode (existing flow).
+   Like goes straight to its confirm panel (existing flow).
+   Recaw opens the app's choice sheet: Recaw / SuperRecaw /
+   Quote Recaw — with any unfinished SuperRecaw leg routed
+   first (v14). Bookmark is a local-only toggle; Share uses the
+   app's text share. Write actions tapped while the posting
+   wallet is locked scroll to the wallet instead of failing. */
+function scrollToWallet() {
+  const s = $('pwallet');
+  if (s) s.scrollIntoView({ block: 'start' });
 }
-function wireActionButtons(div, a) {
+function wireRowActions(div, a) {
   /* A card can contain a nested original (quote/Recaw frame)
-     with its own buttons — only wire the wrap that belongs to
-     THIS card, never the nested one. */
-  const wrap = [...div.querySelectorAll('.act-btns')].find(w => w.closest('.post') === div);
-  if (!wrap) return;
-  wrap.addEventListener('click', e => e.stopPropagation());
-  const btn = name => wrap.querySelector('[data-act="' + name + '"]');
-  const like = btn('like'); if (like) like.onclick = () => doSimpleAction(1, a);
-  const rec = btn('recaw'); if (rec) rec.onclick = () => doSimpleAction(2, a);
-  const rep = btn('reply'); if (rep) rep.onclick = () => setComposerRef('reply', a);
-  const quo = btn('quote'); if (quo) quo.onclick = () => setComposerRef('quote', a);
+     with its own row — only wire the row that belongs to THIS
+     card, never the nested one. */
+  const foot = [...div.querySelectorAll('.pfoot')].find(w => w.closest('.post') === div);
+  if (!foot) return;
+  foot.addEventListener('click', e => e.stopPropagation());
+  const btn = name => foot.querySelector('[data-act="' + name + '"]');
+  const rep = btn('reply');
+  if (rep) rep.onclick = () => setComposerRef('reply', a);
+  const like = btn('like');
+  if (like) like.onclick = () => {
+    if (!pwUnlocked() || !pwActing()) { scrollToWallet(); return; }
+    doSimpleAction(1, a);
+  };
+  const rec = btn('recaw');
+  if (rec) rec.onclick = () => onRecawTap(a);
+  const sup = btn('super');
+  if (sup) sup.onclick = () => { if (typeof onSuperTap === 'function') onSuperTap(a, div); };
+  const bm = btn('bookmark');
+  if (bm) bm.onclick = () => {
+    if (!pwSession) { scrollToWallet(); return; }
+    const now = bmToggle(pwSession.address, a.cawId);
+    bm.classList.toggle('on', now);
+    bm.innerHTML = '<span class="icring">' + (now ? IC_BOOKMARK_FILL : IC_BOOKMARK) + '</span>';
+    if (typeof bmViewActive !== 'undefined' && bmViewActive && !now) {
+      const row = div.closest('.bm-row');
+      if (row) row.remove();
+    }
+  };
+  const sh = btn('share');
+  if (sh) sh.onclick = () => sharePostText(a, sh);
+}
+/* The Recaw choice sheet (the app's RecawChoiceSheet): plain
+   Recaw, SuperRecaw (v14), Quote Recaw. Any unfinished
+   SuperRecaw leg for this post routes to its own finish sheet
+   first — the plain Recaw is never re-sent for a pending burn
+   or payment. */
+let recawChoiceTarget = null;
+function openRecawChoice(a) {
+  const ov = $('choiceOverlay');
+  if (!ov) { doSimpleAction(2, a); return; }
+  recawChoiceTarget = a;
+  ov.style.display = '';
+  const close = () => { ov.style.display = 'none'; recawChoiceTarget = null; };
+  $('choiceCancelBtn').onclick = close;
+  $('choiceRecawBtn').onclick = () => { close(); doSimpleAction(2, a); };
+  $('choiceQuoteBtn').onclick = () => { close(); setComposerRef('quote', a); };
+  $('choiceSuperBtn').onclick = () => {
+    close();
+    if (typeof openSuperRecawFlow === 'function') openSuperRecawFlow(a);
+  };
+}
+function onRecawTap(a) {
+  if (!pwUnlocked() || !pwActing()) { scrollToWallet(); return; }
+  if (typeof routeRecawPending === 'function' && routeRecawPending(a)) return;
+  openRecawChoice(a);
 }
 let profileOwner = null;
 async function renderProfFollow() {
@@ -3212,9 +3558,136 @@ async function renderProfFollow() {
   };
 }
 
+/* ---------- bookmarks view (?bookmarks=1, v13) ----------
+   The saved ids resolve against the live readers one by one,
+   newest-saved first. An id that no longer resolves renders an
+   honest placeholder with a remove button — never a cached
+   copy of the post. Locked / no wallet: the view says the list
+   lives with the posting wallet and waits for the unlock (the
+   wallet section above re-renders this view on unlock). */
+let bmViewActive = false;
+async function loadBookmarksView() {
+  bmViewActive = true;
+  const box = $('bmList');
+  if (!box) return;
+  box.innerHTML = '';
+  if (!pwSession) {
+    box.innerHTML = '<p class="bm-note">' + esc(T.bmNeedWallet) + '</p>';
+    return;
+  }
+  const ids = bmList(pwSession.address);
+  if (!ids.length) {
+    box.innerHTML = '<p class="bm-note">' + esc(T.bmEmpty) + '</p>';
+    return;
+  }
+  for (const id of ids) {
+    const wrap = document.createElement('div');
+    wrap.className = 'bm-row';
+    wrap.innerHTML = '<p class="bm-note">' + esc(T.looking) + '</p>';
+    box.appendChild(wrap);
+    (async () => {
+      let post = null;
+      try { post = await findPostByCawId(id, 12); } catch (e) {}
+      if (!post) { try { post = await findPostDeep(id); } catch (e) {} }
+      if (post) {
+        const card = await postCard(post);
+        wrap.innerHTML = '';
+        wrap.appendChild(card);
+      } else {
+        wrap.innerHTML = '<div class="bm-missing"><span class="small">' + esc(T.bmMissing) + '</span>' +
+          '<button type="button" class="ghost bm-del">' + esc(T.bmRemove) + '</button></div>';
+        wrap.querySelector('.bm-del').onclick = () => {
+          if (pwSession) bmToggle(pwSession.address, id);
+          wrap.remove();
+          if (!box.querySelector('.bm-row')) box.innerHTML = '<p class="bm-note">' + esc(T.bmEmpty) + '</p>';
+        };
+      }
+    })();
+  }
+}
+
+/* ---------- chrome sync: sidebar + drawer summaries (v13) ----------
+   Both summaries mirror the posting-wallet state the way the
+   app's drawer does: unlocked → the acting name's avatar, name,
+   "@handle · #id" and its follow counts (shown only when the
+   follow index is already built — otherwise an honest dash,
+   never a guessed number); locked → the CAW mark and the plain
+   "on QL1 · web" line. Called from renderPw, so every wallet
+   state change repaints the chrome. */
+function openDrawer() {
+  const d = $('drawer');
+  if (!d) return;
+  d.classList.add('open');
+  d.setAttribute('aria-hidden', 'false');
+}
+function closeDrawer() {
+  const d = $('drawer');
+  if (!d) return;
+  d.classList.remove('open');
+  d.setAttribute('aria-hidden', 'true');
+}
+async function syncChrome() {
+  const acting = pwSession ? pwActing() : null;
+  const setSummary = async (avaId, nameId, subId, followId, profileRowId) => {
+    const ava = $(avaId), nm = $(nameId), sub = $(subId), fol = $(followId), prow = $(profileRowId);
+    if (prow) prow.style.display = acting ? '' : 'none';
+    if (acting) {
+      if (nm) nm.textContent = acting.username || '';
+      if (sub) sub.textContent = '@' + acting.username + ' · #' + acting.id.toString();
+      if (ava) {
+        const im = await avatarFor(acting.id).catch(() => null);
+        ava.innerHTML = avatarHtml(im, acting.username);
+      }
+      if (prow) prow.setAttribute('href', profUrl(acting.username));
+      const sum = document.querySelector('.mt-avatar-btn');
+      if (avaId === 'drawerAvatar') {
+        const mt = $('mtAvatar');
+        if (mt) {
+          const im2 = await avatarFor(acting.id).catch(() => null);
+          mt.innerHTML = avatarHtml(im2, acting.username);
+        }
+      }
+      if (fol) {
+        fol.style.display = '';
+        let followingTxt = '—', followersTxt = '—';
+        if (followBuildState().complete) {
+          try {
+            const l = followListsOf(acting.id);
+            followingTxt = String(l.following.length);
+            const fc = await readUint(CAW_ACTIONS, SEL.followerCount + word(acting.id)).catch(() => null);
+            if (fc !== null) followersTxt = fc.toString();
+            else followersTxt = String(l.followers.length);
+          } catch (e) {}
+        }
+        fol.innerHTML = '<b>' + esc(followingTxt) + '</b> ' + esc(T.followingLbl) + ' · <b>' + esc(followersTxt) + '</b> ' + esc(T.followersLbl);
+      }
+    } else {
+      if (nm) nm.textContent = 'CAW Social';
+      if (sub) sub.textContent = LANG === 'ja' ? 'QL1 版・ウェブ' : 'on QL1 · web';
+      if (ava) ava.innerHTML = '<img class="avatar" src="icon-192.png?v=13" alt="">';
+      const mt = $('mtAvatar');
+      if (mt && avaId === 'drawerAvatar') mt.innerHTML = '<img class="avatar" src="icon-192.png?v=13" alt="">';
+      if (fol) fol.style.display = 'none';
+    }
+  };
+  await Promise.all([
+    setSummary('sideAvatar', 'sideName', 'sideSub', null, 'sideProfileRow'),
+    setSummary('drawerAvatar', 'drawerName', 'drawerSub', 'drawerFollow', 'drawerProfileRow'),
+  ]);
+  /* current-place highlight */
+  const mode = (typeof postQuery !== 'undefined' && postQuery) ? 'post'
+    : (typeof profileQuery !== 'undefined' && profileQuery) ? 'profile'
+    : (typeof searchQuery !== 'undefined' && searchQuery) ? 'search'
+    : (typeof bmQuery !== 'undefined' && bmQuery) ? 'bookmarks' : 'home';
+  document.querySelectorAll('[data-nav]').forEach(el => {
+    el.classList.toggle('on', el.dataset.nav === mode);
+  });
+}
+
 /* ---------- init ---------- */
 const postQuery = new URLSearchParams(location.search).get('post');
 const searchQuery = new URLSearchParams(location.search).get('q');
+const bmQuery = new URLSearchParams(location.search).get('bookmarks');
 document.querySelectorAll('.langs a').forEach(a => {
   const base = a.getAttribute('href').split('?')[0];
   a.href = base + location.search;
@@ -3248,6 +3721,10 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
   if (ptr) ptr.onclick = () => switchProfTab('recaws');
   const sprb = $('shareProfileBtn');
   if (sprb) sprb.onclick = () => shareCurrentPage(sprb);
+} else if (bmQuery) {
+  document.body.classList.add('bookmarks-mode');
+  $('viewBookmarks').style.display = '';
+  loadBookmarksView();
 } else if (searchQuery) {
   $('viewSearch').style.display = '';
   $('searchTitle').textContent = T.searchTitle.replace('{q}', searchQuery);
@@ -3301,6 +3778,40 @@ if (mni) mni.addEventListener('keydown', e => { if (e.key === 'Enter') doMintChe
 refreshWallet();
 renderPw();
 renderComposer();
+/* v13 chrome wiring: the mobile drawer (avatar button, scrim,
+   close, Escape), the floating compose button and the sidebar
+   Post button (both jump to the home composer — on other views
+   they land on the home view, whose composer keeps the draft),
+   and the right rail's search pill (a plain GET to ?q=, the
+   existing post search). */
+const drBtn = $('drawerBtn');
+if (drBtn) drBtn.onclick = () => { syncChrome(); openDrawer(); };
+const drScrim = $('drawerScrim');
+if (drScrim) drScrim.onclick = closeDrawer;
+const drClose = $('drawerClose');
+if (drClose) drClose.onclick = closeDrawer;
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+document.querySelectorAll('#drawer a').forEach(a => a.addEventListener('click', closeDrawer));
+const goCompose = () => {
+  closeDrawer();
+  if ($('viewHome') && $('viewHome').style.display !== 'none') {
+    const ca = $('composerArea');
+    if (ca) ca.scrollIntoView({ block: 'start' });
+    const ta = $('compText');
+    if (ta) ta.focus();
+  } else {
+    location.href = pageFile;
+  }
+};
+const fab = $('fabBtn');
+if (fab) fab.onclick = goCompose;
+const spb2 = $('sidePostBtn');
+if (spb2) spb2.onclick = goCompose;
+const rsf = $('railSearchForm');
+if (rsf) rsf.addEventListener('submit', e => {
+  const v = $('railSearchInput').value.trim();
+  if (!v) e.preventDefault();
+});
 /* Reply/Quote links from other views land here as
    ?compose=reply:<cawId> / ?compose=quote:<cawId>; resolve the
    target post now so the composer can open in that mode as soon
@@ -3343,6 +3854,7 @@ if (typeof module !== 'undefined' && module.exports) {
     buildDepositCalldata, buildWithdrawCalldata, buildApproveToCalldata,
     parseAmount, hexToB64Url, postRefMarker, appendPostRef, textBytes,
     randomCawId, submitLocalAction,
+    bmList, bmHas, bmToggle, BOOKMARKS_KEY_PREFIX,
     SEL, CAW_NAME, CAW_ACTIONS, MINTER, QCAW, CHAIN_ID_HEX, word,
   };
 }

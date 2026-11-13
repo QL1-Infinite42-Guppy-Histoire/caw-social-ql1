@@ -275,9 +275,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v12: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=12') && jaHtml.includes('?v=12'), 'shells reference ?v=12 assets');
-ok(swSrc.includes("caw-view-v12"), 'sw.js cache name is caw-view-v12');
+console.log('— v13: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=13') && jaHtml.includes('?v=13'), 'shells reference ?v=13 assets');
+ok(swSrc.includes("caw-view-v13"), 'sw.js cache name is caw-view-v13');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -510,6 +510,62 @@ console.log('— v12: write-path guards (rewritten for the two-write design) —
      V.BIP39_WORDS[0] === 'abandon' && V.BIP39_WORDS[2047] === 'zoo' &&
      new Set(V.BIP39_WORDS).size === 2048,
      'the wordlist file holds exactly the 2048 BIP39 English words');
+}
+
+console.log('— v13: X-style UI overhaul (display layer, app v0.6.x parity) —');
+{
+  const cssSrc = read('../docs/style.css');
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    ok(html.includes('id="drawer"') && html.includes('id="drawerBtn"') &&
+       html.includes('id="drawerScrim"') && html.includes('id="sidebar"'),
+       label + ' carries the app-style drawer + sidebar chrome');
+    ok(html.includes('id="viewBookmarks"') && html.includes('id="bmList"'),
+       label + ' carries the bookmarks view');
+    ok(html.includes('id="choiceOverlay"') && html.includes('id="choiceSuperBtn"'),
+       label + ' carries the Recaw choice sheet (incl. the SuperRecaw entry)');
+    ok(html.includes('id="fabBtn"') && html.includes('id="railSearchForm"'),
+       label + ' carries the compose FAB and the rail search pill');
+    ok(html.includes('id="likedByBlock"') && html.includes('id="sharedByBlock"'),
+       label + ' carries the post-page Liked by / Recawed by sections');
+  }
+  const idSet = h => new Set([...h.matchAll(/ id="([^"]+)"/g)].map(m => m[1]));
+  const enIds = idSet(enHtml), jaIds = idSet(jaHtml);
+  ok(enIds.size === jaIds.size && [...enIds].every(i => jaIds.has(i)),
+    'en.html and ja.html expose the IDENTICAL element-id set', 'en=' + enIds.size + ' ja=' + jaIds.size);
+  for (const tok of ['#1d9bf0', '#0f1419', '#536471', '#eff3f4', '#ffac33', 'rgba(255,172,51,0.10)']) {
+    ok(cssSrc.toLowerCase().includes(tok), 'style.css carries the app design token ' + tok);
+  }
+  ok(!viewerSrc.includes('data-views') && !enHtml.includes('data-views') && !jaHtml.includes('data-views'),
+    'no view/impression counter element exists anywhere (it cannot be counted, so it is not faked)');
+  ok(viewerSrc.includes('data-act="super"') && viewerSrc.includes('data-act="bookmark"') &&
+     viewerSrc.includes('data-act="share"'),
+     'the action row carries SuperLike / bookmark / share in the app order');
+}
+{
+  /* The bookmark store (app lib/bookmarks.ts rule): per-address
+     localStorage key, newest first, ids only. */
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: k => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+    removeItem: k => store.delete(k),
+  };
+  try {
+    const addr = '0xAbC0000000000000000000000000000000000001';
+    const idA = '0x' + 'aa'.repeat(32), idB = '0x' + 'bb'.repeat(32);
+    ok(V.BOOKMARKS_KEY_PREFIX === 'caw-bookmarks-v1-', 'bookmark key prefix matches the app');
+    ok(V.bmToggle(addr, idA) === true && V.bmHas(addr, idA), 'bmToggle saves a post');
+    ok(V.bmToggle(addr, idB) === true, 'bmToggle saves a second post');
+    ok(JSON.stringify(V.bmList(addr)) === JSON.stringify([idB, idA]),
+      'bookmarks list is newest-first');
+    ok(store.has('caw-bookmarks-v1-' + addr.toLowerCase()),
+      'bookmarks persist under caw-bookmarks-v1-<lowercased address>');
+    ok(V.bmToggle(addr, idA) === false && !V.bmHas(addr, idA), 'bmToggle again removes the post');
+    ok(V.bmList('0x0000000000000000000000000000000000000002').length === 0,
+      'another address sees none of them (per-wallet scoping)');
+  } finally {
+    delete globalThis.localStorage;
+  }
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

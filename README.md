@@ -21,10 +21,69 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   built-in wallet produces it in-page instead. See "What's new
   in v12" for the safety model, and "Posting" below for the
   verified scheme itself.
-- Design: white, X-style timeline (round avatars, light borders),
-  plain everyday wording, one accent colour. A two-pane layout on
-  desktop (rail + reading column), a single column on phones. Also a
-  **PWA**: add it to the home screen and it opens standalone.
+- Design: the Android app's X-style design, copied token for
+  token in v13 (X blue `#1d9bf0`, ink `#0f1419`, hairlines,
+  gold reserved for Super marks), plain everyday wording.
+  Three columns on desktop (sidebar + timeline + rail), a
+  drawer on phones. Also a **PWA**: add it to the home screen
+  and it opens standalone.
+
+## What's new in v13 (2026-11-13)
+
+- **The display layer was rebuilt to match the Android app's
+  X-style overhaul (app v0.6.x) exactly** — same design tokens,
+  same post-row anatomy, same drawer contents and order.
+  Display only: no read, signing, minting or sending logic
+  changed, every element id and both send sites are untouched,
+  and the verification harness grew to 130 checks.
+- **Layout.** Desktop gets the app's three columns: a left
+  sidebar (logo, your acting name's summary, large nav rows),
+  the timeline column, and a right rail holding only real
+  things — a search pill wired to the existing post search,
+  the "CAW right now" stats, About, the app card and the
+  contract addresses. On phones the sidebar becomes the app's
+  drawer: tap your avatar (top-left) and it slides in over a
+  scrim with your profile summary, the nav rows in the app's
+  order, and the theme/language rows at the bottom. A bottom
+  tab bar (Home / Search / Wallet / Bookmarks) and a compose
+  FAB complete the phone chrome; the FAB and the sidebar Post
+  button only appear when a name can post.
+- **Post rows.** Avatar left; the bold name on its own line
+  with "@handle · time" under it (the app's two-line head);
+  15px body; then ONE action row that never wraps — reply,
+  Recaw, like (counts fill in after render, as before), the
+  gold SuperLike star, bookmark, share — with circular hover
+  washes in X's colours (blue / green / pink / gold). The
+  record link sits alone under the row, exactly one per post.
+  Share sends the post's text plus "— @handle · CAW Social"
+  (the app's share; no URL is invented). There is **no view
+  counter**: impressions cannot be counted from the chain, so
+  no element exists for them.
+- **Bookmarks (new, local only).** The bookmark toggle in the
+  action row saves the post's id in this browser, scoped per
+  posting-wallet address under `caw-bookmarks-v1-<address>`
+  (the Android app's own rule and key shape). The Bookmarks
+  view resolves each saved id against the live readers; an id
+  that no longer resolves shows an honest placeholder with a
+  remove button — content is never cached or faked. Nothing
+  is signed or sent for a bookmark.
+- **Recaw choice sheet.** Tapping Recaw now opens the app's
+  choice sheet (Recaw / SuperRecaw / Quote Recaw) instead of
+  sending immediately; plain Recaw and Quote keep their exact
+  v12 flows from there. (SuperRecaw itself arrives in v14.)
+- **Profiles** follow the app: banner, overlapping avatar,
+  follow pill, big name, and a counts band (Following /
+  Followers — tappable, opening the same reconstructed lists
+  as before — plus the name's own qCAW balance). Post pages
+  show the target post large, with **Liked by** and **Recawed
+  by** name lists under the quotes. The wallet section is the
+  app's wallet screen: profile summary with a copyable address
+  chip, the balances (QOM / qCAW / O) as an asset list, the
+  acting names as tappable rows, then the unchanged
+  deposit / withdraw card.
+- The theme stays **guppy-theme** (white by default, white /
+  black toggle, `localStorage` key `guppy-theme`); the dark
+  side is X's true black `#000`.
 
 ## What's new in v12 (2026-11-09)
 

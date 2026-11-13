@@ -11,54 +11,50 @@
 <meta property="og:image" content="https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/icon-512.png">
 <link rel="preconnect" href="https://evm-rpc-ql1.mschihuahua.org">
 <link rel="preconnect" href="https://scan.qom.network">
-<meta name="theme-color" id="themeColorMeta" content="#f7f8fa">
+<meta name="theme-color" id="themeColorMeta" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png?v=12">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=12">
+<link rel="icon" type="image/png" href="icon-192.png?v=13">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=13">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
 <script>(function(){try{var t=localStorage.getItem('guppy-theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){document.documentElement.dataset.theme='light';}})();</script>
-<link rel="stylesheet" href="style.css?v=12">
+<link rel="stylesheet" href="style.css?v=13">
 </head>
 <body>
-<div class="topbar">
+<header class="topbar">
   <div class="topbar-inner">
-    <img class="logo" src="icon-192.png?v=12" alt="">
-    <div>
-      <div class="title">CAW Social</div>
-      <div class="tag">on QL1 · web viewer</div>
+    <div class="mt-side">
+      <button id="drawerBtn" class="mt-avatar-btn" type="button" aria-label="Menu"><span id="mtAvatar"><img class="avatar" src="icon-192.png?v=13" alt=""></span></button>
     </div>
-    <div class="langs"><a href="en.html" class="active">English</a><a href="ja.html">日本語</a><button id="themeToggle" class="theme-btn" type="button">🌙 Dark</button></div>
+    <div class="mt-mark"><img src="icon-192.png?v=13" alt=""><span class="word">CAW</span></div>
+    <div class="mt-side end"></div>
   </div>
-</div>
+</header>
 
 <div class="layout">
-  <aside class="rail">
-    <section class="railcard app-cta">
-      <h3>Posting — here, or in the app</h3>
-      <p>On this web version you can read everything, get a name with your wallet app, and post with the built-in posting wallet — signing happens safely inside this page. The Android app works the same way.</p>
-      <p><a class="cta-btn" href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Get the Android app</a></p>
-    </section>
-    <section class="railcard">
-      <h3>About this site</h3>
-      <p>CAW is a social network where posts are kept on a shared public record (a blockchain) instead of one company's computers — so anyone can read them, and nobody can quietly rewrite them later.</p>
-      <p>This site is a community-made window into the QL1 version of CAW. It is <b>not</b> run by the official CAW team.</p>
-      <p class="small">Add this page to your home screen and it opens like an app.</p>
-    </section>
-    <section class="railcard stats-card hidden" id="statsCard">
-      <h3>CAW right now</h3>
-      <div class="statsBody"><p class="small">Loading…</p></div>
-    </section>
-    <section class="railcard">
-      <h3>On QL1</h3>
-      <p class="small">Names: <code>0x864f08Af11F6DC2c0De42562e4664d4f033D393f</code><br>
-      Posts: <code>0x95c2AFEc2dE8b09323Cdc7E40Bcce42C3C49E496</code><br>
-      Name desk: <code>0xFC2f8743E3b09a6c973B114c3a082433e974eD9f</code><br>
-      qCAW coin: <code>0xd2140E16aDf37194036865E90BbCA1139b739d0D</code></p>
-      <p class="small"><a href="https://ql1-infinite42-guppy-histoire.github.io/links/">← Guppy's Guide — all our tools</a></p>
-    </section>
+  <aside class="sidebar" id="sidebar">
+    <a class="side-logo" href="en.html" aria-label="CAW Social home"><img src="icon-192.png?v=13" alt=""></a>
+    <a class="side-summary" id="sideSummary" href="en.html#pwallet">
+      <span id="sideAvatar"><img class="avatar" src="icon-192.png?v=13" alt=""></span>
+      <span><span class="side-name" id="sideName">CAW Social</span><br><span class="side-sub" id="sideSub">on QL1 · web</span></span>
+    </a>
+    <nav>
+      <a class="nav-it" data-nav="home" href="en.html"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
+      <a class="nav-it" data-nav="search" href="en.html#lookup"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span class="nav-label">Search</span></a>
+      <a class="nav-it" data-nav="profile" id="sideProfileRow" href="en.html" style="display:none"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
+      <a class="nav-it" data-nav="wallet" href="en.html#pwallet"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="nav-label">Wallet</span></a>
+      <a class="nav-it" data-nav="mynames" href="en.html#getname"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">My names</span></a>
+      <a class="nav-it" data-nav="getname" href="en.html#getname"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></span><span class="nav-label">Get a name</span></a>
+      <a class="nav-it" data-nav="bookmarks" href="en.html?bookmarks=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><span class="nav-label">Bookmarks</span></a>
+      <a class="nav-it" data-nav="app" href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span><span class="nav-label">Android app</span></a>
+    </nav>
+    <button id="sidePostBtn" class="side-post" type="button"><span class="side-post-label">Post</span><span aria-hidden="true">＋</span></button>
+    <div class="side-sep"></div>
+    <button id="themeToggle" class="nav-it" type="button"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label" id="themeLabel">🌙 Dark</span></button>
+    <a class="nav-it" data-nav="lang" href="ja.html"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="nav-label">日本語</span></a>
+    <div class="side-foot">CAW Social (QL1) — made by the community. Not run by the official CAW team.<br>Part of <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> — Don't Panic.</div>
   </aside>
 
   <main class="maincol">
@@ -103,35 +99,46 @@
       <div id="myNames"></div>
     </section>
 
-    <section class="block" id="viewHome" style="display:none">
-      <div class="railcard stats-card stats-main hidden" id="statsCardMain">
-        <h3>CAW right now</h3>
-        <div class="statsBody"><p class="small">Loading…</p></div>
-      </div>
-      <div id="composerArea"></div>
-      <div class="row" style="justify-content:space-between">
-        <h2 style="margin:0">Timeline</h2>
+    <section id="viewHome" style="display:none">
+      <div class="view-head">
+        <h2>Home</h2>
+        <div class="spacer"></div>
         <button id="refreshBtn" class="ghost" type="button">Refresh</button>
       </div>
-      <p class="muted">The newest posts on CAW, in order. Anyone can read — no wallet needed.</p>
+      <div id="composerArea"></div>
+      <div style="padding:10px 16px 0">
+        <div class="railcard stats-card stats-main hidden" id="statsCardMain">
+          <h3>CAW right now</h3>
+          <div class="statsBody"><p class="small">Loading…</p></div>
+        </div>
+      </div>
+      <p class="muted" style="padding:0 16px">The newest posts on CAW, in order. Anyone can read — no wallet needed.</p>
       <div id="newPostsPill" class="newpill" style="display:none"><button id="newPostsBtn" type="button">New posts</button></div>
-      <div id="timeline"><p>Loading…</p></div>
+      <div id="timeline"><p style="padding:0 16px">Loading…</p></div>
       <div class="loadmore"><button id="moreBtn" class="ghost" style="display:none">See more</button></div>
     </section>
 
-    <section class="block" id="viewSearch" style="display:none">
-      <p><a class="plink" href="en.html">← Back to the timeline</a></p>
-      <h2 id="searchTitle">Search</h2>
-      <div id="searchNameChip" style="margin-bottom:8px"></div>
-      <p id="searchProgress" class="small"></p>
+    <section id="viewSearch" style="display:none">
+      <div class="view-head">
+        <a class="back-link" href="en.html" aria-label="Back">←</a>
+        <h2 id="searchTitle">Search</h2>
+      </div>
+      <div style="padding:12px 16px 0">
+        <div id="searchNameChip" style="margin-bottom:8px"></div>
+        <p id="searchProgress" class="small"></p>
+      </div>
       <div id="searchResults"></div>
       <div class="loadmore"><button id="searchMoreBtn" class="ghost" style="display:none">Search further back</button></div>
     </section>
 
-    <section class="block" id="viewProfile" style="display:none">
-      <p><a class="plink" href="en.html">← Back to the timeline</a></p>
-      <div id="profileHead"><p>Loading…</p></div>
-      <div class="row" style="margin-top:10px"><button id="shareProfileBtn" class="ghost sharebtn" type="button">Share</button></div>
+    <section id="viewProfile" style="display:none">
+      <div class="view-head">
+        <a class="back-link" href="en.html" aria-label="Back">←</a>
+        <h2>Profile</h2>
+        <div class="spacer"></div>
+        <button id="shareProfileBtn" class="ghost sharebtn" type="button">Share</button>
+      </div>
+      <div id="profileHead"><p style="padding:0 16px">Loading…</p></div>
       <h3 id="profilePostsTitle">Posts</h3>
       <div class="ptabs">
         <button id="profTabPosts" class="ptab on" type="button">Posts</button>
@@ -141,21 +148,41 @@
       <div class="loadmore"><button id="profileMore" class="ghost" style="display:none">See more</button></div>
     </section>
 
-    <section class="block" id="viewPost" style="display:none">
-      <p><a class="plink" href="en.html">← Back to the timeline</a></p>
-      <div class="row" style="margin-bottom:8px"><button id="sharePostBtn" class="ghost sharebtn" type="button">Share</button></div>
-      <div id="postMain"><p>Loading…</p></div>
+    <section id="viewPost" style="display:none">
+      <div class="view-head">
+        <a class="back-link" href="en.html" aria-label="Back">←</a>
+        <h2>Post</h2>
+        <div class="spacer"></div>
+        <button id="sharePostBtn" class="ghost sharebtn" type="button">Share</button>
+      </div>
+      <div id="postMain"><p style="padding:0 16px">Loading…</p></div>
       <p id="postCounts" class="counts"></p>
-      <p id="postNote" class="small"></p>
+      <p id="postNote" class="small" style="padding:0 16px"></p>
       <div id="threadBlock">
-        <h3 class="detail-h">Replies</h3>
-        <p class="small">Replies are shown oldest first.</p>
+        <h3 class="detail-h" style="padding:0 16px">Replies</h3>
+        <p class="small" style="padding:0 16px">Replies are shown oldest first.</p>
         <div id="postThread"></div>
       </div>
       <div id="quotesBlock">
-        <h3 class="detail-h">Quotes</h3>
+        <h3 class="detail-h" style="padding:0 16px">Quotes</h3>
         <div id="postQuotes"></div>
       </div>
+      <div id="likedByBlock">
+        <h3 class="detail-h" style="padding:0 16px">Liked by</h3>
+        <div id="postLikedBy"></div>
+      </div>
+      <div id="sharedByBlock">
+        <h3 class="detail-h" style="padding:0 16px">Recawed by</h3>
+        <div id="postSharedBy"></div>
+      </div>
+    </section>
+
+    <section id="viewBookmarks" style="display:none">
+      <div class="view-head">
+        <a class="back-link" href="en.html" aria-label="Back">←</a>
+        <h2>Bookmarks</h2>
+      </div>
+      <div id="bmList"></div>
     </section>
 
     <footer>
@@ -163,6 +190,63 @@
       Part of <a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> — Don't Panic.
     </footer>
   </main>
+
+  <aside class="rightrail">
+    <form class="rail-search" id="railSearchForm" action="en.html" method="get">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" name="q" id="railSearchInput" placeholder="Search posts" autocomplete="off" spellcheck="false">
+    </form>
+    <section class="railcard stats-card hidden" id="statsCard">
+      <h3>CAW right now</h3>
+      <div class="statsBody"><p class="small">Loading…</p></div>
+    </section>
+    <section class="railcard">
+      <h3>About this site</h3>
+      <p>CAW is a social network where posts are kept on a shared public record (a blockchain) instead of one company's computers — so anyone can read them, and nobody can quietly rewrite them later.</p>
+      <p>This site is a community-made window into the QL1 version of CAW. It is <b>not</b> run by the official CAW team.</p>
+      <p class="small">Add this page to your home screen and it opens like an app.</p>
+    </section>
+    <section class="railcard app-cta">
+      <h3>Posting — here, or in the app</h3>
+      <p>On this web version you can read everything, get a name with your wallet app, and post with the built-in posting wallet — signing happens safely inside this page. The Android app works the same way.</p>
+      <p><a class="cta-btn" href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Get the Android app</a></p>
+    </section>
+    <section class="railcard">
+      <h3>On QL1</h3>
+      <p class="small">Names: <code>0x864f08Af11F6DC2c0De42562e4664d4f033D393f</code><br>
+      Posts: <code>0x95c2AFEc2dE8b09323Cdc7E40Bcce42C3C49E496</code><br>
+      Name desk: <code>0xFC2f8743E3b09a6c973B114c3a082433e974eD9f</code><br>
+      qCAW coin: <code>0xd2140E16aDf37194036865E90BbCA1139b739d0D</code></p>
+      <p class="small"><a href="https://ql1-infinite42-guppy-histoire.github.io/links/">← Guppy's Guide — all our tools</a></p>
+    </section>
+  </aside>
+</div>
+
+<div class="drawer" id="drawer" aria-hidden="true">
+  <div class="drawer-scrim" id="drawerScrim"></div>
+  <div class="drawer-panel" role="dialog" aria-label="Menu">
+    <button id="drawerClose" class="drawer-close" type="button" aria-label="Close">✕</button>
+    <a class="drawer-summary" id="drawerSummary" href="en.html#pwallet">
+      <span id="drawerAvatar"><img class="avatar" src="icon-192.png?v=13" alt=""></span>
+      <div class="drawer-name" id="drawerName">CAW Social</div>
+      <div class="drawer-sub" id="drawerSub">on QL1 · web</div>
+      <div class="drawer-follow" id="drawerFollow" style="display:none"></div>
+    </a>
+    <div class="drawer-sep"></div>
+    <nav>
+      <a class="nav-it" data-nav="home" href="en.html"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span><span class="nav-label">Home</span></a>
+      <a class="nav-it" data-nav="profile" id="drawerProfileRow" href="en.html" style="display:none"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">Profile</span></a>
+      <a class="nav-it" data-nav="wallet" href="en.html#pwallet"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="nav-label">Wallet</span></a>
+      <a class="nav-it" data-nav="mynames" href="en.html#getname"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">My names</span></a>
+      <a class="nav-it" data-nav="getname" href="en.html#getname"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></span><span class="nav-label">Get a name</span></a>
+      <a class="nav-it" data-nav="bookmarks" href="en.html?bookmarks=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><span class="nav-label">Bookmarks</span></a>
+      <a class="nav-it" data-nav="search" href="en.html#lookup"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span><span class="nav-label">Search</span></a>
+      <a class="nav-it" data-nav="app" href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg></span><span class="nav-label">Android app</span></a>
+    </nav>
+    <div class="drawer-sep"></div>
+    <button id="themeToggleDrawer" class="nav-it" type="button"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label" id="themeLabelDrawer">🌙 Dark</span></button>
+    <a class="nav-it" data-nav="lang" href="ja.html"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="nav-label">日本語</span></a>
+  </div>
 </div>
 
 <div id="confirmOverlay" class="overlay" style="display:none">
@@ -176,40 +260,60 @@
     </div>
   </div>
 </div>
+<div id="choiceOverlay" class="overlay" style="display:none">
+  <div class="sheet">
+    <h3 id="choiceTitle">Recaw this post?</h3>
+    <div class="sheet-btns">
+      <button id="choiceRecawBtn" type="button">Recaw</button>
+      <button id="choiceSuperBtn" class="choice-super" type="button">⭐ SuperRecaw (25,000,000 O)</button>
+      <button id="choiceQuoteBtn" class="ghost" type="button">Quote Recaw</button>
+      <button id="choiceCancelBtn" class="ghost" type="button">Cancel</button>
+    </div>
+  </div>
+</div>
+<button id="fabBtn" class="fab" type="button" aria-label="Post">＋</button>
 <button id="toTopBtn" class="to-top" type="button" style="display:none" aria-label="Back to top">↑</button>
 <nav class="bottomnav">
-  <a href="en.html"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg><span>Home</span></a>
-  <a href="en.html#lookup"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg><span>Look up</span></a>
-  <a href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg><span>App</span></a>
+  <a href="en.html" data-nav="home" aria-label="Home"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
+  <a href="en.html#lookup" data-nav="search" aria-label="Search"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></a>
+  <a href="en.html#pwallet" data-nav="wallet" aria-label="Wallet"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></a>
+  <a href="en.html?bookmarks=1" data-nav="bookmarks" aria-label="Bookmarks"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></a>
 </nav>
-<script src="bip39-words.js?v=12"></script>
-<script src="viewer.js?v=12"></script>
+<script src="bip39-words.js?v=13"></script>
+<script src="viewer.js?v=13"></script>
 <script>
 /* If the viewer script was blocked or replaced by an older saved
    copy of this site, say so instead of loading forever. */
 setTimeout(function () {
   if (window.__cawViewerBooted) return;
   var tl = document.getElementById('timeline');
-  if (tl) tl.innerHTML = '<p class="err">The viewer did not start. An older saved copy of this site may be in the way — please <a href="en.html">reload the page</a>.</p>';
+  if (tl) tl.innerHTML = '<p class="err" style="padding:0 16px">The viewer did not start. An older saved copy of this site may be in the way — please <a href="en.html">reload the page</a>.</p>';
 }, 10000);
 </script>
 <script>
 (function () {
-  var b = document.getElementById('themeToggle');
-  if (!b) return;
   var ja = (document.documentElement.lang || '').indexOf('ja') === 0;
+  function isDark() { return document.documentElement.dataset.theme === 'dark'; }
   function render() {
-    var d = document.documentElement.dataset.theme === 'dark';
-    b.textContent = d ? (ja ? '☀️ 白背景' : '☀️ Light') : (ja ? '🌙 黒背景' : '🌙 Dark');
+    var d = isDark();
+    var label = d ? (ja ? '☀️ 白背景' : '☀️ Light') : (ja ? '🌙 黒背景' : '🌙 Dark');
+    var a = document.getElementById('themeLabel');
+    if (a) a.textContent = label;
+    var b = document.getElementById('themeLabelDrawer');
+    if (b) b.textContent = label;
     var m = document.getElementById('themeColorMeta');
-    if (m) m.setAttribute('content', d ? '#000000' : '#f7f8fa');
+    if (m) m.setAttribute('content', d ? '#000000' : '#ffffff');
   }
-  b.addEventListener('click', function () {
-    var next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+  function toggle() {
+    var next = isDark() ? 'light' : 'dark';
     document.documentElement.dataset.theme = next;
     try { localStorage.setItem('guppy-theme', next); } catch (e) {}
     render();
-  });
+  }
+  var t1 = document.getElementById('themeToggle');
+  if (t1) t1.addEventListener('click', toggle);
+  var t2 = document.getElementById('themeToggleDrawer');
+  if (t2) t2.addEventListener('click', toggle);
   render();
 })();
 </script>
