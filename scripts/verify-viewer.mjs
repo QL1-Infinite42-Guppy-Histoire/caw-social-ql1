@@ -275,9 +275,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v13: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=13') && jaHtml.includes('?v=13'), 'shells reference ?v=13 assets');
-ok(swSrc.includes("caw-view-v13"), 'sw.js cache name is caw-view-v13');
+console.log('— v14: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=14') && jaHtml.includes('?v=14'), 'shells reference ?v=14 assets');
+ok(swSrc.includes("caw-view-v14"), 'sw.js cache name is caw-view-v14');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -566,6 +566,107 @@ console.log('— v13: X-style UI overhaul (display layer, app v0.6.x parity) —
   } finally {
     delete globalThis.localStorage;
   }
+}
+
+console.log('— v14: SuperLike / SuperRecaw (app v0.6.3 spec, ported) —');
+{
+  const E18 = 10n ** 18n;
+  ok(V.O_TOKEN === '0x6c39b68a28bA90F4EB80032ec0eB32ad81cbbEd4',
+    'O token is the app\'s Childhoods End address on QL1');
+  ok(V.BURN_ADDRESS === '0x000000000000000000000000000000000000dEaD', 'burn address matches the app');
+  ok(V.SUPERLIKE_TOTAL_O === 25000000 && V.SUPERLIKE_AUTHOR_O === 15000000 && V.SUPERLIKE_BURN_O === 10000000,
+    'SuperLike split: 25,000,000 total = 15,000,000 author + 10,000,000 burn');
+  ok(V.SUPERRECAW_TOTAL_O === 25000000 && V.SUPERRECAW_AUTHOR_O === 5000000 && V.SUPERRECAW_BURN_O === 20000000,
+    'SuperRecaw split: 25,000,000 total = 5,000,000 author + 20,000,000 burn');
+  ok(V.SUPERLIKE_TOTAL_RAW === 25000000n * E18 && V.SUPERLIKE_AUTHOR_RAW === 15000000n * E18 &&
+     V.SUPERLIKE_BURN_RAW === 10000000n * E18 && V.SUPERRECAW_AUTHOR_RAW === 5000000n * E18 &&
+     V.SUPERRECAW_BURN_RAW === 20000000n * E18 && V.LEGACY_MARKED_BURN_RAW === 1000000n * E18,
+     'raw amounts are the whole-O amounts at 18 decimals');
+  ok(V.SUPERLIKE_MAGIC === '534c4b31' && V.SUPERRECAW_MAGIC === '53524331',
+    'marker magics are SLK1 / SRC1');
+  ok(V.MARKED_BURN_START_BLOCK === 13400000, 'marked-burn scan starts at block 13,400,000');
+  const id = '0x' + 'ab'.repeat(32);
+  const slData = V.buildSuperlikeData(id);
+  const slMark = V.parseMarkedBurnInput(slData);
+  ok(!!slMark && slMark.magic === V.SUPERLIKE_MAGIC && slMark.amount === V.SUPERLIKE_BURN_RAW &&
+     slMark.cawId === id && slMark.to === V.BURN_ADDRESS.toLowerCase(),
+     'SuperLike burn calldata round-trips through the strict parser');
+  const srcData = V.buildSuperRecawData(id);
+  const srcMark = V.parseMarkedBurnInput(srcData);
+  ok(!!srcMark && srcMark.magic === V.SUPERRECAW_MAGIC && srcMark.amount === V.SUPERRECAW_BURN_RAW,
+     'SuperRecaw burn calldata round-trips through the strict parser');
+  ok(V.parseMarkedBurnInput(V.buildAuthorPayData('0x1111111111111111111111111111111111111111', 5n)) === null,
+     'a plain (unmarked) transfer does NOT parse as a marked burn');
+  ok(V.parseMarkedBurnInput(slData + 'ff') === null && V.parseMarkedBurnInput('0xa9059cbb') === null,
+     'the parser rejects wrong-length inputs');
+  ok(V.burnAmountsForMagic(V.SUPERLIKE_MAGIC).includes(V.LEGACY_MARKED_BURN_RAW) &&
+     V.burnAmountsForMagic(V.SUPERRECAW_MAGIC).includes(V.LEGACY_MARKED_BURN_RAW) &&
+     V.burnAmountsForMagic(V.SUPERLIKE_MAGIC).includes(V.SUPERLIKE_BURN_RAW) &&
+     V.burnAmountsForMagic(V.SUPERRECAW_MAGIC).includes(V.SUPERRECAW_BURN_RAW),
+     'detection sets accept the current burn AND the legacy 1,000,000 burn for both markers');
+  ok(V.superlikeBlockReason({ senderId: 5n, myTokenIds: [5n], authorOwner: '0xabc', myAddress: '0xdef' }) === 'self',
+     'SuperLike blocked when the post\'s name is one of mine');
+  ok(V.superlikeBlockReason({ senderId: 9n, myTokenIds: [], authorOwner: '0xABC', myAddress: '0xabc' }) === 'self',
+     'SuperLike blocked when the author owner is my own address');
+  ok(V.superlikeBlockReason({ senderId: 9n, myTokenIds: [1n], authorOwner: '0xabc', myAddress: '0xdef' }) === null,
+     'SuperLike allowed for someone else\'s post');
+  ok(V.superlikeShortfall(V.SUPERLIKE_TOTAL_RAW - 1n) === true && V.superlikeShortfall(V.SUPERLIKE_TOTAL_RAW) === false,
+     'the shortfall gate is the full 25,000,000 total');
+  ok(V.MB_KV_KEY === 'caw-marked-burns-v1' && V.SRC_BURN_KV_KEY === 'caw-superrecaw-burn-v1' &&
+     V.AUTHOR_PAY_KV_KEY === 'caw-author-pay-v1',
+     'pending/scan storage keys match the app');
+  ok((viewerSrc.match(/eth_sendRawTransaction/g) || []).length === 1 &&
+     (viewerSrc.match(/eth_sendTransaction/g) || []).length === 1 &&
+     !/eth_sign/.test(viewerSrc) && !/personal_sign/.test(viewerSrc),
+     'v14 keeps the single broadcast site and the single mint send site; no raw-sign methods named');
+  ok(viewerSrc.includes("new Error('self-superlike')") && viewerSrc.includes('performSuperRecawBurn') &&
+     viewerSrc.includes('performAuthorPay'),
+     'the flows carry the self-block and the leg-only retries');
+}
+{
+  /* Pending-leg stores: record -> read back -> clear, under the
+     app's keys and key shapes. */
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: k => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+    removeItem: k => store.delete(k),
+  };
+  try {
+    const me = '0xAbC0000000000000000000000000000000000001';
+    const id = '0x' + 'cd'.repeat(32);
+    V.recordAuthorPay(me, 'sl', { cawId: id, author: '0x2222222222222222222222222222222222222222', amountRaw: V.SUPERLIKE_AUTHOR_RAW, ts: 1700000000 });
+    const p = V.pendingAuthorPayFor(me, 'sl', id);
+    ok(!!p && p.amountRaw === V.SUPERLIKE_AUTHOR_RAW && p.author === '0x2222222222222222222222222222222222222222',
+      'author-pay debt records and reads back (amount as decimal string in storage)');
+    ok(store.has('caw-author-pay-v1') && (store.get('caw-author-pay-v1') || '').includes(me.toLowerCase() + ':sl:' + id),
+      'author-pay debt persists under caw-author-pay-v1 with the sender:kind:cawId key');
+    ok(V.authorPayAmountFor('sl') === V.SUPERLIKE_AUTHOR_RAW && V.authorPayAmountFor('src') === V.SUPERRECAW_AUTHOR_RAW,
+      'author-pay amounts come from the one spec table');
+    V.clearAuthorPay(me, 'sl', id);
+    ok(V.pendingAuthorPayFor(me, 'sl', id) === null, 'a paid debt clears');
+    V.recordSrcBurn(me, { cawId: id, ts: 1700000000, author: '0x3333333333333333333333333333333333333333' });
+    const b = V.pendingSrcBurnFor(me, id);
+    ok(!!b && b.author === '0x3333333333333333333333333333333333333333',
+      'SuperRecaw burn debt records and reads back');
+    ok(store.has('caw-superrecaw-burn-v1') && (store.get('caw-superrecaw-burn-v1') || '').includes(me.toLowerCase() + ':' + id),
+      'burn debt persists under caw-superrecaw-burn-v1 with the sender:cawId key');
+    V.clearSrcBurn(me, id);
+    ok(V.pendingSrcBurnFor(me, id) === null, 'a burned debt clears');
+  } finally {
+    delete globalThis.localStorage;
+  }
+}
+{
+  /* Live: the marked-burn scan must reach the chain head — the
+     counts the rows show are only ever sums of completed scans.
+     (No real send is tested: there are no keys or funds here;
+     the first live SuperLike from the page is the user's.) */
+  const headBefore = Number(BigInt(await V.rpc('eth_blockNumber', [])));
+  await V.scanMarkedBurns();
+  const headAfter = Number(BigInt(await V.rpc('eth_blockNumber', [])));
+  ok(V.mbCursor() >= headBefore - 1 && V.mbCursor() <= headAfter,
+    'live marked-burn scan reaches the QL1 head', 'cursor=' + V.mbCursor() + ' head=' + headAfter);
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

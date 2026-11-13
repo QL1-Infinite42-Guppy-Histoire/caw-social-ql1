@@ -28,6 +28,51 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   drawer on phones. Also a **PWA**: add it to the home screen
   and it opens standalone.
 
+## What's new in v14 (2026-11-13)
+
+- **SuperLike and SuperRecaw work on the web too** — the
+  Android app's v0.6.3 design, ported piece for piece (same
+  amounts, same marker codec, same detection rules, same
+  pending-leg discipline; the harness now runs 157 checks).
+  Both cost **25,000,000 O in total** (O = "Childhoods End"
+  on QL1): a SuperLike sends 15,000,000 O to the author plus
+  a 10,000,000 O burn; a SuperRecaw first sends the normal
+  Recaw, then 5,000,000 O to the author plus a 20,000,000 O
+  burn. The burn carries the marker — the magic `SLK1` /
+  `SRC1` plus the post's cawId as trailing calldata — and
+  the gold star count and the gold SuperRecaw wash are read
+  back from a chain-wide scan of O transfers to the burn
+  address, exactly like the app: a burn counts only when its
+  calldata parses strictly, its amount is the current burn
+  **or the legacy 1,000,000** (the v0.5.0–v0.6.2 price —
+  those burns stay counted forever), and the Transfer log's
+  value agrees. Scan progress persists in this browser
+  (`caw-marked-burns-v1`); a failed chunk never advances the
+  cursor, so counts are only ever sums of completed scans.
+- **Every leg is an ordinary transaction from the posting
+  wallet** through the same single broadcast path as every
+  other send on this page (gas is QOM, paid by the posting
+  wallet). The confirm sheet shows the total, the split and
+  your current O balance before anything is signed. A
+  SuperLike on your own post is refused; a SuperRecaw of
+  your own post is allowed with the author leg skipped
+  (only the burn counts), as in the app.
+- **Unfinished legs are owed, never lost.** If the burn
+  lands but the author payment fails, the debt is recorded
+  on this device (`caw-author-pay-v1`); tapping the ⭐ (or
+  Recaw) on that post then offers to send **only** the
+  payment. If a SuperRecaw's burn fails after the Recaw
+  landed, the burn is owed (`caw-superrecaw-burn-v1`) and
+  tapping Recaw offers only the burn — the Recaw itself is
+  never re-sent. Short of O, the sheets say so honestly and
+  nothing is signed.
+- Not yet exercised with real funds from the web page: the
+  first live SuperLike / SuperRecaw sent from here is the
+  end-to-end check (the same first-run status posting and
+  minting had). The detection side is already verified
+  against the live chain — the scan finds the app's real
+  SuperLikes.
+
 ## What's new in v13 (2026-11-13)
 
 - **The display layer was rebuilt to match the Android app's

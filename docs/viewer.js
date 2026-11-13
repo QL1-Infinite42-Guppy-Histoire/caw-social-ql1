@@ -1296,6 +1296,312 @@ function bmToggle(address, cawId) {
   return now;
 }
 
+/* ---------- SuperLike / SuperRecaw (v14) ----------
+   A straight port of the Android app's v0.6.3 design
+   (caw-social-app src/lib/markedBurns.ts, authorPay.ts,
+   superRecaw.ts, superlike.ts, actionFlow.ts) — the amounts,
+   the marker codec, the detection sets, the debt records and
+   the leg order are the app's, copied, not reinvented.
+
+   Both actions cost 25,000,000 O IN TOTAL (O = "Childhoods
+   End" on QL1, 18 decimals), split into a marked BURN leg —
+   an ordinary O transfer to the burn address with a 4-byte
+   magic ("SLK1" / "SRC1") + the post's 32-byte cawId appended
+   as trailing calldata — and a plain, unmarked author-payment
+   leg:
+     SuperLike:  15,000,000 to the author + 10,000,000 burned
+     SuperRecaw:  5,000,000 to the author + 20,000,000 burned
+                 (after the normal Recaw action itself)
+   Burns of exactly 1,000,000 O (the v0.5.0–v0.6.2 spec) still
+   COUNT for both markers, forever — the detection sets accept
+   the current amount and the legacy one.
+
+   Counts come from ONE chain-wide scan of O Transfer events
+   TO the burn address, indexed by cawId (SuperRecaw also by
+   cawId + sender). A transfer counts only when its tx input
+   parses as a marked burn, its amount is in the marker's
+   accepted set, and the Transfer log's own value agrees.
+   Scan progress persists in localStorage; a failed chunk
+   never advances the cursor, so a count is only ever the sum
+   of completed scans. */
+const O_TOKEN = '0x6c39b68a28bA90F4EB80032ec0eB32ad81cbbEd4';
+const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
+const oWhole = n => BigInt(n) * 10n ** 18n;
+const SUPERLIKE_TOTAL_O = 25000000;
+const SUPERLIKE_AUTHOR_O = 15000000;
+const SUPERLIKE_BURN_O = 10000000;
+const SUPERRECAW_TOTAL_O = 25000000;
+const SUPERRECAW_AUTHOR_O = 5000000;
+const SUPERRECAW_BURN_O = 20000000;
+const LEGACY_MARKED_BURN_O = 1000000;
+const SUPERLIKE_TOTAL_RAW = oWhole(SUPERLIKE_TOTAL_O);
+const SUPERLIKE_AUTHOR_RAW = oWhole(SUPERLIKE_AUTHOR_O);
+const SUPERLIKE_BURN_RAW = oWhole(SUPERLIKE_BURN_O);
+const SUPERRECAW_TOTAL_RAW = oWhole(SUPERRECAW_TOTAL_O);
+const SUPERRECAW_AUTHOR_RAW = oWhole(SUPERRECAW_AUTHOR_O);
+const SUPERRECAW_BURN_RAW = oWhole(SUPERRECAW_BURN_O);
+const LEGACY_MARKED_BURN_RAW = oWhole(LEGACY_MARKED_BURN_O);
+const SUPERLIKE_BURN_AMOUNTS = [SUPERLIKE_BURN_RAW, LEGACY_MARKED_BURN_RAW];
+const SUPERRECAW_BURN_AMOUNTS = [SUPERRECAW_BURN_RAW, LEGACY_MARKED_BURN_RAW];
+const SUPERLIKE_MAGIC = '534c4b31'; // "SLK1"
+const SUPERRECAW_MAGIC = '53524331'; // "SRC1"
+const MARKED_BURN_START_BLOCK = 13400000;
+const MB_CHUNK = 9000;
+const MB_KV_KEY = 'caw-marked-burns-v1';
+const TRANSFER_TOPIC = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
+const TRANSFER_SELECTOR = 'a9059cbb';
+function burnAmountsForMagic(magic) {
+  return magic === SUPERLIKE_MAGIC ? SUPERLIKE_BURN_AMOUNTS : SUPERRECAW_BURN_AMOUNTS;
+}
+function normCawIdHex(cawId) {
+  const h = String(cawId || '').replace(/^0x/, '').toLowerCase();
+  return /^[0-9a-f]{64}$/.test(h) ? h : null;
+}
+/* Plain ERC20 transfer calldata (no 0x on the selector const —
+   word()/encAddr() here return bare hex, like the rest of the
+   pure section). */
+const buildTransferData = (to, amountRaw) => '0x' + TRANSFER_SELECTOR + encAddr(to) + word(amountRaw);
+/* The marked-burn calldata: the ordinary transfer encoding
+   with magic + cawId appended. Null on a malformed id. */
+function buildMarkedBurnData(magic, cawId, amountRaw) {
+  const id = normCawIdHex(cawId);
+  if (!id) return null;
+  return buildTransferData(BURN_ADDRESS, amountRaw) + magic + id;
+}
+const buildSuperlikeData = cawId => buildMarkedBurnData(SUPERLIKE_MAGIC, cawId, SUPERLIKE_BURN_RAW);
+const buildSuperRecawData = cawId => buildMarkedBurnData(SUPERRECAW_MAGIC, cawId, SUPERRECAW_BURN_RAW);
+/* The author leg's calldata: a PLAIN transfer, no marker —
+   deliberately indistinguishable from any other O transfer. */
+const buildAuthorPayData = (to, amountRaw) => buildTransferData(to, amountRaw);
+/* Strict parse of a tx input as a marked burn (the app's
+   shape: exactly the transfer encoding + 36 trailing bytes,
+   a known magic, the recipient the burn address). */
+function parseMarkedBurnInput(data) {
+  const h = String(data || '').replace(/^0x/, '').toLowerCase();
+  if (h.length !== 208) return null;
+  if (!h.startsWith(TRANSFER_SELECTOR)) return null;
+  const magic = h.slice(136, 144);
+  if (magic !== SUPERLIKE_MAGIC && magic !== SUPERRECAW_MAGIC) return null;
+  const to = '0x' + h.slice(32, 72);
+  if (to !== BURN_ADDRESS.toLowerCase()) return null;
+  let amount;
+  try { amount = BigInt('0x' + h.slice(72, 136)); } catch (e) { return null; }
+  return { magic, to, amount, cawId: '0x' + h.slice(144, 208) };
+}
+/* The SuperLike self-block (the app's superlikeBlockReason):
+   'self' when the post's name is one of mine, or the author's
+   owner IS my address; null when the SuperLike may proceed. */
+function superlikeBlockReason(args) {
+  if ((args.myTokenIds || []).some(id => id === args.senderId)) return 'self';
+  if (args.authorOwner && args.myAddress &&
+      args.authorOwner.toLowerCase() === args.myAddress.toLowerCase()) return 'self';
+  return null;
+}
+const superlikeShortfall = balance => balance < SUPERLIKE_TOTAL_RAW;
+
+/* ----- the marked-burn index (store + scanner) ----- */
+let mbRecord = { to: MARKED_BURN_START_BLOCK - 1, sl: {}, src: {} };
+let mbLoaded = false;
+let mbScanning = null;
+const mbListeners = new Set();
+function mbNotify() { for (const fn of [...mbListeners]) { try { fn(); } catch (e) {} } }
+function mbEnsureLoaded() {
+  if (mbLoaded) return;
+  mbLoaded = true;
+  if (typeof localStorage === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(MB_KV_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.to === 'number' && parsed.sl && parsed.src &&
+        parsed.to >= MARKED_BURN_START_BLOCK - 1) {
+      mbRecord = { to: parsed.to, sl: { ...parsed.sl }, src: { ...parsed.src } };
+    }
+  } catch (e) { /* a corrupt cache just means a rescan */ }
+}
+function mbPersist() {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(MB_KV_KEY, JSON.stringify(mbRecord)); } catch (e) {}
+}
+const mbTopicAddress = addr => '0x' + '0'.repeat(24) + String(addr).replace(/^0x/, '').toLowerCase();
+const mbHexBlock = n => '0x' + n.toString(16);
+async function mbAbsorb(logs) {
+  const hashes = [...new Set(logs.map(l => l.transactionHash))];
+  const inputs = new Map();
+  for (let i = 0; i < hashes.length; i += 30) {
+    const group = hashes.slice(i, i + 30);
+    const txs = await Promise.all(group.map(h => rpc('eth_getTransactionByHash', [h]).catch(() => null)));
+    group.forEach((hash, j) => {
+      const tx = txs[j];
+      if (tx && typeof tx.input === 'string') inputs.set(hash, tx.input);
+    });
+  }
+  for (const log of logs) {
+    const input = inputs.get(log.transactionHash);
+    if (!input) throw new Error('missing input'); // rescan chunk later
+    const mark = parseMarkedBurnInput(input);
+    if (!mark) continue;
+    if (!burnAmountsForMagic(mark.magic).includes(mark.amount)) continue;
+    try { if (BigInt(log.data) !== mark.amount) continue; } catch (e) { continue; }
+    const from = ('0x' + (log.topics[1] || '').slice(26)).toLowerCase();
+    if (mark.magic === SUPERLIKE_MAGIC) {
+      mbRecord.sl[mark.cawId] = (mbRecord.sl[mark.cawId] || 0) + 1;
+    } else {
+      const key = mark.cawId + ':' + from;
+      mbRecord.src[key] = (mbRecord.src[key] || 0) + 1;
+    }
+  }
+}
+async function mbScanOnce() {
+  mbEnsureLoaded();
+  let head;
+  try { head = Number(BigInt(await rpc('eth_blockNumber', []))); }
+  catch (e) { return; } // cannot even read the head — try again later
+  let from = Math.max(MARKED_BURN_START_BLOCK, mbRecord.to + 1);
+  while (from <= head) {
+    const toB = Math.min(from + MB_CHUNK - 1, head);
+    let logs;
+    try {
+      logs = await rpc('eth_getLogs', [{
+        address: O_TOKEN,
+        topics: [TRANSFER_TOPIC, null, mbTopicAddress(BURN_ADDRESS)],
+        fromBlock: mbHexBlock(from),
+        toBlock: mbHexBlock(toB),
+      }]);
+    } catch (e) { return; } // cursor NOT advanced past the failed chunk
+    if (logs && logs.length) {
+      try { await mbAbsorb(logs); }
+      catch (e) { return; } // input fetch failed — rescan this chunk later
+    }
+    mbRecord.to = toB;
+    mbPersist();
+    mbNotify();
+    from = toB + 1;
+  }
+}
+/* Scan to the current head (deduped while a scan is running). */
+function scanMarkedBurns() {
+  if (!mbScanning) {
+    mbScanning = mbScanOnce().catch(() => {}).then(() => { mbScanning = null; });
+  }
+  return mbScanning;
+}
+function superlikeCountCached(cawId) {
+  mbEnsureLoaded();
+  const id = normCawIdHex(cawId);
+  if (!id) return 0;
+  return mbRecord.sl['0x' + id] || 0;
+}
+/* The last fully scanned block (harness visibility). */
+const mbCursor = () => { mbEnsureLoaded(); return mbRecord.to; };
+async function superlikeCount(cawId) {
+  await scanMarkedBurns();
+  return superlikeCountCached(cawId);
+}
+function superRecawCached(cawId, sender) {
+  mbEnsureLoaded();
+  const id = normCawIdHex(cawId);
+  if (!id || !sender) return false;
+  return (mbRecord.src['0x' + id + ':' + String(sender).toLowerCase()] || 0) > 0;
+}
+async function hasSuperRecaw(cawId, sender) {
+  await scanMarkedBurns();
+  return superRecawCached(cawId, sender);
+}
+/* After my own marked burn lands, nudge a rescan. */
+function refreshMarkedBurns() { scanMarkedBurns().then(() => mbNotify()).catch(() => {}); }
+function subscribeMarkedBurns(fn) { mbListeners.add(fn); return () => mbListeners.delete(fn); }
+
+/* ----- pending SuperRecaw burns (the app's superRecaw.ts) -----
+   When the Recaw landed but its O burn did not, the burn is
+   owed. The record's existence is the proof the Recaw already
+   happened; the retry sends ONLY the burn and can never
+   rebuild or resend the Recaw. Key: sender + ':' + cawId. */
+const SRC_BURN_KV_KEY = 'caw-superrecaw-burn-v1';
+const srcBurnKey = (sender, cawId) => {
+  const id = normCawIdHex(cawId);
+  if (!id || !sender) return null;
+  return String(sender).toLowerCase() + ':' + '0x' + id;
+};
+function srcBurnLoadAll() {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SRC_BURN_KV_KEY) || 'null');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (e) { return {}; }
+}
+function srcBurnSaveAll(obj) {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(SRC_BURN_KV_KEY, JSON.stringify(obj)); } catch (e) {}
+}
+function pendingSrcBurnFor(sender, cawId) {
+  const k = srcBurnKey(sender, cawId);
+  if (!k) return null;
+  const v = srcBurnLoadAll()[k];
+  return v && typeof v.cawId === 'string' ? v : null;
+}
+function recordSrcBurn(sender, rec) {
+  const k = srcBurnKey(sender, rec.cawId);
+  if (!k) return;
+  const all = srcBurnLoadAll();
+  all[k] = rec;
+  srcBurnSaveAll(all);
+}
+function clearSrcBurn(sender, cawId) {
+  const k = srcBurnKey(sender, cawId);
+  if (!k) return;
+  const all = srcBurnLoadAll();
+  if (delete all[k]) srcBurnSaveAll(all);
+}
+
+/* ----- pending author payments (the app's authorPay.ts) -----
+   The plain-transfer leg of a SuperLike / SuperRecaw, owed
+   when it fails after the defining legs landed. The record
+   pins the recipient AS RESOLVED WHEN THE ACTION WAS TAKEN
+   ('' = resolve fresh at retry), the amount (decimal string)
+   and the post. Key: sender + ':' + kind + ':' + cawId. */
+const AUTHOR_PAY_KV_KEY = 'caw-author-pay-v1';
+const authorPayKey = (sender, kind, cawId) => {
+  const id = normCawIdHex(cawId);
+  if (!id || !sender) return null;
+  return String(sender).toLowerCase() + ':' + kind + ':' + '0x' + id;
+};
+const authorPayAmountFor = kind => kind === 'sl' ? SUPERLIKE_AUTHOR_RAW : SUPERRECAW_AUTHOR_RAW;
+function authorPayLoadAll() {
+  if (typeof localStorage === 'undefined') return {};
+  try {
+    const parsed = JSON.parse(localStorage.getItem(AUTHOR_PAY_KV_KEY) || 'null');
+    return parsed && typeof parsed === 'object' ? parsed : {};
+  } catch (e) { return {}; }
+}
+function authorPaySaveAll(obj) {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(AUTHOR_PAY_KV_KEY, JSON.stringify(obj)); } catch (e) {}
+}
+/* -> {cawId, author, amountRaw (bigint), ts} or null */
+function pendingAuthorPayFor(sender, kind, cawId) {
+  const k = authorPayKey(sender, kind, cawId);
+  if (!k) return null;
+  const v = authorPayLoadAll()[k];
+  if (!v || typeof v.cawId !== 'string') return null;
+  try {
+    return { cawId: v.cawId, author: typeof v.author === 'string' ? v.author : '', amountRaw: BigInt(v.amount), ts: typeof v.ts === 'number' ? v.ts : 0 };
+  } catch (e) { return null; } // an unreadable amount drops the record
+}
+function recordAuthorPay(sender, kind, rec) {
+  const k = authorPayKey(sender, kind, rec.cawId);
+  if (!k) return;
+  const all = authorPayLoadAll();
+  all[k] = { cawId: rec.cawId, author: rec.author || '', amount: rec.amountRaw.toString(), ts: rec.ts };
+  authorPaySaveAll(all);
+}
+function clearAuthorPay(sender, kind, cawId) {
+  const k = authorPayKey(sender, kind, cawId);
+  if (!k) return;
+  const all = authorPayLoadAll();
+  if (delete all[k]) authorPaySaveAll(all);
+}
+
 /* Timeline row rule (app v0.4.x semantics): LIKE actions never
    render as rows — they only feed the counts on their target post.
    Posts, Recaws, follows and unfollows do render. */
@@ -3230,6 +3536,15 @@ async function pwDoDepWd(kind) {
 function confirmErrHtml(e) {
   if (e && e.message === 'not-owner') return '<span class="err">' + esc(T.actNotOwner) + '</span>';
   if (e && e.message === 'self-follow') return '<span class="err">' + esc(T.actSelfFollow) + '</span>';
+  /* v14: the Super flows' named outcomes (the app's wording). */
+  if (e && e.message === 'self-superlike') return '<span class="err">' + esc(T.slSelf) + '</span>';
+  if (e && e.message === 'sl-pay-pending') return '<span class="warn">' + esc(T.slPayPending) + '</span>';
+  if (e && e.message === 'src-burn-pending') return '<span class="warn">' + esc(T.srcBurnPending) + '</span>';
+  if (e && e.message === 'src-pay-pending') return '<span class="warn">' + esc(T.srcPayPending) + '</span>';
+  if (e && e.message === 'shortfall-sl') return '<span class="err">' + esc(T.slShortfall) + '</span>';
+  if (e && e.message === 'shortfall-src') return '<span class="err">' + esc(T.srcShortfall) + '</span>';
+  if (e && e.message === 'shortfall-burn') return '<span class="err">' + esc(T.srcBurnShortfall) + '</span>';
+  if (e && e.message === 'shortfall-pay') return '<span class="err">' + esc(T.payShortfall) + '</span>';
   if (e && e.unconfirmed) return '<span class="warn">' + esc(T.actUnconfirmed) + '</span>' + txLinkHtml(e.txHash);
   return '<span class="err">' + esc(T.actFail) + '</span>' + txLinkHtml(e && e.txHash) + errDetailHtml(e);
 }
@@ -3240,10 +3555,11 @@ function openConfirmPanel(opts) {
   $('confirmLines').innerHTML = (opts.lines || []).map(([k, v]) =>
     '<div class="confirm-line"><span class="ck">' + esc(k) + '</span><span class="cv">' + esc(v) + '</span></div>').join('');
   const status = $('confirmStatus');
-  status.innerHTML = '';
+  status.innerHTML = opts.statusHtml || '';
   const sign = $('confirmSignBtn'), cancel = $('confirmCancelBtn');
-  sign.textContent = opts.signLabel || T.confirmSignBtn; sign.style.display = ''; sign.disabled = false;
-  cancel.textContent = T.confirmCancelBtn; cancel.disabled = false;
+  sign.textContent = opts.signLabel || T.confirmSignBtn; sign.disabled = false;
+  sign.style.display = opts.noSign ? 'none' : '';
+  cancel.textContent = opts.noSign ? (LANG === 'ja' ? '閉じる' : 'Close') : T.confirmCancelBtn; cancel.disabled = false;
   ov.style.display = '';
   const close = () => { ov.style.display = 'none'; sign.onclick = null; cancel.onclick = null; };
   cancel.onclick = close;
@@ -3492,6 +3808,324 @@ function onRecawTap(a) {
   if (typeof routeRecawPending === 'function' && routeRecawPending(a)) return;
   openRecawChoice(a);
 }
+
+/* ================= SuperLike / SuperRecaw (v14) =================
+   The app's flows (actionFlow.ts), re-shaped only where the
+   web's wallet differs: every O leg is an ordinary legacy tx
+   through sendLocalTx — the ONE existing broadcast site —
+   which waits for the receipt, so a resolved leg is a
+   confirmed leg, exactly the app's leg semantics. The CAW
+   Recaw leg goes through submitLocalAction, so the acting
+   name's fresh ownerOf fail-closed check applies to it like
+   every other action. One deviation, by necessity: the app
+   throws a single Error('shortfall') and lets each screen
+   word it; the web's one shared confirm panel cannot, so the
+   performs throw context-named shortfalls (shortfall-sl /
+   -src / -burn / -pay) that confirmErrHtml maps to the app's
+   per-action wording. Amounts and order are unchanged. */
+const nameOwnerOf = async id => readAddr(CAW_NAME, SEL.ownerOf + word(id));
+const oBalanceOf = async addr => readUint(O_TOKEN, SEL.balanceOf + encAddr(addr));
+const fmtO = raw => fmtQcaw(raw);
+const postTargetLabel = async a => {
+  const nm = await resolveName(a.senderId).catch(() => null);
+  return (nm ? '@' + nm : T.unknownName + a.senderId) + ' — ' + parsePostText(a.text).body.slice(0, 80);
+};
+
+async function performSuperlike(a) {
+  if (!pwSession) throw new Error('locked');
+  const authorOwner = await nameOwnerOf(a.senderId);
+  const blocked = superlikeBlockReason({
+    senderId: a.senderId,
+    myTokenIds: pwNames.map(t => t.id),
+    authorOwner,
+    myAddress: pwSession.address,
+  });
+  if (blocked) throw new Error('self-superlike');
+  const balance = await oBalanceOf(pwSession.address);
+  if (superlikeShortfall(balance)) throw Object.assign(new Error('shortfall-sl'), { balance });
+  const data = buildSuperlikeData(a.cawId);
+  if (!data) throw new Error('bad-post');
+  /* Leg 1 — the burn (defines the action). A throw here is an
+     ordinary failure: nothing else ran, nothing is owed. */
+  await sendLocalTx(pwSession.keyBytes, { to: O_TOKEN, data, gasFallback: 80000 });
+  /* Leg 2 — the author payment (plain transfer, no marker). */
+  try {
+    await sendLocalTx(pwSession.keyBytes, { to: O_TOKEN, data: buildAuthorPayData(authorOwner, SUPERLIKE_AUTHOR_RAW), gasFallback: 80000 });
+  } catch (e) {
+    recordAuthorPay(pwSession.address, 'sl', {
+      cawId: a.cawId, author: authorOwner,
+      amountRaw: SUPERLIKE_AUTHOR_RAW, ts: Math.floor(Date.now() / 1000),
+    });
+    refreshMarkedBurns();
+    throw new Error('sl-pay-pending');
+  }
+  refreshMarkedBurns();
+}
+
+async function performSuperRecaw(a) {
+  const acting = pwActing();
+  if (!pwSession || !acting) throw new Error('locked');
+  /* The author's owner decides the payment leg (and whether
+     there is one). A read failure does NOT block the path:
+     the payment is then recorded as owed with the recipient
+     resolved at retry time. */
+  let authorOwner = '';
+  try { authorOwner = await nameOwnerOf(a.senderId); } catch (e) {}
+  const selfPay = authorOwner !== '' &&
+    authorOwner.toLowerCase() === pwSession.address.toLowerCase();
+  const balance = await oBalanceOf(pwSession.address);
+  const needed = SUPERRECAW_BURN_RAW + (selfPay ? 0n : SUPERRECAW_AUTHOR_RAW);
+  if (balance < needed) throw Object.assign(new Error('shortfall-src'), { balance });
+  const burnData = buildSuperRecawData(a.cawId);
+  if (!burnData) throw new Error('bad-post');
+  /* Step 1 — the normal Recaw action (submitLocalAction
+     re-proves name ownership before signing). If this throws,
+     nothing else ran. */
+  const action = {
+    type: 2, senderId: acting.id, receiverId: a.senderId,
+    ts: Math.floor(Date.now() / 1000), sender: pwSession.address,
+    cawId: a.cawId, text: 'REPOST',
+  };
+  await submitLocalAction(pwSession.keyBytes, action);
+  /* Step 2 — the marked O burn. Its failure leaves an honest
+     debt, never a second Recaw. */
+  try {
+    await sendLocalTx(pwSession.keyBytes, { to: O_TOKEN, data: burnData, gasFallback: 80000 });
+  } catch (e) {
+    recordSrcBurn(pwSession.address, {
+      cawId: a.cawId, ts: Math.floor(Date.now() / 1000), author: authorOwner,
+    });
+    throw new Error('src-burn-pending');
+  }
+  /* Step 3 — the author payment. Skipped when the author is
+     the sender (self-SuperRecaw). */
+  if (!selfPay) {
+    try {
+      if (!authorOwner) authorOwner = await nameOwnerOf(a.senderId);
+      await sendLocalTx(pwSession.keyBytes, { to: O_TOKEN, data: buildAuthorPayData(authorOwner, SUPERRECAW_AUTHOR_RAW), gasFallback: 80000 });
+    } catch (e) {
+      recordAuthorPay(pwSession.address, 'src', {
+        cawId: a.cawId, author: authorOwner,
+        amountRaw: SUPERRECAW_AUTHOR_RAW, ts: Math.floor(Date.now() / 1000),
+      });
+      refreshMarkedBurns();
+      throw new Error('src-pay-pending');
+    }
+  }
+  refreshMarkedBurns();
+}
+
+async function performSuperRecawBurn(a) {
+  if (!pwSession) throw new Error('locked');
+  const pending = pendingSrcBurnFor(pwSession.address, a.cawId);
+  if (!pending) throw new Error('no-pending-src-burn');
+  const balance = await oBalanceOf(pwSession.address);
+  if (balance < SUPERRECAW_BURN_RAW) throw Object.assign(new Error('shortfall-burn'), { balance });
+  await sendLocalTx(pwSession.keyBytes, { to: O_TOKEN, data: buildSuperRecawData(a.cawId), gasFallback: 80000 });
+  clearSrcBurn(pwSession.address, a.cawId);
+  /* The author payment (never attempted while the burn was
+     outstanding) becomes the owed leg — unless the author is
+     the sender, who is owed nothing. */
+  let author = pending.author || '';
+  if (!author) { try { author = await nameOwnerOf(a.senderId); } catch (e) {} }
+  if (author.toLowerCase() !== pwSession.address.toLowerCase()) {
+    recordAuthorPay(pwSession.address, 'src', {
+      cawId: a.cawId, author,
+      amountRaw: SUPERRECAW_AUTHOR_RAW, ts: Math.floor(Date.now() / 1000),
+    });
+  }
+  refreshMarkedBurns();
+}
+
+async function performAuthorPay(a, kind) {
+  if (!pwSession) throw new Error('locked');
+  const pending = pendingAuthorPayFor(pwSession.address, kind, a.cawId);
+  if (!pending) throw new Error('no-pending-author-pay');
+  const balance = await oBalanceOf(pwSession.address);
+  if (balance < pending.amountRaw) throw Object.assign(new Error('shortfall-pay'), { balance });
+  let author = pending.author;
+  if (!author) author = await nameOwnerOf(a.senderId);
+  await sendLocalTx(pwSession.keyBytes, { to: O_TOKEN, data: buildAuthorPayData(author, pending.amountRaw), gasFallback: 80000 });
+  clearAuthorPay(pwSession.address, kind, a.cawId);
+}
+
+/* ----- the confirm sheets ----- */
+function openMessagePanel(title, lines, errText) {
+  openConfirmPanel({
+    title, lines, noSign: true,
+    statusHtml: '<span class="err">' + esc(errText) + '</span>',
+    onSign: async () => {},
+  });
+}
+async function openSuperlikeFlow(a) {
+  const acting = pwActing();
+  if (!acting || !pwSession) return;
+  const targetLabel = await postTargetLabel(a);
+  const lines = [
+    [T.confirmAsLbl, '@' + acting.username],
+    [T.slTarget, targetLabel],
+    [T.slTotal, fmtO(SUPERLIKE_TOTAL_RAW) + ' O'],
+    [T.slToAuthor, fmtO(SUPERLIKE_AUTHOR_RAW) + ' O'],
+    [T.slBurned, fmtO(SUPERLIKE_BURN_RAW) + ' O'],
+  ];
+  /* Fast local self-check first (the app's instant feedback);
+     the fresh-owner check inside performSuperlike is the
+     authoritative one and still runs before any signing. */
+  if (pwNames.some(t => t.id === a.senderId)) { openMessagePanel(T.slTitle, lines, T.slSelf); return; }
+  let balance = null;
+  try { balance = await oBalanceOf(pwSession.address); } catch (e) {}
+  if (balance !== null && superlikeShortfall(balance)) {
+    openMessagePanel(T.slTitle, lines, T.slShortfall);
+    return;
+  }
+  lines.push([T.slBalance, (balance === null ? '—' : fmtO(balance)) + ' O']);
+  openConfirmPanel({
+    title: T.slTitle, lines,
+    signLabel: T.slConfirm, doneText: T.slDone,
+    onSign: async () => { pwTouch(); await performSuperlike(a); },
+    afterSuccess: () => { repaintSuperCounts(); pwLoadNames().then(() => renderComposer()).catch(() => {}); },
+  });
+}
+async function openSuperRecawFlow(a) {
+  const acting = pwActing();
+  if (!acting || !pwSession) return;
+  const targetLabel = await postTargetLabel(a);
+  let authorOwner = '';
+  try { authorOwner = await nameOwnerOf(a.senderId); } catch (e) {}
+  const selfPay = authorOwner !== '' &&
+    authorOwner.toLowerCase() === pwSession.address.toLowerCase();
+  const needed = selfPay ? SUPERRECAW_BURN_RAW : SUPERRECAW_TOTAL_RAW;
+  let balance = null;
+  try { balance = await oBalanceOf(pwSession.address); } catch (e) {}
+  if (balance !== null && balance < needed) {
+    openMessagePanel(T.srcTitle, [
+      [T.confirmAsLbl, '@' + acting.username],
+      [T.slTarget, targetLabel],
+    ], T.srcShortfall);
+    return;
+  }
+  const lines = [
+    [T.confirmAsLbl, '@' + acting.username],
+    [T.slTarget, targetLabel],
+    [T.slTotal, fmtO(SUPERRECAW_TOTAL_RAW) + ' O'],
+  ];
+  if (selfPay) lines.push([T.slBurned, fmtO(SUPERRECAW_BURN_RAW) + ' O']);
+  else {
+    lines.push([T.slToAuthor, fmtO(SUPERRECAW_AUTHOR_RAW) + ' O']);
+    lines.push([T.slBurned, fmtO(SUPERRECAW_BURN_RAW) + ' O']);
+  }
+  lines.push([T.slBalance, (balance === null ? '—' : fmtO(balance)) + ' O']);
+  openConfirmPanel({
+    title: T.srcTitle, lines,
+    statusHtml: selfPay ? '<span class="small">' + esc(T.srcSelfNote) + '</span>' : '',
+    signLabel: T.srcConfirm, doneText: T.srcDone,
+    onSign: async () => { pwTouch(); await performSuperRecaw(a); },
+    afterSuccess: () => { repaintSuperCounts(); },
+  });
+}
+async function openSrcBurnFlow(a, pending) {
+  const acting = pwActing();
+  if (!acting || !pwSession) return;
+  const targetLabel = await postTargetLabel(a);
+  let balance = null;
+  try { balance = await oBalanceOf(pwSession.address); } catch (e) {}
+  openConfirmPanel({
+    title: T.srcBurnTitle,
+    lines: [
+      [T.confirmAsLbl, '@' + acting.username],
+      [T.slTarget, targetLabel],
+      [T.slBurned, fmtO(SUPERRECAW_BURN_RAW) + ' O'],
+      [T.slBalance, (balance === null ? '—' : fmtO(balance)) + ' O'],
+    ],
+    signLabel: T.srcBurnConfirm, doneText: T.srcBurnDone,
+    onSign: async () => { pwTouch(); await performSuperRecawBurn(a); },
+    afterSuccess: () => { repaintSuperCounts(); },
+  });
+}
+async function openAuthorPayFlow(a, kind, pending) {
+  const acting = pwActing();
+  if (!acting || !pwSession) return;
+  const targetLabel = await postTargetLabel(a);
+  let balance = null;
+  try { balance = await oBalanceOf(pwSession.address); } catch (e) {}
+  openConfirmPanel({
+    title: T.payTitle,
+    lines: [
+      [T.confirmAsLbl, '@' + acting.username],
+      [T.slTarget, targetLabel],
+      [T.slToAuthor, fmtO(pending.amountRaw) + ' O'],
+      [T.slBalance, (balance === null ? '—' : fmtO(balance)) + ' O'],
+    ],
+    signLabel: T.payConfirm.replace('{amount}', fmtO(pending.amountRaw)),
+    doneText: T.payDone,
+    onSign: async () => { pwTouch(); await performAuthorPay(a, kind); },
+    afterSuccess: () => { repaintSuperCounts(); },
+  });
+}
+/* Pending-leg routing for the Recaw tap: an owed burn first,
+   then an owed author payment — the plain Recaw is never
+   re-sent for either. Returns true when a sheet was opened. */
+function routeRecawPending(a) {
+  if (!pwSession) return false;
+  const burn = pendingSrcBurnFor(pwSession.address, a.cawId);
+  if (burn) { openSrcBurnFlow(a, burn); return true; }
+  const pay = pendingAuthorPayFor(pwSession.address, 'src', a.cawId);
+  if (pay) { openAuthorPayFlow(a, 'src', pay); return true; }
+  return false;
+}
+function onSuperTap(a, div) {
+  if (!pwUnlocked() || !pwActing()) { scrollToWallet(); return; }
+  const pending = pendingAuthorPayFor(pwSession.address, 'sl', a.cawId);
+  if (pending) { openAuthorPayFlow(a, 'sl', pending); return; }
+  openSuperlikeFlow(a);
+}
+
+/* ----- painting the marks on rows ----- */
+function paintSuperInto(div, cawId) {
+  const c = superlikeCountCached(cawId);
+  const el = div.querySelector('.sl-count');
+  if (el) el.textContent = c > 0 ? fmtCount(c) : '';
+  const ic = div.querySelector('.sl-ic');
+  if (ic) ic.innerHTML = c > 0 ? IC_STAR_FILL : IC_STAR;
+  const btn = div.querySelector('.x-super');
+  if (btn) btn.classList.toggle('has', c > 0);
+}
+function repaintSuperCounts() {
+  document.querySelectorAll('.post[data-cawid]').forEach(d => paintSuperInto(d, d.dataset.cawid));
+}
+let mbSubscribed = false;
+function paintSuperRow(div, a) {
+  paintSuperInto(div, a.cawId);
+  if (!mbSubscribed) {
+    mbSubscribed = true;
+    subscribeMarkedBurns(() => repaintSuperCounts());
+  }
+  scanMarkedBurns().then(() => paintSuperInto(div, a.cawId)).catch(() => {});
+}
+/* A Recaw row is Super when the scan holds a mark for
+   (original cawId, the Recawer's owner address) — the app's
+   key. The owner is resolved fresh from the name contract. */
+async function paintRecawRow(div, a) {
+  let owner = null;
+  try { owner = await nameOwnerOf(a.senderId); } catch (e) {}
+  if (!owner) return;
+  const paint = () => {
+    if (div.dataset.superPainted) return;
+    if (!superRecawCached(a.cawId, owner)) return;
+    div.dataset.superPainted = '1';
+    div.classList.add('super-recaw');
+    const attr = div.querySelector('.recaw-attr');
+    if (attr) {
+      attr.classList.add('super');
+      const ic = attr.querySelector('.ra-ic');
+      if (ic) ic.innerHTML = IC_STAR_FILL;
+      const txt = attr.querySelector('.ra-txt');
+      if (txt) txt.textContent = txt.textContent + ' · SuperRecaw';
+    }
+  };
+  paint();
+  scanMarkedBurns().then(paint).catch(() => {});
+}
 let profileOwner = null;
 async function renderProfFollow() {
   const box = $('profFollowArea');
@@ -3664,9 +4298,9 @@ async function syncChrome() {
     } else {
       if (nm) nm.textContent = 'CAW Social';
       if (sub) sub.textContent = LANG === 'ja' ? 'QL1 版・ウェブ' : 'on QL1 · web';
-      if (ava) ava.innerHTML = '<img class="avatar" src="icon-192.png?v=13" alt="">';
+      if (ava) ava.innerHTML = '<img class="avatar" src="icon-192.png?v=14" alt="">';
       const mt = $('mtAvatar');
-      if (mt && avaId === 'drawerAvatar') mt.innerHTML = '<img class="avatar" src="icon-192.png?v=13" alt="">';
+      if (mt && avaId === 'drawerAvatar') mt.innerHTML = '<img class="avatar" src="icon-192.png?v=14" alt="">';
       if (fol) fol.style.display = 'none';
     }
   };
@@ -3855,6 +4489,20 @@ if (typeof module !== 'undefined' && module.exports) {
     parseAmount, hexToB64Url, postRefMarker, appendPostRef, textBytes,
     randomCawId, submitLocalAction,
     bmList, bmHas, bmToggle, BOOKMARKS_KEY_PREFIX,
+    O_TOKEN, BURN_ADDRESS,
+    SUPERLIKE_TOTAL_O, SUPERLIKE_AUTHOR_O, SUPERLIKE_BURN_O,
+    SUPERRECAW_TOTAL_O, SUPERRECAW_AUTHOR_O, SUPERRECAW_BURN_O,
+    LEGACY_MARKED_BURN_O,
+    SUPERLIKE_TOTAL_RAW, SUPERLIKE_AUTHOR_RAW, SUPERLIKE_BURN_RAW,
+    SUPERRECAW_TOTAL_RAW, SUPERRECAW_AUTHOR_RAW, SUPERRECAW_BURN_RAW,
+    LEGACY_MARKED_BURN_RAW, SUPERLIKE_MAGIC, SUPERRECAW_MAGIC,
+    MARKED_BURN_START_BLOCK, MB_KV_KEY, SRC_BURN_KV_KEY, AUTHOR_PAY_KV_KEY,
+    buildMarkedBurnData, buildSuperlikeData, buildSuperRecawData,
+    buildAuthorPayData, buildTransferData, parseMarkedBurnInput,
+    burnAmountsForMagic, normCawIdHex, superlikeBlockReason, superlikeShortfall,
+    scanMarkedBurns, superlikeCount, superlikeCountCached, superRecawCached,
+    hasSuperRecaw, mbCursor, pendingSrcBurnFor, recordSrcBurn, clearSrcBurn,
+    pendingAuthorPayFor, recordAuthorPay, clearAuthorPay, authorPayAmountFor,
     SEL, CAW_NAME, CAW_ACTIONS, MINTER, QCAW, CHAIN_ID_HEX, word,
   };
 }

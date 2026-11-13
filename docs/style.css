@@ -769,3 +769,5 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .drawer-follow b{color:var(--ink)}
 /* stats body rows reuse .stats-row (defined with the rail card) */
 .statsBody p{margin:4px 0}
+/* a post with SuperLikes: the star and its count turn gold */
+.xact.x-super.has{color:var(--gold)}
