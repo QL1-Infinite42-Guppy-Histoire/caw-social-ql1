@@ -275,9 +275,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v15: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=15') && jaHtml.includes('?v=15'), 'shells reference ?v=15 assets');
-ok(swSrc.includes("caw-view-v15"), 'sw.js cache name is caw-view-v15');
+console.log('— v16: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=16') && jaHtml.includes('?v=16'), 'shells reference ?v=16 assets');
+ok(swSrc.includes("caw-view-v16"), 'sw.js cache name is caw-view-v16');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -693,8 +693,8 @@ console.log('— v15: home is the timeline only; wallet / lookup / name desk are
     ok((html.match(/\?wallet=1/g) || []).length >= 5 && html.includes('?lookup=1'),
        label + ': the wallet view opens from the summaries, both wallet rows and the tab bar; the lookup view has an entry too',
        'wallet links=' + (html.match(/\?wallet=1/g) || []).length);
-    ok(html.includes('?getname=1#myNames'),
-       label + ': "My names" lands on the names side of the get-a-name view');
+    ok(/data-nav="mynames" href="[^"]*\?wallet=1"/.test(html),
+       label + ': "My names" defaults to the wallet view (v16: syncChrome re-points it to the names side of the name desk once a name acts — see the v16 section)');
     const chrome = html.slice(0, html.indexOf('<nav class="bottomnav"'));
     const order = ['profile', 'wallet', 'mynames', 'getname', 'bookmarks']
       .map(k => chrome.indexOf('data-nav="' + k + '"'));
@@ -714,6 +714,68 @@ console.log('— v15: home is the timeline only; wallet / lookup / name desk are
     'viewer.js routes wallet guidance to the wallet VIEW (no scroll-to-block left)');
   ok(viewerSrc.includes("get('wallet')") && viewerSrc.includes("get('getname')") && viewerSrc.includes("get('lookup')"),
     'viewer.js opens the new views from their query params');
+}
+
+console.log('— v16: post-row anatomy fixes (action pills, record link, recaw stacking, name lines, chrome rows) —');
+{
+  const css = read('../docs/style.css');
+  const rule = sel => {
+    const i = css.indexOf(sel);
+    if (i < 0) return '';
+    const j = css.indexOf('}', i);
+    return j < 0 ? '' : css.slice(i, j);
+  };
+  /* 1 — the blue pills: the generic primary-button style must
+     not reach the action row; .xact neutralises it explicitly */
+  const xact = rule('.xact {');
+  ok(xact.includes('background: transparent') && xact.includes('border: 0') &&
+     xact.includes('box-shadow: none') && xact.includes('min-height: 0'),
+     'action buttons explicitly neutralise the generic button style (transparent bg, no border / shadow / min-height)');
+  const iconPx = parseFloat((rule('.xact .icring svg').match(/width:\s*([\d.]+)px/) || [])[1]);
+  ok(iconPx >= 16 && iconPx <= 18, 'action icon size is the app size (16–18px)', iconPx + 'px');
+  ok(rule('.xact .xcount').includes('font-size: 13px'),
+     'action counts sit next to the icon at 13px (never wrapped under it)');
+  ok(rule('.pfoot {').includes('flex-wrap: nowrap'), 'the action row never wraps');
+  ok(!css.includes('var(--secondary)') && !css.includes('var(--hairline)'),
+     'no style references the never-defined --secondary / --hairline variables');
+  /* 2 — exactly one record link per row, from one builder */
+  ok((viewerSrc.match(/class="recordline"/g) || []).length === 1,
+     'the record-link markup is built in exactly ONE place (recordLineHtml)');
+  ok(viewerSrc.includes('if (!opts.nested) html += recordLineHtml(a.hash);'),
+     'nested rows render no record link — the outer row owns the one link');
+  const recawSrc = viewerSrc.slice(viewerSrc.indexOf('async function recawCard'), viewerSrc.indexOf('async function ctxRow'));
+  ok(recawSrc.includes('recordLineHtml(a.hash)'),
+     'the recaw row takes its one record link from the same single builder');
+  /* 3 — recaw stacking: attribution full-width on top */
+  ok(rule('.post.recaw-row').includes('flex-direction: column'),
+     'recaw rows stack in a column (no squeezed side columns)');
+  ok(/\.recaw-attr\s*\{[^}]*display:\s*flex/.test(css),
+     'the attribution is a full-width line of its own at the top of the row');
+  ok(recawSrc.indexOf('recaw-attr') >= 0 && recawSrc.indexOf('recaw-attr') < recawSrc.indexOf('frameslot') &&
+     recawSrc.indexOf('frameslot') < recawSrc.indexOf('recordLineHtml'),
+     'recaw row order: attribution line, then the original, then the one record link');
+  ok(rule('.post-nested {').includes('background: transparent'),
+     'the nested original is transparent, so the SuperRecaw wash covers the whole row');
+  /* 4 — the "@" lives on line 2 only */
+  ok(viewerSrc.includes('const display = name ? name : who;') && viewerSrc.includes("esc('@' + name)"),
+     'post header: line 1 is the display name as-is, the "@" appears only on line 2');
+  /* drawer / sidebar rows: always shown, routed by state */
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    ok(!/data-nav="(profile|mynames)"[^>]*display:none/.test(html),
+       label + ': the profile / my-names rows exist in the DOM and are never hidden (locked state included)');
+    ok((html.match(/M19\.4 15/g) || []).length === 2,
+       label + ': the gear icon survives only on the two Settings headings (not on the theme rows)');
+    const segOf = id => { const i = html.indexOf('id="' + id + '"'); return i < 0 ? '' : html.slice(i, html.indexOf('</button>', i)); };
+    ok(!segOf('themeToggle').includes('nav-ic') && segOf('themeToggle').includes('themeLabel') &&
+       !segOf('themeToggleDrawer').includes('nav-ic') && segOf('themeToggleDrawer').includes('themeLabelDrawer'),
+       label + ': theme rows are 🌙/☀️ + label only (no second gear)');
+  }
+  ok(viewerSrc.includes("acting ? profUrl(acting.username) : pageFile + '?wallet=1'"),
+     'profile rows route by state: acting → own profile, locked → the wallet view');
+  ok(viewerSrc.includes("acting ? pageFile + '?getname=1#myNames' : pageFile + '?wallet=1'"),
+     'my-names rows route by state: acting → the names list, locked → the wallet view');
+  ok(!viewerSrc.includes('prow.style.display') && !viewerSrc.includes("el.style.display = acting"),
+     'syncChrome no longer hides the profile / my-names rows in any state');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

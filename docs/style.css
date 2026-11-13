@@ -350,6 +350,27 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
    (light 0.10 / dark 0.16), no frame, no gradient, no card. */
 .post.super-recaw { background: var(--super-wash); }
 .post.super-recaw:hover { background: var(--super-wash); }
+/* A Recaw row STACKS (v16): the attribution is one small
+   full-width line at the top of the row, and the original
+   post below it keeps the ordinary full-width row layout
+   (avatar 44 + body column). Before, .post's flex row laid
+   attribution / original / record link out as three squeezed
+   columns — the attribution crushed into a narrow left strip
+   (the post body shrank to ~60% width) and the record link
+   wrapped character-by-character down the right edge. The
+   SuperRecaw wash lives on this outer row, so it covers the
+   attribution line too. */
+.post.recaw-row { flex-direction: column; gap: 0; }
+.recaw-attr {
+  display: flex; align-items: center; gap: 5px;
+  font-size: 13px; font-weight: 700; color: var(--sub); min-width: 0;
+}
+.recaw-attr .ra-ic { display: inline-flex; color: var(--recaw); flex: 0 0 auto; }
+.recaw-attr .ra-ic svg { width: 14px; height: 14px; display: block; }
+.recaw-attr .ra-txt { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recaw-attr .time { font-weight: 400; white-space: nowrap; }
+.recaw-attr.super { color: var(--gold); }
+.recaw-attr.super .ra-ic { color: var(--gold); }
 .ic { flex: 0 0 auto; }
 .avatar {
   width: 44px; height: 44px; border-radius: 50%; flex: 0 0 44px;
@@ -380,39 +401,59 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
 .ptext a, .qtext a { color: var(--accent); text-decoration: none; }
 .ptext a:hover, .qtext a:hover { text-decoration: underline; }
 .ptext a.mention, .qtext a.mention { font-weight: 600; }
-/* the ONE action row: a single space-between line, never wraps */
+/* The ONE action row: a single space-between line, never
+   wraps (the app's actionRow). v16: the buttons are the app's
+   actionBtn anatomy — icon + count side by side, colour on the
+   glyphs only. The generic `button` rule (the solid blue pill
+   for primary buttons) must NEVER reach them: the v13 markup
+   renamed the buttons to .xact but the dedicated reset was
+   never written, so the generic rule painted them as big blue
+   pills and squeezed the counts under the icons. .xact now
+   neutralises background / border / shadow / min-height
+   EXPLICITLY, and the primary-button style stays scoped to
+   the containers that opt in (forms, sheets, composer). */
 .pfoot {
   margin-top: 8px; display: flex; align-items: center;
-  justify-content: space-between; max-width: 425px;
+  justify-content: space-between; flex-wrap: nowrap; max-width: 425px;
 }
-.act {
-  display: inline-flex; align-items: center; gap: 1px;
-  background: none; border: 0; border-radius: 999px;
-  color: var(--sub); font-size: 13px; font-weight: 400;
-  padding: 4px; margin-left: -5px; min-height: 34px; cursor: pointer;
+.xact {
+  display: inline-flex; align-items: center; gap: 2px;
+  background: transparent; border: 0; box-shadow: none;
+  -webkit-appearance: none; appearance: none;
+  color: var(--sub); font-size: 13px; font-weight: 400; line-height: 1;
+  padding: 4px 3px; margin: 0 0 0 -4px; min-height: 0; height: auto;
+  border-radius: 999px; cursor: pointer; flex: 0 1 auto; min-width: 0;
 }
-.act .act-ic { display: inline-flex; padding: 7px; margin: -7px 0; border-radius: 50%; }
-.act .act-ic svg { width: 17px; height: 17px; display: block; }
-.act .act-count { padding-right: 6px; }
-.act:hover { background: none; color: var(--accent); }
-.act:hover .act-ic { background: var(--accent-soft); }
-.act-like:hover { color: var(--like); }
-.act-like:hover .act-ic { background: var(--like-soft); }
-.act-recaw:hover { color: var(--recaw); }
-.act-recaw:hover .act-ic { background: var(--recaw-soft); }
-.act-star { color: var(--sub); }
-.act-star .act-count { color: var(--sub); }
-.act-star.on { color: var(--gold); }
-.act-star.on .act-count { color: var(--gold); font-weight: 700; }
-.act-star:hover { color: var(--gold); }
-.act-star:hover .act-ic { background: var(--gold-soft); }
-.act-static { cursor: default; }
-.act-static:hover { color: var(--sub); }
-.act-static:hover .act-ic { background: none; }
-.act:disabled { opacity: .45; cursor: not-allowed; }
-.rec-line { margin-top: 6px; font-size: 13px; }
-.rec-line a { color: var(--accent); text-decoration: none; }
-.rec-line a:hover { text-decoration: underline; }
+/* the hover/press ring: a soft circle BEHIND the icon, in the
+   action's own colour — the button itself stays unpainted */
+.xact .icring {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 5px; margin: -5px 0; border-radius: 50%; flex: 0 0 auto;
+}
+.xact .icring svg { width: 17px; height: 17px; display: block; }
+.xact .xcount { font-size: 13px; white-space: nowrap; }
+.xact:hover { background: transparent; color: var(--accent); }
+.xact:hover .icring { background: var(--accent-soft); }
+.x-recaw:hover { color: var(--recaw); }
+.x-recaw:hover .icring { background: var(--recaw-soft); }
+.x-like:hover { color: var(--like); }
+.x-like:hover .icring { background: var(--like-soft); }
+.x-super:hover { color: var(--gold); }
+.x-super:hover .icring { background: var(--gold-soft); }
+/* on-states the row wiring sets: liked (class on, set after a
+   confirmed like), bookmarked (on), has SuperLikes (has) */
+.x-like.on { color: var(--like); }
+.x-like.on .icring svg { fill: currentColor; }
+.x-like.on .like-count { font-weight: 700; }
+.x-bm.on { color: var(--accent); }
+.x-super.has { color: var(--gold); }
+.x-super.has .sl-count { font-weight: 700; }
+.xact:disabled { opacity: .45; cursor: not-allowed; }
+.xspacer { display: none; }
+/* the ONE record link, under the action row (the app's slot) */
+.recordline { margin-top: 6px; font-size: 13px; }
+.recordline a { color: var(--accent); text-decoration: none; }
+.recordline a:hover { text-decoration: underline; }
 .post-status { margin-top: 4px; font-size: 13px; color: var(--sub); }
 .loadmore { text-align: center; padding: 14px 16px; }
 
@@ -427,7 +468,7 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
 .quotebox .qname { font-weight: 700; font-size: 13.5px; }
 .quotebox .qhead .time { color: var(--sub); font-size: 12px; }
 .quotebox .qtext { margin-top: 4px; white-space: pre-wrap; word-break: break-word; font-size: 14px; line-height: 1.4; }
-.post-nested { border-bottom: 0; padding: 6px 0 2px; }
+.post-nested { border-bottom: 0; padding: 6px 0 2px; background: transparent; }
 .post-nested:hover { background: transparent; }
 .super-recaw .post-nested:hover { background: transparent; }
 .ctxrow { padding: 10px 16px; }
@@ -717,24 +758,18 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
 
 /* ==== v13 completion: classes the new markup uses ==== */
 .post.clickable{cursor:pointer}
-.subline{display:flex;align-items:center;gap:2px;font-size:13px;color:var(--secondary);margin-top:1px}
+.subline{display:flex;align-items:center;gap:2px;font-size:13px;color:var(--sub);margin-top:1px}
 .subline .handle{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.subline .time{color:var(--secondary);white-space:nowrap}
+.subline .time{color:var(--sub);white-space:nowrap}
 .frameslot:empty{display:none}
-.recordline{margin-top:2px}
-.xcount{font-size:13px;font-weight:400}
-.icring{display:inline-flex}
-.sl-ic{display:inline-flex}
 .like-count:empty{display:none}
 .sl-count:empty{display:none}
-.recaw-attr .ra-ic{display:inline-flex}
-.recaw-attr .ra-ic svg{width:14px;height:14px}
-.post-detail .detail-date{font-size:13px;color:var(--secondary);margin-top:10px}
-.qhead{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--secondary);margin-bottom:2px}
+.post-detail .detail-date{font-size:13px;color:var(--sub);margin-top:10px}
+.qhead{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--sub);margin-bottom:2px}
 .qhead .avatar{width:20px;height:20px;font-size:10px}
 .qhead .qname{font-weight:700;color:var(--ink)}
 .counts-row .cc-num{font-size:16px;font-weight:800;color:var(--ink)}
-.counts-row .cc-lbl{font-size:12.5px;color:var(--secondary)}
+.counts-row .cc-lbl{font-size:12.5px;color:var(--sub)}
 button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .pactions button{border-radius:999px;padding:9px 16px;font-size:14px;font-weight:700;background:var(--ink);color:var(--bg);border:1px solid var(--ink)}
 .pactions button.ghost{background:var(--bg);color:var(--ink);border:1px solid var(--line)}
@@ -746,20 +781,20 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .pw-actions{display:flex;gap:12px;margin-bottom:6px}
 .pw-action-btn{flex:1;background:var(--accent);color:#fff;border-radius:999px;padding:12px;font-size:15.5px;font-weight:700;border:0;cursor:pointer}
 .asset-list{margin-top:6px}
-.asset-row{display:flex;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid var(--hairline)}
+.asset-row{display:flex;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}
 .asset-row:last-child{border-bottom:0}
 .asset-sym{font-size:15px;font-weight:700}
 .asset-amt{margin-left:auto;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
 .acting-list{display:flex;flex-direction:column}
-.acting-row{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-bottom:1px solid var(--hairline);padding:10px 2px;cursor:pointer;font:inherit;color:var(--ink);text-align:left}
+.acting-row{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 2px;cursor:pointer;font:inherit;color:var(--ink);text-align:left}
 .acting-row:last-child{border-bottom:0}
 .acting-row.on .ar-name{color:var(--accent)}
 .ar-ava .avatar{width:32px;height:32px}
 .ar-name{font-size:15px;font-weight:700}
-.ar-bal{margin-left:auto;font-size:13px;color:var(--secondary)}
+.ar-bal{margin-left:auto;font-size:13px;color:var(--sub)}
 .pw-card{margin-top:14px}
-.menu-list{display:flex;flex-direction:column;margin-top:14px;border-top:1px solid var(--hairline)}
-.menu-row{display:flex;align-items:center;width:100%;background:none;border:0;border-bottom:1px solid var(--hairline);padding:13px 2px;cursor:pointer;font:inherit;font-size:15px;font-weight:600;color:var(--ink);text-align:left}
+.menu-list{display:flex;flex-direction:column;margin-top:14px;border-top:1px solid var(--line)}
+.menu-row{display:flex;align-items:center;width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:13px 2px;cursor:pointer;font:inherit;font-size:15px;font-weight:600;color:var(--ink);text-align:left}
 /* composer pieces */
 .composer-row{display:flex;gap:10px}
 .comp-ava .avatar{width:40px;height:40px}
@@ -770,12 +805,10 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .comp-post{background:var(--accent);color:#fff;border:0;border-radius:999px;padding:8px 18px;font-size:14.5px;font-weight:700;cursor:pointer}
 .comp-post:disabled{opacity:.5;cursor:default}
 /* bookmarks view */
-.bm-note{padding:16px;color:var(--secondary);font-size:14.5px}
-.bm-missing{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--hairline)}
+.bm-note{padding:16px;color:var(--sub);font-size:14.5px}
+.bm-missing{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
 .bm-missing .bm-del{margin-left:auto}
 /* drawer follow line numbers */
 .drawer-follow b{color:var(--ink)}
 /* stats body rows reuse .stats-row (defined with the rail card) */
 .statsBody p{margin:4px 0}
-/* a post with SuperLikes: the star and its count turn gold */
-.xact.x-super.has{color:var(--gold)}

@@ -28,6 +28,57 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   drawer on phones. Also a **PWA**: add it to the home screen
   and it opens standalone.
 
+## What's new in v16 (2026-11-13)
+
+- **Post rows look like the app again — the giant blue
+  action pills are gone.** The v13 markup renamed the action
+  buttons (`.xact`) but their dedicated style was never
+  written, so the generic primary-button rule (solid blue
+  pill, 44px min-height) painted Reply / Recaw / Like /
+  SuperLike / Bookmark / Share as big blue buttons and
+  squeezed the counts under the icons. The action buttons
+  now explicitly reset background / border / shadow /
+  min-height: transparent buttons, 17px icons in the idle
+  grey with the count beside the icon at 13px, a soft
+  coloured ring behind the icon on hover (blue / green /
+  pink / gold per action), and the on-states the wiring
+  already sets (liked = filled pink heart + pink count,
+  bookmarked = blue, has SuperLikes = gold). The
+  never-defined `--secondary` / `--hairline` variables the
+  v13 fragment block referenced are fixed to the real
+  tokens too.
+- **One record link per post, in one place.** A Recaw row
+  used to show the record link twice — the nested original
+  carried its own, and the squeezed right-hand copy wrapped
+  character-by-character down the row's edge. The link
+  markup now comes from a single builder, nested rows render
+  none, and the one link sits under the action row.
+- **Recaw rows stack like the app.** The attribution
+  ("@x recawed · time", gold for a SuperRecaw) is a small
+  full-width line at the top of the row, and the original
+  post below it keeps the ordinary full-width layout —
+  before, the flex row crushed the attribution into a
+  narrow left column and shrank the post body to ~60%
+  width. The nested original is transparent now, so the
+  SuperRecaw gold wash covers the whole row, attribution
+  included.
+- **The "@" lives on line 2 only.** Post headers showed
+  "@name" on the bold line AND "@name · time" under it; the
+  bold line is now the card's display name as-is, exactly
+  like the app.
+- **The drawer / sidebar keep every row in every state.**
+  v15 hid Profile and My names until a name was acting,
+  which broke the app shape the user asked for. Both rows
+  are always shown now; their target is what changes —
+  with an acting name they open your profile / your names
+  as before, and while locked they route to the wallet
+  view, where a wallet can be made, imported or unlocked
+  and a name chosen. The Settings group lost its duplicated
+  gear: the gear stays on the Settings heading, the theme
+  row is now just 🌙/☀️ + label (the language row keeps its
+  globe). Display and routing only — no logic, ids or send
+  sites changed.
+
 ## What's new in v15 (2026-11-13)
 
 - **The home view is the timeline alone.** The posting

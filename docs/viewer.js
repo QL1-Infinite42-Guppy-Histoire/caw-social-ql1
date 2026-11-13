@@ -2185,6 +2185,13 @@ async function sharePostText(post, btn) {
   }
 }
 
+/* The ONE record link a post row may carry (the app's rule:
+   exactly one per top-level row, alone under the action row;
+   nested rows render none — the outer row's link is the one).
+   Both row builders take the markup from this single source,
+   so a row can never grow a second copy. */
+const recordLineHtml = hash => '<div class="recordline"><a href="' + EXPLORER + '/tx/' + hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a></div>';
+
 /* One post card (also used nested inside a Recaw, and on post pages).
    v13 anatomy, copied from the app's timeline row: avatar on the
    left; a bold name line; a "@handle · time" line under it; the
@@ -2212,9 +2219,15 @@ async function postCard(a, opts) {
   if (parsed.ref && parsed.ref.kind === 'reply') {
     html += '<div class="ctx reply-ctx" data-parent="' + parsed.ref.parentCawId + '">' + esc(T.replyingTo.replace('{name}', '…')) + '</div>';
   }
-  const whoHtml = profHref ? '<a class="plink" href="' + profHref + '">' + esc(who) + '</a>' : esc(who);
-  html += '<div class="meta"><span class="name">' + whoHtml + '</span></div>';
-  html += '<div class="subline"><span class="handle">' + esc(who) + '</span><span class="time" title="' + esc(fullTimeStr(a.ts)) + '">· ' + esc(whenStr(a.ts)) + '</span></div>';
+  /* X-style header (the app's, v16): line 1 is the card's
+     display name as-is — no "@" on it; the "@" lives only on
+     line 2, with the handle and the time. (v13/v15 put the
+     "@handle" on BOTH lines.) */
+  const display = name ? name : who;
+  const nameHtml = profHref ? '<a class="plink" href="' + profHref + '">' + esc(display) + '</a>' : esc(display);
+  html += '<div class="meta"><span class="name">' + nameHtml + '</span></div>';
+  html += '<div class="subline">' + (name ? '<span class="handle">' + esc('@' + name) + '</span>' : '') +
+    '<span class="time" title="' + esc(fullTimeStr(a.ts)) + '">' + (name ? '· ' : '') + esc(whenStr(a.ts)) + '</span></div>';
   if (parsed.body) html += '<div class="ptext">' + (opts.highlight ? highlightKeyword(linkify(parsed.body), opts.highlight) : linkify(parsed.body)) + '</div>';
   html += '<div class="frameslot"></div>';
   if (opts.detail) {
@@ -2234,7 +2247,10 @@ async function postCard(a, opts) {
     '<button type="button" class="xact x-bm' + (saved ? ' on' : '') + '" data-act="bookmark" aria-label="' + esc(T.bmAdd) + '"><span class="icring">' + (saved ? IC_BOOKMARK_FILL : IC_BOOKMARK) + '</span></button>' +
     '<button type="button" class="xact x-share" data-act="share" aria-label="' + esc(T.shareLabel) + '"><span class="icring">' + IC_SHARE + '</span></button>' +
     '</div>';
-  html += '<div class="recordline"><a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a></div>';
+  /* Nested rows (the original inside a Recaw) render NO
+     record link — the outer row's one link is the row's
+     only one (v16; before, a Recaw showed two). */
+  if (!opts.nested) html += recordLineHtml(a.hash);
   html += '</div>';
   div.innerHTML = html;
   /* Like count fills in after the card is on screen — it must
@@ -2287,7 +2303,7 @@ async function recawCard(a) {
     esc(T.recawedBy.replace('{name}', who)) + '</span>' +
     '<span class="time" title="' + esc(fullTimeStr(a.ts)) + '">· ' + esc(whenStr(a.ts)) + '</span></div>' +
     '<div class="frameslot"></div>' +
-    '<div class="recordline"><a href="' + EXPLORER + '/tx/' + a.hash + '" target="_blank" rel="noopener">' + T.viewTx + ' ↗</a></div>';
+    recordLineHtml(a.hash);
   div.innerHTML = html;
   const slot = div.querySelector('.frameslot');
   (async () => {
@@ -4265,7 +4281,13 @@ async function syncChrome() {
   const acting = pwSession ? pwActing() : null;
   const setSummary = async (avaId, nameId, subId, followId, profileRowId) => {
     const ava = $(avaId), nm = $(nameId), sub = $(subId), fol = $(followId), prow = $(profileRowId);
-    if (prow) prow.style.display = acting ? '' : 'none';
+    /* v16: the Profile row is ALWAYS in the drawer / sidebar
+       (the app's drawer keeps every row in every state — v15
+       hid it with no acting name and the shape broke). Its
+       target is what changes: acting → the own profile;
+       locked / nameless → the wallet view, where a wallet can
+       be made, imported or unlocked and a name chosen. */
+    if (prow) prow.setAttribute('href', acting ? profUrl(acting.username) : pageFile + '?wallet=1');
     if (acting) {
       if (nm) nm.textContent = acting.username || '';
       if (sub) sub.textContent = '@' + acting.username + ' · #' + acting.id.toString();
@@ -4273,7 +4295,6 @@ async function syncChrome() {
         const im = await avatarFor(acting.id).catch(() => null);
         ava.innerHTML = avatarHtml(im, acting.username);
       }
-      if (prow) prow.setAttribute('href', profUrl(acting.username));
       const sum = document.querySelector('.mt-avatar-btn');
       if (avaId === 'drawerAvatar') {
         const mt = $('mtAvatar');
@@ -4299,17 +4320,18 @@ async function syncChrome() {
     } else {
       if (nm) nm.textContent = 'CAW Social';
       if (sub) sub.textContent = LANG === 'ja' ? 'QL1 版・ウェブ' : 'on QL1 · web';
-      if (ava) ava.innerHTML = '<img class="avatar" src="icon-192.png?v=15" alt="">';
+      if (ava) ava.innerHTML = '<img class="avatar" src="icon-192.png?v=16" alt="">';
       const mt = $('mtAvatar');
-      if (mt && avaId === 'drawerAvatar') mt.innerHTML = '<img class="avatar" src="icon-192.png?v=15" alt="">';
+      if (mt && avaId === 'drawerAvatar') mt.innerHTML = '<img class="avatar" src="icon-192.png?v=16" alt="">';
       if (fol) fol.style.display = 'none';
     }
   };
-  /* The "My names" rows follow the same rule as the Profile
-     rows (the app's drawer): with no acting name there is
-     nothing to list, so the row is not shown at all. */
+  /* The "My names" rows follow the same always-shown rule
+     (v16): acting → the names side of the name desk;
+     locked / nameless → the wallet view, like the Profile
+     rows — never a hidden or dead row. */
   document.querySelectorAll('[data-nav="mynames"]').forEach(el => {
-    el.style.display = acting ? '' : 'none';
+    el.setAttribute('href', acting ? pageFile + '?getname=1#myNames' : pageFile + '?wallet=1');
   });
   await Promise.all([
     setSummary('sideAvatar', 'sideName', 'sideSub', 'sideFollow', 'sideProfileRow'),
