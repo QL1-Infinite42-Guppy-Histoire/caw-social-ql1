@@ -202,6 +202,14 @@ const T = {
     bmEmpty: 'No bookmarks yet. Posts you save will appear here.',
     bmNeedWallet: 'Bookmarks live with your posting wallet on this device. Unlock the posting wallet above to see the posts you saved.',
     bmRemove: 'Remove', bmAdd: 'Bookmark', bmMissing: 'This post could not be found in the part of the record we can read.',
+    navReactions: 'Notifications',
+    ntNeedWallet: 'These are reactions to YOUR name. Set up or unlock the posting wallet and choose a name, and reactions to it will appear here.',
+    ntOpenWallet: 'Open the wallet',
+    ntEmpty: 'No reactions found in the range scanned so far.',
+    ntLiked: '{name} liked your post', ntRecawed: '{name} Recawed your post',
+    ntReplied: '{name} replied to your post', ntQuoted: '{name} quoted your post',
+    ntFollowed: '{name} followed you',
+    ntSuperLiked: '{name} SuperLiked your post', ntSuperRecawed: '{name} SuperRecawed your post',
     likedBy: 'Liked by', sharedBy: 'Recawed by',
     shareLabel: 'Share',
     depostLbl: 'Put in / take out',
@@ -369,6 +377,14 @@ const T = {
     bmEmpty: 'ブックマークはまだありません。保存した投稿がここに表示されます。',
     bmNeedWallet: 'ブックマークはこの端末の投稿用ウォレットに紐づいています。上の投稿用ウォレットを開くと、保存した投稿が見られます。',
     bmRemove: '削除', bmAdd: 'ブックマーク', bmMissing: 'この投稿は、読める範囲の記録では見つかりませんでした。',
+    navReactions: '通知',
+    ntNeedWallet: 'ここに出るのは、あなたの名前への反応です。投稿用ウォレットを用意（または解錠）して名前を選ぶと、その名前への反応が表示されます。',
+    ntOpenWallet: 'ウォレットを開く',
+    ntEmpty: 'いま走査した範囲では、反応はまだ見つかりません。',
+    ntLiked: '{name} さんがいいねしました', ntRecawed: '{name} さんがRecawしました',
+    ntReplied: '{name} さんが返信しました', ntQuoted: '{name} さんが引用しました',
+    ntFollowed: '{name} さんがフォローしました',
+    ntSuperLiked: '{name} さんがSuperLikeしました', ntSuperRecawed: '{name} さんがSuperRecawしました',
     likedBy: 'いいねした人', sharedBy: 'Recaw した人',
     shareLabel: '共有',
     depostLbl: '入れる／出す',
@@ -881,6 +897,31 @@ function refChildren(cawId, kind) {
   const kids = refIndex.get((cawId || '').toLowerCase());
   if (!kids) return [];
   return [...kids.values()].filter(k => k.refKind === kind);
+}
+
+/* The notifications filter (v17): is this decoded action a
+   reaction TO the given name? Kinds are exactly the ones the
+   existing decoder reads with a real actor, target and time —
+   a like (1) or Recaw (2) aimed at one of my posts, a reply /
+   quote post whose marker parent is one of my posts, and a
+   follow (3) of my name. My own actions never count, and
+   nothing is inferred: no match, no notification. Pure over
+   (item, myId, myPostIds) so the harness can drive it. */
+function ntClassify(it, myId, myPosts) {
+  if (!it || it.senderId === undefined || it.senderId === null) return null;
+  const me = myId.toString();
+  if (it.senderId.toString() === me) return null;
+  if (it.type === 3) {
+    return (it.receiverId !== undefined && it.receiverId !== null &&
+      it.receiverId.toString() === me) ? 'follow' : null;
+  }
+  if (it.type === 1) return myPosts.has((it.cawId || '').toLowerCase()) ? 'like' : null;
+  if (it.type === 2) return myPosts.has((it.cawId || '').toLowerCase()) ? 'recaw' : null;
+  if (it.type === 0) {
+    const { ref } = parsePostText(it.text || '');
+    if (ref && myPosts.has(ref.parentCawId.toLowerCase())) return ref.kind;
+  }
+  return null;
 }
 
 const pageCache = new Map();
@@ -1423,6 +1464,40 @@ function mbPersist() {
   if (typeof localStorage === 'undefined') return;
   try { localStorage.setItem(MB_KV_KEY, JSON.stringify(mbRecord)); } catch (e) {}
 }
+/* The marked-burn EVENT list (v17): the counts above cannot
+   say WHO super-liked WHAT, or when — but the logs the scan
+   already reads carry the sender and the block. Every
+   verified mark is also appended here (deduped by tx, newest
+   last, capped) so the notifications view can list SuperLike
+   / SuperRecaw events against my posts. Same scan, same
+   logs — no new read path; events exist only from the first
+   scan that runs with this build, which the view's own note
+   about partial history covers honestly. */
+const MB_EVENTS_KEY = 'caw-mb-events-v1';
+const MB_EVENTS_CAP = 500;
+let mbEvents = null;
+function mbEventsLoad() {
+  if (mbEvents) return mbEvents;
+  mbEvents = [];
+  if (typeof localStorage === 'undefined') return mbEvents;
+  try {
+    const parsed = JSON.parse(localStorage.getItem(MB_EVENTS_KEY) || 'null');
+    if (Array.isArray(parsed)) {
+      mbEvents = parsed.filter(e => e && typeof e.block === 'number' && typeof e.id === 'string' && typeof e.from === 'string');
+    }
+  } catch (e) { /* a corrupt list just means fewer events */ }
+  return mbEvents;
+}
+function mbEventRecord(ev) {
+  const list = mbEventsLoad();
+  if (list.some(e => e.tx === ev.tx && e.k === ev.k)) return; // a rescanned chunk must not double-list an event
+  list.push(ev);
+  if (list.length > MB_EVENTS_CAP) list.splice(0, list.length - MB_EVENTS_CAP);
+  if (typeof localStorage !== 'undefined') {
+    try { localStorage.setItem(MB_EVENTS_KEY, JSON.stringify(list)); } catch (e) {}
+  }
+}
+const mbEventsFor = () => mbEventsLoad().slice();
 const mbTopicAddress = addr => '0x' + '0'.repeat(24) + String(addr).replace(/^0x/, '').toLowerCase();
 const mbHexBlock = n => '0x' + n.toString(16);
 async function mbAbsorb(logs) {
@@ -1444,6 +1519,12 @@ async function mbAbsorb(logs) {
     if (!burnAmountsForMagic(mark.magic).includes(mark.amount)) continue;
     try { if (BigInt(log.data) !== mark.amount) continue; } catch (e) { continue; }
     const from = ('0x' + (log.topics[1] || '').slice(26)).toLowerCase();
+    mbEventRecord({
+      k: mark.magic === SUPERLIKE_MAGIC ? 'sl' : 'src',
+      id: mark.cawId, from,
+      block: Number(BigInt(log.blockNumber || '0x0')),
+      tx: log.transactionHash,
+    });
     if (mark.magic === SUPERLIKE_MAGIC) {
       mbRecord.sl[mark.cawId] = (mbRecord.sl[mark.cawId] || 0) + 1;
     } else {
@@ -2359,6 +2440,7 @@ async function loadTimeline(append) {
       tlCursor = page.next;
       if (!tlCursor) tlDone = true;
       pages++;
+      ntTapItems(page.items); /* v17: a real scan feeds the notifications dot */
       if (!append && tlTopItem === null && page.items.length) tlTopItem = page.items[0];
       /* Build the whole page's rows in parallel, append in order —
          never await one row at a time (v9 speed rule). */
@@ -2395,6 +2477,7 @@ function startNewPostPolling() {
     if (tlLoading || !tlTopItem) return;
     try {
       const page = await fetchPage(null);
+      ntTapItems(page.items); /* v17: the head poll is a real scan too */
       if (page.items.length && isNewerItem(page.items[0], tlTopItem)) {
         const pill = $('newPostsPill');
         if (pill) pill.style.display = '';
@@ -3231,6 +3314,7 @@ function pwWipeSession() {
 }
 function pwLock() {
   pwWipeSession();
+  ntCheckDot(); /* v17: no acting name, no unread dot */
   pwView = 'auto'; pwDraft = null;
   renderPw(); renderComposer(); refreshViewsForWallet();
 }
@@ -3243,6 +3327,7 @@ function refreshViewsForWallet() {
   if (typeof postQuery !== 'undefined' && postQuery) loadPostPage(postQuery);
   else if (typeof profileQuery !== 'undefined' && profileQuery) loadProfile();
   else if (typeof bmQuery !== 'undefined' && bmQuery) loadBookmarksView();
+  else if (typeof reactionsQuery !== 'undefined' && reactionsQuery) loadReactionsView();
   else if (typeof searchQuery !== 'undefined' && searchQuery) { /* search rows keep their buttons state; a fresh search re-adds them */ }
   else loadTimeline(false);
 }
@@ -4257,6 +4342,277 @@ async function loadBookmarksView() {
   }
 }
 
+/* ---------- notifications: reactions to your name (v17) ----------
+   The app's "reactions to you", built ONLY from reads this
+   page already makes: the feed pages the timeline / search /
+   profiles walk (in chunks, resumable via the "scan further
+   back" button) and the v14 marked-burn event list. The
+   filter is ntClassify (shared section, harness-tested):
+   likes / Recaws / marker replies / marker quotes aimed at
+   my posts, and follows of my name; a Recaw the burn index
+   confirms is shown as a SuperRecaw, and SuperLikes come
+   from the burn events (that is the only trace a SuperLike
+   leaves — it has no CawActions action). Nothing is
+   inferred and nothing is counted that cannot be read: no
+   view counts, ever.
+   The tab-bar dot is lit ONLY when one of these real scans
+   (a timeline page load, this view's own walk, a burn scan)
+   finds a reaction newer than the last-seen block kept on
+   this device (caw-notif-seen-v1, per wallet address).
+   Opening this view and scanning moves the mark. */
+const NT_SEEN_KEY = 'caw-notif-seen-v1';
+const NT_CHUNK_PAGES = 25;
+const IC_FOLLOW = svgIc('<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>');
+let ntViewActive = false;
+let ntForId = null;
+const ntMyPosts = new Map(); // cawId (lowercase) -> my post item
+const ntTapBuf = [];         // candidate items from any real page load
+const ntSeenItems = [];      // every item from this view's own walk
+let ntCursor = undefined, ntDone = false, ntLoading = false, ntStarted = false;
+const ntBlockTs = new Map();
+
+function ntResetFor(id) {
+  ntForId = id;
+  ntMyPosts.clear();
+  ntTapBuf.length = 0;
+  ntSeenItems.length = 0;
+  ntCursor = undefined; ntDone = false; ntStarted = false;
+}
+function ntSeenBlock(address) {
+  try {
+    const o = JSON.parse(localStorage.getItem(NT_SEEN_KEY) || '{}');
+    return Number(o[(address || '').toLowerCase()] || 0);
+  } catch (e) { return 0; }
+}
+function ntSetSeenBlock(address, block) {
+  try {
+    const o = JSON.parse(localStorage.getItem(NT_SEEN_KEY) || '{}');
+    o[(address || '').toLowerCase()] = block;
+    localStorage.setItem(NT_SEEN_KEY, JSON.stringify(o));
+  } catch (e) {}
+}
+function ntDotShow(show) {
+  const d = $('ntDot');
+  if (d) d.style.display = show ? '' : 'none';
+}
+function ntCheckDot() {
+  const acting = pwSession ? pwActing() : null;
+  if (!acting || !pwSession) { ntDotShow(false); return; }
+  if (ntForId !== acting.id.toString()) return; // buffer belongs to another name
+  const seenB = ntSeenBlock(pwSession.address);
+  const mySet = new Set(ntMyPosts.keys());
+  if (!mySet.size) { ntDotShow(false); return; }
+  for (const it of ntTapBuf) {
+    if ((it.block ?? 0) <= seenB) continue;
+    if (ntClassify(it, acting.id, mySet)) { ntDotShow(true); return; }
+  }
+  for (const ev of mbEventsFor()) {
+    if (ev.k === 'sl' && ev.block > seenB && mySet.has(ev.id.toLowerCase()) &&
+        ev.from !== pwSession.address.toLowerCase()) { ntDotShow(true); return; }
+  }
+  ntDotShow(false);
+}
+/* Feed one real page load into the tap: register my posts,
+   buffer the candidates, re-evaluate the dot. */
+function ntTapItems(items) {
+  const acting = pwSession ? pwActing() : null;
+  if (!acting || !items || !items.length) return;
+  if (ntForId !== acting.id.toString()) ntResetFor(acting.id.toString());
+  const me = acting.id.toString();
+  for (const it of items) {
+    if (it.type === 0 && it.senderId.toString() === me) ntMyPosts.set(it.cawId.toLowerCase(), it);
+    if (it.type !== 4) ntTapBuf.push(it);
+  }
+  if (ntTapBuf.length > 4000) ntTapBuf.splice(0, ntTapBuf.length - 4000);
+  ntCheckDot();
+}
+subscribeMarkedBurns(() => ntCheckDot());
+
+function ntCollectEvents() {
+  const acting = pwActing();
+  if (!acting) return [];
+  const mySet = new Set(ntMyPosts.keys());
+  const out = [];
+  const seenKey = new Set();
+  for (const it of ntSeenItems) {
+    const kind = ntClassify(it, acting.id, mySet);
+    if (!kind) continue;
+    const key = (it.hash || '') + ':' + kind + ':' + (it.cawId || '');
+    if (seenKey.has(key)) continue;
+    seenKey.add(key);
+    out.push({ kind, item: it });
+  }
+  for (const ev of mbEventsFor()) {
+    if (ev.k !== 'sl') continue;
+    if (!mySet.has(ev.id.toLowerCase())) continue;
+    if (pwSession && ev.from === pwSession.address.toLowerCase()) continue; // my own burn is not a reaction
+    out.push({ kind: 'superlike', burn: ev });
+  }
+  const blockOf = e => e.item ? (e.item.block ?? 0) : e.burn.block;
+  const idxOf = e => e.item ? (e.item.txIndex ?? 0) : 0;
+  out.sort((a, b) => blockOf(b) - blockOf(a) || idxOf(b) - idxOf(a));
+  return out;
+}
+async function ntBlockTime(block) {
+  if (ntBlockTs.has(block)) return ntBlockTs.get(block);
+  let ts = 0;
+  try {
+    const b = await rpc('eth_getBlockByNumber', ['0x' + block.toString(16), false]);
+    if (b && b.timestamp) ts = Number(BigInt(b.timestamp));
+  } catch (e) {}
+  ntBlockTs.set(block, ts);
+  return ts;
+}
+function ntKindMeta(kind) {
+  switch (kind) {
+    case 'like': return { tpl: T.ntLiked, icon: IC_HEART, cls: 'k-like' };
+    case 'recaw': return { tpl: T.ntRecawed, icon: IC_REPEAT, cls: 'k-recaw' };
+    case 'superrecaw': return { tpl: T.ntSuperRecawed, icon: IC_STAR_FILL, cls: 'k-super' };
+    case 'superlike': return { tpl: T.ntSuperLiked, icon: IC_STAR_FILL, cls: 'k-super' };
+    case 'reply': return { tpl: T.ntReplied, icon: IC_REPLY, cls: 'k-reply' };
+    case 'quote': return { tpl: T.ntQuoted, icon: IC_REPEAT, cls: 'k-quote' };
+    default: return { tpl: T.ntFollowed, icon: IC_FOLLOW, cls: 'k-follow' };
+  }
+}
+async function ntRow(ev) {
+  const meta = ntKindMeta(ev.kind);
+  const div = document.createElement('div');
+  div.className = 'nt-row';
+  let actorHtml = '', nameHtml = '', excerpt = '', timeTs = 0, href = null;
+  if (ev.item) {
+    const it = ev.item;
+    const [nm, im] = await Promise.all([resolveName(it.senderId), avatarFor(it.senderId)]);
+    const label = nm ? '@' + nm : T.unknownName + it.senderId;
+    actorHtml = nm ? '<a class="plink" href="' + profUrl(nm) + '">' + avatarHtml(im, nm) + '</a>' : avatarHtml(im, nm);
+    nameHtml = nm ? '<a class="plink" href="' + profUrl(nm) + '"><b>' + esc(label) + '</b></a>' : '<b>' + esc(label) + '</b>';
+    timeTs = it.ts;
+    if (ev.kind === 'follow') {
+      href = nm ? profUrl(nm) : null;
+    } else if (ev.kind === 'reply' || ev.kind === 'quote') {
+      excerpt = parsePostText(it.text).body;
+      href = postUrl(it.cawId);
+    } else {
+      const target = ntMyPosts.get((it.cawId || '').toLowerCase()) || postIndex.get((it.cawId || '').toLowerCase());
+      excerpt = target ? parsePostText(target.text).body : '';
+      href = postUrl(it.cawId);
+    }
+  } else {
+    /* A SuperLike burn event: the actor is a wallet address.
+       No read this page has can turn it into a name, so the
+       row names the address, shortened — never a guess. */
+    const from = ev.burn.from;
+    const short = from.slice(0, 6) + '…' + from.slice(-4);
+    actorHtml = avatarHtml(null, short);
+    nameHtml = '<b>' + esc(short) + '</b>';
+    const target = ntMyPosts.get(ev.burn.id.toLowerCase());
+    excerpt = target ? parsePostText(target.text).body : '';
+    timeTs = await ntBlockTime(ev.burn.block);
+    href = postUrl(ev.burn.id);
+  }
+  const parts = meta.tpl.split('{name}');
+  div.innerHTML = actorHtml +
+    '<div class="nt-body"><div class="nt-line"><span class="nt-ic ' + meta.cls + '">' + meta.icon + '</span>' +
+    '<span class="nt-txt">' + esc(parts[0] || '') + nameHtml + esc(parts[1] || '') + '</span>' +
+    (timeTs ? '<span class="nt-time" title="' + esc(fullTimeStr(timeTs)) + '">· ' + esc(whenStr(timeTs)) + '</span>' : '') +
+    '</div>' +
+    (excerpt ? '<div class="nt-excerpt">' + esc(excerpt.length > 120 ? excerpt.slice(0, 120) + '…' : excerpt) + '</div>' : '') +
+    '</div>';
+  if (href) {
+    div.classList.add('clickable');
+    div.addEventListener('click', e => {
+      if (e.target.closest('a,button')) return;
+      location.href = href;
+    });
+  }
+  return div;
+}
+async function ntRender() {
+  const box = $('ntList');
+  if (!box) return;
+  const events = ntCollectEvents();
+  /* A Recaw the marked-burn index confirms (the recawer's
+     owner sent the SRC1 burn for this post) is a SuperRecaw. */
+  const ownerCache = new Map();
+  await Promise.all(events.map(async ev => {
+    if (ev.kind !== 'recaw' || !ev.item) return;
+    const sid = ev.item.senderId.toString();
+    if (!ownerCache.has(sid)) ownerCache.set(sid, await nameOwnerOf(ev.item.senderId).catch(() => null));
+    const owner = ownerCache.get(sid);
+    if (owner && superRecawCached(ev.item.cawId, owner)) ev.kind = 'superrecaw';
+  }));
+  if (!events.length) {
+    box.innerHTML = '<p class="bm-note">' + esc(T.ntEmpty) + '</p>';
+    return;
+  }
+  const rows = await Promise.all(events.slice(0, 200).map(ev => ntRow(ev).catch(() => null)));
+  box.innerHTML = '';
+  for (const r of rows) if (r) box.appendChild(r);
+}
+async function ntWalk() {
+  if (ntLoading || ntDone) return;
+  const acting = pwSession ? pwActing() : null;
+  if (!acting) return;
+  ntLoading = true;
+  try {
+    let pages = 0;
+    while (pages < NT_CHUNK_PAGES && !ntDone) {
+      const page = await fetchPage(ntCursor === undefined ? null : ntCursor);
+      ntCursor = page.next;
+      if (!ntCursor) ntDone = true;
+      pages++;
+      for (const it of page.items) {
+        ntSeenItems.push(it);
+        if (it.type === 0 && it.senderId === acting.id) ntMyPosts.set(it.cawId.toLowerCase(), it);
+      }
+      if (!page.items.length) ntDone = true;
+    }
+    await ntRender();
+    /* The reader has now seen everything this scan found:
+       move the seen mark to the newest block it covered and
+       clear the dot. */
+    if (pwSession) {
+      let maxB = ntSeenBlock(pwSession.address);
+      for (const it of ntSeenItems) if ((it.block ?? 0) > maxB) maxB = it.block ?? 0;
+      for (const ev of mbEventsFor()) {
+        if (ev.k === 'sl' && ev.block > maxB && ntMyPosts.has(ev.id.toLowerCase())) maxB = ev.block;
+      }
+      ntSetSeenBlock(pwSession.address, maxB);
+    }
+    ntDotShow(false);
+  } catch (e) {
+    const box = $('ntList');
+    if (box && !box.children.length) box.innerHTML = '<p class="err" style="padding:0 16px">' + esc(T.loadFail) + '</p>';
+  } finally {
+    ntLoading = false;
+    const b = $('ntMoreBtn');
+    if (b) b.style.display = ntDone ? 'none' : '';
+  }
+}
+async function loadReactionsView() {
+  ntViewActive = true;
+  const box = $('ntList');
+  if (!box) return;
+  const acting = pwSession ? pwActing() : null;
+  if (!acting) {
+    box.innerHTML = '<div class="nt-guide"><p>' + esc(T.ntNeedWallet) + '</p>' +
+      '<p><a class="nt-wallet-link" href="' + pageFile + '?wallet=1">' + esc(T.ntOpenWallet) + '</a></p></div>';
+    const b = $('ntMoreBtn');
+    if (b) b.style.display = 'none';
+    return;
+  }
+  if (ntForId !== acting.id.toString()) ntResetFor(acting.id.toString());
+  if (!ntStarted) {
+    ntStarted = true;
+    box.innerHTML = '<p class="bm-note">' + esc(T.loading) + '</p>';
+    scanMarkedBurns().catch(() => {});
+    await ntWalk();
+  } else {
+    await ntRender();
+    const b = $('ntMoreBtn');
+    if (b) b.style.display = ntDone ? 'none' : '';
+  }
+}
+
 /* ---------- chrome sync: sidebar + drawer summaries (v13) ----------
    Both summaries mirror the posting-wallet state the way the
    app's drawer does: unlocked → the acting name's avatar, name,
@@ -4320,9 +4676,9 @@ async function syncChrome() {
     } else {
       if (nm) nm.textContent = 'CAW Social';
       if (sub) sub.textContent = LANG === 'ja' ? 'QL1 版・ウェブ' : 'on QL1 · web';
-      if (ava) ava.innerHTML = '<img class="avatar" src="icon-192.png?v=16" alt="">';
+      if (ava) ava.innerHTML = '<img class="avatar" src="icon-192.png?v=17" alt="">';
       const mt = $('mtAvatar');
-      if (mt && avaId === 'drawerAvatar') mt.innerHTML = '<img class="avatar" src="icon-192.png?v=16" alt="">';
+      if (mt && avaId === 'drawerAvatar') mt.innerHTML = '<img class="avatar" src="icon-192.png?v=17" alt="">';
       if (fol) fol.style.display = 'none';
     }
   };
@@ -4342,6 +4698,7 @@ async function syncChrome() {
     : (typeof profileQuery !== 'undefined' && profileQuery) ? 'profile'
     : (typeof searchQuery !== 'undefined' && searchQuery) ? 'search'
     : (typeof bmQuery !== 'undefined' && bmQuery) ? 'bookmarks'
+    : (typeof reactionsQuery !== 'undefined' && reactionsQuery) ? 'reactions'
     : (typeof walletQuery !== 'undefined' && walletQuery) ? 'wallet'
     : (typeof getnameQuery !== 'undefined' && getnameQuery) ? (location.hash === '#myNames' ? 'mynames' : 'getname')
     : (typeof lookupQuery !== 'undefined' && lookupQuery) ? 'search' : 'home';
@@ -4354,6 +4711,7 @@ async function syncChrome() {
 const postQuery = new URLSearchParams(location.search).get('post');
 const searchQuery = new URLSearchParams(location.search).get('q');
 const bmQuery = new URLSearchParams(location.search).get('bookmarks');
+const reactionsQuery = new URLSearchParams(location.search).get('reactions');
 /* v15: the posting wallet, the lookup desk and the name desk
    are views of their own, opened from the drawer / sidebar
    rows (and the phone tab bar) — the home view is the timeline
@@ -4402,6 +4760,11 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
   document.body.classList.add('bookmarks-mode');
   $('viewBookmarks').style.display = '';
   loadBookmarksView();
+} else if (reactionsQuery) {
+  document.body.classList.add('reactions-mode');
+  $('viewReactions').style.display = '';
+  loadReactionsView();
+  $('ntMoreBtn').onclick = () => ntWalk();
 } else if (searchQuery) {
   $('viewSearch').style.display = '';
   $('searchTitle').textContent = T.searchTitle.replace('{q}', searchQuery);
@@ -4563,6 +4926,7 @@ if (typeof module !== 'undefined' && module.exports) {
     burnAmountsForMagic, normCawIdHex, superlikeBlockReason, superlikeShortfall,
     scanMarkedBurns, superlikeCount, superlikeCountCached, superRecawCached,
     hasSuperRecaw, mbCursor, pendingSrcBurnFor, recordSrcBurn, clearSrcBurn,
+    ntClassify, mbEventsFor, mbEventRecord, MB_EVENTS_KEY,
     pendingAuthorPayFor, recordAuthorPay, clearAuthorPay, authorPayAmountFor,
     SEL, CAW_NAME, CAW_ACTIONS, MINTER, QCAW, CHAIN_ID_HEX, word,
   };

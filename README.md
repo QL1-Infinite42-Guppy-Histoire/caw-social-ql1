@@ -28,6 +28,34 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   drawer on phones. Also a **PWA**: add it to the home screen
   and it opens standalone.
 
+## What's new in v17 (2026-11-13)
+
+- **Notifications: a "reactions to you" view, and the tab
+  bar to match.** The phone tab bar is now Home / Search /
+  Notifications / Wallet (notifications second from the
+  right, wallet last); bookmarks leaves the bar — its
+  drawer and sidebar rows remain the way in. The new view
+  is the Android app's reactions inbox, built only from
+  reads this page already makes: the same chunked feed walk
+  as search and profiles (with a "scan further back"
+  button), filtered to reactions aimed at the acting name —
+  replies and quotes (by their post markers), Recaws and
+  likes aimed at your posts, follows of your name, and
+  SuperLikes / SuperRecaws proven by the v14 marked-burn
+  index (a confirmed Recaw is shown as a SuperRecaw;
+  SuperLike actors are wallet addresses, shown shortened —
+  no read here can name them, so none is guessed). The
+  view says plainly at the top that it is built from the
+  recent record and is not a complete all-time history.
+  With no acting name it shows wallet guidance instead of
+  an empty screen. The bell's unread dot is lit only when
+  one of these real scans finds a reaction newer than the
+  last-seen block stored on this device — never on a
+  guess — and opening the view moves the mark. Display and
+  routing only, as in v16: no logic, ids or send sites
+  changed (the burn scan additionally keeps the event list
+  its logs already contained).
+
 ## What's new in v16 (2026-11-13)
 
 - **Post rows look like the app again — the giant blue

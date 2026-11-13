@@ -275,9 +275,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v16: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=16') && jaHtml.includes('?v=16'), 'shells reference ?v=16 assets');
-ok(swSrc.includes("caw-view-v16"), 'sw.js cache name is caw-view-v16');
+console.log('— v17: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=17') && jaHtml.includes('?v=17'), 'shells reference ?v=17 assets');
+ok(swSrc.includes("caw-view-v17"), 'sw.js cache name is caw-view-v17');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -776,6 +776,77 @@ console.log('— v16: post-row anatomy fixes (action pills, record link, recaw s
      'my-names rows route by state: acting → the names list, locked → the wallet view');
   ok(!viewerSrc.includes('prow.style.display') && !viewerSrc.includes("el.style.display = acting"),
      'syncChrome no longer hides the profile / my-names rows in any state');
+}
+
+console.log('— v17: tab bar order + the notifications view (reactions to your name) —');
+{
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    const navStart = html.indexOf('<nav class="bottomnav"');
+    const nav = html.slice(navStart, html.indexOf('</nav>', navStart));
+    const order = ['home', 'search', 'reactions', 'wallet'].map(k => nav.indexOf('data-nav="' + k + '"'));
+    ok(order.every(i => i >= 0) && order.every((v, i) => i === 0 || v > order[i - 1]),
+       label + ': the tab bar is home / search / notifications / wallet (notifications second from the right, wallet last)');
+    ok(!nav.includes('data-nav="bookmarks"'),
+       label + ': bookmarks is NOT on the tab bar (its drawer / sidebar rows remain the entry)');
+    ok(nav.includes('id="ntDot"'), label + ': the notifications tab carries the unread-dot element');
+    ok(html.includes('id="viewReactions"') && html.includes('id="ntList"') && html.includes('id="ntMoreBtn"'),
+       label + ': carries the reactions view (list + scan-further-back button)');
+    ok(html.includes('class="nt-note"'),
+       label + ': the reactions view carries the honest scope note (recent record, not a complete history)');
+  }
+  /* the filter predicate, driven unit-style: reactions to my
+     posts / my name are picked up, everything else falls away */
+  const MINE = '0x' + 'aa'.repeat(32), OTHER = '0x' + 'bb'.repeat(32);
+  const myPosts = new Set([MINE]);
+  const me = 7n;
+  const item = over => ({ type: 0, senderId: 9n, receiverId: 0n, cawId: OTHER, text: '', ...over });
+  ok(V.ntClassify(item({ type: 1, cawId: MINE }), me, myPosts) === 'like',
+     'ntClassify: a like aimed at my post is a reaction');
+  ok(V.ntClassify(item({ type: 2, cawId: MINE }), me, myPosts) === 'recaw',
+     'ntClassify: a Recaw of my post is a reaction');
+  ok(V.ntClassify(item({ type: 3, receiverId: me }), me, myPosts) === 'follow',
+     'ntClassify: a follow of my name is a reaction');
+  ok(V.ntClassify(item({ type: 0, text: V.appendPostRef('hi', 'reply', MINE) }), me, myPosts) === 'reply',
+     'ntClassify: a marker reply to my post is a reaction');
+  ok(V.ntClassify(item({ type: 0, text: V.appendPostRef('hi', 'quote', MINE) }), me, myPosts) === 'quote',
+     'ntClassify: a marker quote of my post is a reaction');
+  ok(V.ntClassify(item({ type: 1, cawId: OTHER }), me, myPosts) === null,
+     'ntClassify: a like aimed at someone else\'s post falls away');
+  ok(V.ntClassify(item({ type: 3, receiverId: 8n }), me, myPosts) === null,
+     'ntClassify: a follow of someone else falls away');
+  ok(V.ntClassify(item({ type: 1, senderId: me, cawId: MINE }), me, myPosts) === null,
+     'ntClassify: my own action is never a reaction to me');
+  ok(V.ntClassify(item({ type: 0, text: 'just a post' }), me, myPosts) === null,
+     'ntClassify: an unrelated post falls away');
+  ok(V.ntClassify(item({ type: 4, receiverId: me }), me, myPosts) === null,
+     'ntClassify: an unfollow is not listed as a reaction');
+  /* the marked-burn event list: dedupe by tx, newest last */
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: k => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+    removeItem: k => store.delete(k),
+  };
+  try {
+    const ev = { k: 'sl', id: MINE, from: '0xabc0000000000000000000000000000000000001', block: 100, tx: '0xtx1' };
+    const before = V.mbEventsFor().length; // the live scan above may already hold real events
+    V.mbEventRecord(ev);
+    V.mbEventRecord({ ...ev, block: 101 });
+    V.mbEventRecord({ ...ev, tx: '0xtx2', block: 102 });
+    const list = V.mbEventsFor();
+    ok(list.length === before + 2 && list[list.length - 1].tx === '0xtx2',
+       'marked-burn events dedupe by tx and keep scan order');
+    ok(store.has(V.MB_EVENTS_KEY), 'marked-burn events persist under ' + V.MB_EVENTS_KEY);
+  } finally {
+    delete globalThis.localStorage;
+  }
+  /* locked-state guidance + the seen-mark dot rule */
+  ok(viewerSrc.includes('loadReactionsView') && viewerSrc.includes('T.ntNeedWallet') &&
+     viewerSrc.includes("pageFile + '?wallet=1'"),
+     'with no acting name the reactions view shows wallet guidance (never an empty or dead tab)');
+  ok(viewerSrc.includes("const NT_SEEN_KEY = 'caw-notif-seen-v1'") && viewerSrc.includes('ntSeenBlock') &&
+     viewerSrc.includes('ntTapItems(page.items)'),
+     'the unread dot is driven only by real scans against the stored last-seen block');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
