@@ -3669,7 +3669,7 @@ function renderPwUnlocked(area) {
     '</div>' +
     '<p id="pwGasWarn"></p>';
   if (!pwNames.length) {
-    html += '<p class="warn">' + esc(T.pwNoNamesYet) + '</p>';
+    html += '<p class="warn" id="pwNoNamesWarn">' + esc(T.pwNoNamesYet) + '</p>';
   } else {
     html += '<h3 class="detail-h">' + esc(T.pwActingLbl) + '</h3><div class="acting-list">' +
       pwNames.map(t =>
@@ -3711,7 +3711,17 @@ function renderPwUnlocked(area) {
     })();
   }
   const jump = $('pwDepJump');
-  if (jump) jump.onclick = () => { const c = $('pwDepCard'); if (c) c.scrollIntoView({ block: 'center' }); };
+  if (jump) jump.onclick = () => {
+    /* with a name, the target is the deposit card; without one there is
+       nothing to deposit into, so land on the no-names warning (it says
+       a name is needed and where to get one) — never a dead tap. Either
+       way the target flashes so the eye can follow the jump. */
+    const target = $('pwDepCard') || $('pwNoNamesWarn');
+    if (!target) return;
+    target.scrollIntoView({ block: 'center' });
+    target.classList.add('pw-flash');
+    setTimeout(() => target.classList.remove('pw-flash'), 1600);
+  };
   const dep = $('pwDepBtn'); if (dep) dep.onclick = () => pwDoDepWd('deposit');
   const wd = $('pwWdBtn'); if (wd) wd.onclick = () => pwDoDepWd('withdraw');
   $('pwLockBtn').onclick = () => pwLock();

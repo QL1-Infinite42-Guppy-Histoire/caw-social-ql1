@@ -275,11 +275,27 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v19: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=19') && jaHtml.includes('?v=19'), 'shells reference ?v=19 assets');
-ok(swSrc.includes("caw-view-v19"), 'sw.js cache name is caw-view-v19');
+console.log('— v20: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=20') && jaHtml.includes('?v=20'), 'shells reference ?v=20 assets');
+ok(swSrc.includes("caw-view-v20"), 'sw.js cache name is caw-view-v20');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
+
+console.log('— v20: the 入れる／出す jump button never dead-ends —');
+ok(viewerSrc.includes('id="pwDepJump"') && viewerSrc.includes("esc(T.depostLbl)"),
+  'the jump button still renders on every unlocked wallet');
+ok(viewerSrc.includes('\'<p class="warn" id="pwNoNamesWarn">\' + esc(T.pwNoNamesYet)'),
+  'the no-names warning carries id="pwNoNamesWarn" so the jump can land on it');
+ok(viewerSrc.includes("const target = $('pwDepCard') || $('pwNoNamesWarn');"),
+  'the jump handler targets the deposit card, falling back to the no-names warning');
+ok(viewerSrc.includes("target.classList.add('pw-flash')") &&
+  viewerSrc.includes("target.classList.remove('pw-flash'), 1600"),
+  'the jump flash-highlights its target and clears the flash after 1.6s');
+{
+  const css = read('../docs/style.css');
+  ok(css.includes('.pw-flash{') && css.includes('@keyframes pw-flash-pulse'),
+    'style.css defines the .pw-flash pulse used by both jump targets');
+}
 
 console.log('— v18: link-only share, shortened through cawl —');
 ok(viewerSrc.includes("const CAWL_BASE = 'https://cawl.nepicobsv.workers.dev'") &&

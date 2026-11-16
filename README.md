@@ -28,6 +28,18 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   drawer on phones. Also a **PWA**: add it to the home screen
   and it opens standalone.
 
+## What's new in v20 (2026-11-17)
+
+- **The wallet's 「入れる／出す」 (Put in / take out) button no
+  longer dead-ends on a wallet with no CAW name.** The button
+  always renders, but the deposit card only exists when the
+  wallet owns a name (deposits go into a name) — so on a fresh
+  wallet the tap silently did nothing. Now the tap scrolls to
+  whichever target exists and briefly flash-highlights it: the
+  deposit card when there is a name, or the "no name yet"
+  warning (now `id="pwNoNamesWarn"`) that explains a name is
+  needed and where to get one. Nothing else changed.
+
 ## What's new in v19 (2026-11-16)
 
 - **X → CAW mirror inbox (receive side), the same shape as

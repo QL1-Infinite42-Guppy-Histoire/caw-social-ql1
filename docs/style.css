@@ -801,6 +801,8 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .ar-name{font-size:15px;font-weight:700}
 .ar-bal{margin-left:auto;font-size:13px;color:var(--sub)}
 .pw-card{margin-top:14px}
+.pw-flash{border-radius:10px;animation:pw-flash-pulse 1.6s ease-out}
+@keyframes pw-flash-pulse{0%,55%{outline:2px solid var(--accent);outline-offset:3px;background:var(--hover)}100%{outline:2px solid transparent;outline-offset:3px}}
 .menu-list{display:flex;flex-direction:column;margin-top:14px;border-top:1px solid var(--line)}
 .menu-row{display:flex;align-items:center;width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:13px 2px;cursor:pointer;font:inherit;font-size:15px;font-weight:600;color:var(--ink);text-align:left}
 /* composer pieces */
