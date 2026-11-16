@@ -210,6 +210,34 @@ const T = {
     ntReplied: '{name} replied to your post', ntQuoted: '{name} quoted your post',
     ntFollowed: '{name} followed you',
     ntSuperLiked: '{name} SuperLiked your post', ntSuperRecawed: '{name} SuperRecawed your post',
+    navMirror: 'Mirror',
+    mirrorWatchOff: 'Automatic X watch: not configured yet — the inbox and manual intake below work now.',
+    mirrorTokenLabel: 'Inbox token (paste once; stored only in this browser)',
+    mirrorTokenPh: 'Paste your inbox token',
+    mirrorTokenSaved: 'Token saved in this browser.',
+    mirrorSave: 'Save',
+    mirrorNotify: 'Enable notifications',
+    mirrorNotifyOn: 'Notifications are on for this browser.',
+    mirrorNotifyDenied: 'Notifications were not allowed. You can still use the inbox and manual intake.',
+    mirrorNotifyUnsupported: 'This browser does not support Web Push.',
+    mirrorNeedToken: 'Save your inbox token first.',
+    manualTitle: 'Manual intake',
+    manualTextPh: 'Paste the post text…',
+    manualUrlPh: 'Source URL (optional, e.g. the X post link)',
+    manualBtn: 'Open in compose',
+    manualUrlOnly: 'This page cannot fetch X posts itself — paste the post text as well.',
+    manualEmpty: 'Paste the post text first.',
+    pendingTitle: 'Pending',
+    pendingEmpty: 'Nothing waiting.',
+    pendingNeedToken: 'Paste your inbox token above to load the inbox.',
+    mirrorPost: 'Post to CAW',
+    mirrorDismiss: 'Dismiss',
+    mirrorNeedConnect: 'Posting a mirrored post signs inside this page with the built-in posting wallet — set it up or unlock it first, and choose a name (in the menu). Your text is kept as a compose draft meanwhile.',
+    mirrorOpenWallet: 'Open the wallet',
+    mirrorTruncated: 'Shortened to fit the 420-byte post limit — check it in the compose box before posting.',
+    mirrorLoadErr: 'Could not load the inbox.',
+    mirrorReload: 'Reload',
+    sourceLink: 'Source ↗',
     likedBy: 'Liked by', sharedBy: 'Recawed by',
     shareLabel: 'Share',
     depostLbl: 'Put in / take out',
@@ -385,6 +413,34 @@ const T = {
     ntReplied: '{name} さんが返信しました', ntQuoted: '{name} さんが引用しました',
     ntFollowed: '{name} さんがフォローしました',
     ntSuperLiked: '{name} さんがSuperLikeしました', ntSuperRecawed: '{name} さんがSuperRecawしました',
+    navMirror: 'X転写',
+    mirrorWatchOff: 'Xの自動監視：未設定です（下の受信箱と手動取り込みは今すぐ使えます）。',
+    mirrorTokenLabel: '受信箱トークン（1回貼ればこのブラウザに保存されます）',
+    mirrorTokenPh: '受信箱トークンを貼り付け',
+    mirrorTokenSaved: 'トークンはこのブラウザに保存されています。',
+    mirrorSave: '保存',
+    mirrorNotify: '通知を有効にする',
+    mirrorNotifyOn: 'このブラウザの通知は有効です。',
+    mirrorNotifyDenied: '通知は許可されませんでした。受信箱と手動取り込みはそのまま使えます。',
+    mirrorNotifyUnsupported: 'このブラウザは Web Push に対応していません。',
+    mirrorNeedToken: '先に受信箱トークンを保存してください。',
+    manualTitle: '手動取り込み',
+    manualTextPh: '投稿テキストを貼り付け…',
+    manualUrlPh: '元のURL（任意。Xの投稿リンクなど）',
+    manualBtn: '投稿欄に入れる',
+    manualUrlOnly: 'このページは X の投稿を取得できません。投稿テキストも貼ってください。',
+    manualEmpty: 'まず投稿テキストを貼ってください。',
+    pendingTitle: '未処理',
+    pendingEmpty: '未処理はありません。',
+    pendingNeedToken: '受信箱を読むには、上にトークンを貼ってください。',
+    mirrorPost: 'CAWに投稿',
+    mirrorDismiss: '破棄',
+    mirrorNeedConnect: '転写の投稿はこのページの内蔵ウォレットで署名します。先に投稿用ウォレットを用意／解錠して、名前を選んでください（メニュー）。テキストは下書きとして保持されます。',
+    mirrorOpenWallet: 'ウォレットを開く',
+    mirrorTruncated: '投稿の上限（420バイト）に収まるよう短縮しました。投稿前に投稿欄で確認してください。',
+    mirrorLoadErr: '受信箱を読み込めませんでした。',
+    mirrorReload: '再読み込み',
+    sourceLink: '元の投稿 ↗',
     likedBy: 'いいねした人', sharedBy: 'Recaw した人',
     shareLabel: '共有',
     depostLbl: '入れる／出す',
@@ -1335,6 +1391,55 @@ function bmToggle(address, cawId) {
   else { ids.unshift(id); now = true; }
   bmWriteIds(address, ids);
   return now;
+}
+
+/* ---------- mirror inbox: shared constants + draft store (v19) ----------
+   The receive-side X -> CAW mirror inbox (the ETH web viewer's
+   pattern; the DOM half lives in the browser section). The
+   inbox token is the user's own secret: NEVER in this source —
+   he pastes it once and it lives only in this browser's
+   localStorage under MIRROR_TOKEN_KEY. */
+const MIRROR = {
+  baseUrl: 'https://eth-caw-mirror.nepicobsv.workers.dev',
+  vapidPublicKey: 'BJzw7HGeE9osCIENYC5VUSOms5iP0MDzilPaDm33Z8yjd_FItFjbGDj2kN7OPsgYfenImTCs_qvIpgZtcgslLXk',
+};
+const MIRROR_TOKEN_KEY = 'caw-mirror-token';
+const MIRROR_DRAFT_KEY = 'caw-mirror-draft';
+/* The QL1 post limit is 420 BYTES (the composer's own rule,
+   textBytes) — NOT the ETH inbox's 420 characters. Cut on a
+   UTF-8 boundary (a split sequence decodes to one U+FFFD, which
+   is dropped), preferring a late word break like the ETH side. */
+function truncateToPostBytes(text) {
+  text = String(text || '');
+  if (textBytes(text) <= 420) return { text, truncated: false };
+  let cut = new TextDecoder('utf-8').decode(utf8ToBytes(text).slice(0, 420));
+  if (cut.endsWith('\uFFFD')) cut = cut.slice(0, -1);
+  const sp = cut.lastIndexOf(' ');
+  if (sp > 200) cut = cut.slice(0, sp);
+  return { text: cut, truncated: true };
+}
+/* The mirror draft record: views here are separate page loads,
+   so the prefilled text (and the inbox item it came from) ride
+   in localStorage until a post actually goes out. id is null
+   for manual intake — nothing to resolve on the Worker then. */
+function mirrorDraftSave(text, id, truncated) {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(MIRROR_DRAFT_KEY, JSON.stringify({
+      text: String(text || ''), id: id != null ? id : null, truncated: !!truncated,
+    }));
+  } catch (e) {}
+}
+function mirrorDraftLoad() {
+  if (typeof localStorage === 'undefined') return null;
+  try {
+    const j = JSON.parse(localStorage.getItem(MIRROR_DRAFT_KEY) || 'null');
+    return j && typeof j.text === 'string' ? j : null;
+  } catch (e) { return null; }
+}
+function mirrorDraftClear() {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.removeItem(MIRROR_DRAFT_KEY); } catch (e) {}
 }
 
 /* ---------- SuperLike / SuperRecaw (v14) ----------
@@ -3356,6 +3461,7 @@ function refreshViewsForWallet() {
   else if (typeof profileQuery !== 'undefined' && profileQuery) loadProfile();
   else if (typeof bmQuery !== 'undefined' && bmQuery) loadBookmarksView();
   else if (typeof reactionsQuery !== 'undefined' && reactionsQuery) loadReactionsView();
+  else if (typeof mirrorQuery !== 'undefined' && mirrorQuery) loadMirrorView();
   else if (typeof searchQuery !== 'undefined' && searchQuery) { /* search rows keep their buttons state; a fresh search re-adds them */ }
   else loadTimeline(false);
 }
@@ -3798,6 +3904,12 @@ function renderComposer() {
   };
   ta.addEventListener('input', update);
   update();
+  /* v19: a one-shot note rides the composer's status line —
+     e.g. a mirrored text that was shortened to the byte limit. */
+  if (mirrorNotice) {
+    const st = $('compStatus');
+    if (st) { st.innerHTML = '<span class="small">' + esc(mirrorNotice) + '</span>'; mirrorNotice = ''; }
+  }
   postBtn.onclick = () => {
     const body = ta.value.trim();
     const finalText = ref ? appendPostRef(body, ref.kind, ref.post.cawId) : body;
@@ -3822,6 +3934,7 @@ function renderComposer() {
         await submitLocalAction(pwSession.keyBytes, action);
       },
       afterSuccess: async () => {
+        mirrorResolveAfterPost(); /* v19: a mirrored post that landed resolves its inbox item */
         compDraft = ''; composerRef = null;
         await pwLoadNames(); /* the action spent a little of the name's qCAW */
         renderComposer();
@@ -4641,6 +4754,266 @@ async function loadReactionsView() {
   }
 }
 
+/* ---------- v19: X -> CAW mirror inbox (receive side) ----------
+   The same receive-side inbox as the ETH web viewer's, fed by
+   the eth-caw-mirror Worker. The inbox token is the user's own
+   secret: it is NEVER in this page's source — he pastes it once
+   and it lives only in this browser's localStorage
+   (caw-mirror-token). The Worker calls here are reads plus
+   /done and /subscribe only; nothing here touches keys or
+   signing — a mirrored post is posted from the home composer by
+   the built-in posting wallet, exactly like a hand-typed one,
+   and the inbox item is resolved (/done) only once that post
+   has actually gone out. The Worker's X watch source is not
+   configured yet, so the setup card says so plainly; the inbox
+   and the manual intake work regardless. (MIRROR, the storage
+   keys, the byte truncation and the draft record live in the
+   shared section above, next to the bookmark store.) */
+let mirrorViewActive = false;
+let mirrorState = { items: null, loading: false, error: false };
+let mirrorItemsById = {};
+let mirrorItemId = null;        // deep-linked item (?item= / ?mirror=<id>), set at init
+let mirrorDoneAfterPost = null; // inbox item id resolved once its CAW post lands
+let mirrorNotice = '';          // one-shot note shown on the composer (truncation)
+
+function mirrorToken() {
+  try { return localStorage.getItem(MIRROR_TOKEN_KEY) || ''; } catch (e) { return ''; }
+}
+function mirrorFetch(path, opts) {
+  opts = opts || {};
+  const headers = { 'Content-Type': 'application/json' };
+  const token = mirrorToken();
+  if (token) headers['X-Inbox-Token'] = token;
+  return fetch(MIRROR.baseUrl + path, {
+    method: opts.method || 'GET',
+    headers,
+    body: opts.body != null ? JSON.stringify(opts.body) : undefined,
+  }).then(res => {
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json().catch(() => ({}));
+  });
+}
+function mirrorTimeStr(item) {
+  const v = item.createdAt || item.timestamp || item.receivedAt || item.time;
+  if (v == null) return '';
+  const d = typeof v === 'number' ? new Date(v) : new Date(v);
+  return isNaN(d.getTime()) ? '' : relTime(Math.floor(d.getTime() / 1000));
+}
+/* "Post to CAW" / manual intake: stash the (byte-truncated)
+   text as the pending mirror draft and go home, where the
+   composer adopts it. Locked wallet / no name: the draft is
+   still kept, and the home composer + wallet view guide the
+   unlock — the text is never dropped. */
+function mirrorPrefill(text, id) {
+  const t = truncateToPostBytes(text);
+  mirrorDraftSave(t.text, id, t.truncated);
+  location.href = pageFile;
+}
+/* Called at init, before the composer renders: adopt a pending
+   mirror draft into the composer state. The stored record is
+   the source of truth and stays until a post lands, so the
+   wallet-unlock round trip (a separate page load) keeps it. */
+function mirrorAdoptDraft() {
+  const md = mirrorDraftLoad();
+  if (!md || !md.text) return;
+  compDraft = md.text;
+  mirrorDoneAfterPost = md.id != null ? md.id : null;
+  if (md.truncated) mirrorNotice = T.mirrorTruncated;
+}
+/* The composer's post-success hook: the mirrored post has
+   actually gone out, so resolve its inbox item and drop the
+   draft record. A failed send never reaches this — the item
+   stays pending and the draft stays kept. */
+function mirrorResolveAfterPost() {
+  const md = mirrorDraftLoad();
+  mirrorDoneAfterPost = null;
+  if (!md) return;
+  mirrorDraftClear();
+  if (md.id != null) mirrorDone(md.id).catch(() => {});
+}
+function mirrorDone(id) {
+  return mirrorFetch('/done', { method: 'POST', body: { id: isNaN(Number(id)) ? id : Number(id) } });
+}
+function loadMirrorPending() {
+  if (mirrorState.loading) return;
+  if (!mirrorToken()) {
+    mirrorState.items = []; mirrorState.error = false;
+    if (mirrorViewActive) renderMirrorList();
+    return;
+  }
+  mirrorState.loading = true;
+  mirrorFetch('/pending').then(b => {
+    const items = Array.isArray(b) ? b : (b.items || b.pending || []);
+    mirrorState.items = items;
+    mirrorItemsById = {};
+    items.forEach(it => { if (it && it.id != null) mirrorItemsById[String(it.id)] = it; });
+    mirrorState.error = false;
+  }).catch(() => {
+    mirrorState.error = true;
+    if (!mirrorState.items) mirrorState.items = [];
+  }).finally(() => {
+    mirrorState.loading = false;
+    if (mirrorViewActive) renderMirrorList();
+  });
+}
+function mirrorItemHtml(item) {
+  const hl = mirrorItemId != null && String(mirrorItemId) === String(item.id);
+  let h = '<div class="mirror-item' + (hl ? ' hl' : '') + '" data-mirror-item="' + esc(item.id) + '">';
+  h += '<div class="mi-text">' + linkify(item.text || '') + '</div>';
+  h += '<div class="mi-meta">';
+  if (item.sourceUrl) h += '<a href="' + esc(item.sourceUrl) + '" target="_blank" rel="noopener nofollow">' + esc(T.sourceLink) + '</a>';
+  const tm = mirrorTimeStr(item);
+  if (tm) h += '<span>' + esc(tm) + '</span>';
+  h += '</div>';
+  h += '<div class="mi-actions"><button type="button" data-mirror-post="' + esc(item.id) + '">' + esc(T.mirrorPost) + '</button>' +
+    '<button type="button" class="ghost" data-mirror-dismiss="' + esc(item.id) + '">' + esc(T.mirrorDismiss) + '</button></div>';
+  h += '</div>';
+  return h;
+}
+function renderMirrorList() {
+  const box = $('mirrorList');
+  if (!box) return;
+  if (!mirrorToken()) {
+    box.innerHTML = '<p class="bm-note">' + esc(T.pendingNeedToken) + '</p>';
+    return;
+  }
+  if (mirrorState.loading && mirrorState.items === null) {
+    box.innerHTML = '<p class="bm-note">' + esc(T.loading) + '</p>';
+    return;
+  }
+  if (mirrorState.error && !(mirrorState.items || []).length) {
+    box.innerHTML = '<p class="bm-note"><span class="err">' + esc(T.mirrorLoadErr) + '</span></p>';
+    return;
+  }
+  if (!mirrorState.items || !mirrorState.items.length) {
+    box.innerHTML = '<p class="bm-note">' + esc(T.pendingEmpty) + '</p>';
+    return;
+  }
+  box.innerHTML = mirrorState.items.map(mirrorItemHtml).join('');
+  box.querySelectorAll('[data-mirror-post]').forEach(b => { b.onclick = () => onMirrorPost(b); });
+  box.querySelectorAll('[data-mirror-dismiss]').forEach(b => { b.onclick = () => onMirrorDismiss(b); });
+  if (mirrorItemId != null) {
+    const el = box.querySelector('[data-mirror-item="' + CSS.escape(String(mirrorItemId)) + '"]');
+    if (el) setTimeout(() => el.scrollIntoView({ block: 'center' }), 60);
+  }
+}
+function renderMirrorNotifyRow() {
+  const row = $('mirrorNotifyRow');
+  if (!row) return;
+  const pushOk = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+  if (!pushOk) row.innerHTML = '<span class="small">' + esc(T.mirrorNotifyUnsupported) + '</span>';
+  else if (Notification.permission === 'granted') row.innerHTML = '<span class="small">' + esc(T.mirrorNotifyOn) + '</span>';
+  else if (Notification.permission === 'denied') row.innerHTML = '<span class="small">' + esc(T.mirrorNotifyDenied) + '</span>';
+  else {
+    row.innerHTML = '<button type="button" class="ghost" id="mirrorNotifyBtn">' + esc(T.mirrorNotify) + '</button>';
+    $('mirrorNotifyBtn').onclick = onMirrorNotify;
+  }
+}
+function loadMirrorView() {
+  mirrorViewActive = true;
+  const area = $('mirrorArea');
+  if (!area) return;
+  /* A re-render (wallet state changed, token saved) keeps what
+     was typed into the manual card and the token box. */
+  const keepText = ($('mirrorManualText') || {}).value || '';
+  const keepUrl = ($('mirrorManualUrl') || {}).value || '';
+  let h = '';
+  if (!pwSession || !pwActing()) {
+    h += '<div class="nt-guide"><p>' + esc(T.mirrorNeedConnect) + '</p>' +
+      '<p><a class="nt-wallet-link" href="' + pageFile + '?wallet=1">' + esc(T.mirrorOpenWallet) + '</a></p></div>';
+  }
+  const saved = !!mirrorToken();
+  h += '<div class="mirror-card"><h3>' + esc(T.navMirror) + '</h3>' +
+    '<p class="small">' + esc(T.mirrorWatchOff) + '</p>' +
+    '<label class="small" for="mirrorTokenInput">' + esc(T.mirrorTokenLabel) + '</label>' +
+    '<div class="mirror-tokenrow"><input id="mirrorTokenInput" type="password" autocomplete="off" placeholder="' +
+      esc(saved ? T.mirrorTokenSaved : T.mirrorTokenPh) + '">' +
+    '<button type="button" id="mirrorSaveBtn">' + esc(T.mirrorSave) + '</button></div>' +
+    (saved ? '<p class="small">' + esc(T.mirrorTokenSaved) + '</p>' : '') +
+    '<div class="mirror-actions" id="mirrorNotifyRow"></div></div>';
+  h += '<div class="mirror-card"><h3>' + esc(T.manualTitle) + '</h3>' +
+    '<textarea id="mirrorManualText" rows="4" placeholder="' + esc(T.manualTextPh) + '">' + esc(keepText) + '</textarea>' +
+    '<input type="text" id="mirrorManualUrl" placeholder="' + esc(T.manualUrlPh) + '" value="' + esc(keepUrl) + '">' +
+    '<div class="mirror-actions"><button type="button" id="mirrorManualBtn">' + esc(T.manualBtn) + '</button>' +
+    '<span class="small err" id="mirrorManualMsg" style="display:none"></span></div></div>';
+  h += '<div class="mirror-head"><h3>' + esc(T.pendingTitle) + '</h3>' +
+    '<button type="button" class="ghost" id="mirrorReloadBtn">' + esc(T.mirrorReload) + '</button></div>' +
+    '<p class="small err" id="mirrorListMsg" style="display:none;padding:0 16px"></p>' +
+    '<div id="mirrorList"></div>';
+  area.innerHTML = h;
+  renderMirrorNotifyRow();
+  renderMirrorList();
+  $('mirrorSaveBtn').onclick = () => {
+    const v = ($('mirrorTokenInput').value || '').trim();
+    try {
+      if (v) localStorage.setItem(MIRROR_TOKEN_KEY, v);
+      else localStorage.removeItem(MIRROR_TOKEN_KEY);
+    } catch (e) {}
+    mirrorState.items = null; mirrorState.error = false;
+    loadMirrorView();
+    loadMirrorPending();
+  };
+  $('mirrorReloadBtn').onclick = () => { mirrorState.items = null; renderMirrorList(); loadMirrorPending(); };
+  $('mirrorManualBtn').onclick = onMirrorManual;
+  loadMirrorPending();
+}
+function onMirrorPost(btn) {
+  const item = mirrorItemsById[btn.getAttribute('data-mirror-post')];
+  if (!item) return;
+  mirrorPrefill(item.text || '', item.id);
+}
+function onMirrorDismiss(btn) {
+  const id = btn.getAttribute('data-mirror-dismiss');
+  btn.disabled = true;
+  mirrorDone(id).then(() => {
+    mirrorState.items = (mirrorState.items || []).filter(it => String(it.id) !== String(id));
+    delete mirrorItemsById[String(id)];
+    /* A dismissed item must not leave its draft behind either. */
+    const md = mirrorDraftLoad();
+    if (md && md.id != null && String(md.id) === String(id)) mirrorDraftClear();
+    renderMirrorList();
+  }).catch(() => {
+    btn.disabled = false;
+    const m = $('mirrorListMsg');
+    if (m) { m.textContent = T.mirrorLoadErr; m.style.display = ''; }
+  });
+}
+function onMirrorManual() {
+  const text = (($('mirrorManualText') || {}).value || '').trim();
+  const url = (($('mirrorManualUrl') || {}).value || '').trim();
+  const msg = $('mirrorManualMsg');
+  if (!text) {
+    if (msg) { msg.textContent = url ? T.manualUrlOnly : T.manualEmpty; msg.style.display = ''; }
+    return;
+  }
+  mirrorPrefill(text, null);
+}
+function urlB64ToUint8Array(b64) {
+  const pad = '='.repeat((4 - (b64.length % 4)) % 4);
+  const raw = atob((b64 + pad).replace(/-/g, '+').replace(/_/g, '/'));
+  const out = new Uint8Array(raw.length);
+  for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+  return out;
+}
+function onMirrorNotify() {
+  if (!mirrorToken()) {
+    const m = $('mirrorListMsg');
+    if (m) { m.textContent = T.mirrorNeedToken; m.style.display = ''; }
+    return;
+  }
+  Notification.requestPermission().then(perm => {
+    if (perm !== 'granted') { renderMirrorNotifyRow(); return; }
+    return mirrorFetch('/vapid-public').catch(() => null).then(v => {
+      const key = (v && (v.publicKey || v.key)) || MIRROR.vapidPublicKey;
+      return navigator.serviceWorker.ready.then(reg =>
+        reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlB64ToUint8Array(key) })
+      ).then(sub =>
+        mirrorFetch('/subscribe', { method: 'POST', body: { subscription: sub.toJSON ? sub.toJSON() : sub } })
+      ).then(() => renderMirrorNotifyRow());
+    });
+  }).catch(() => renderMirrorNotifyRow());
+}
+
 /* ---------- chrome sync: sidebar + drawer summaries (v13) ----------
    Both summaries mirror the posting-wallet state the way the
    app's drawer does: unlocked → the acting name's avatar, name,
@@ -4727,6 +5100,7 @@ async function syncChrome() {
     : (typeof searchQuery !== 'undefined' && searchQuery) ? 'search'
     : (typeof bmQuery !== 'undefined' && bmQuery) ? 'bookmarks'
     : (typeof reactionsQuery !== 'undefined' && reactionsQuery) ? 'reactions'
+    : (typeof mirrorQuery !== 'undefined' && mirrorQuery) ? 'mirror'
     : (typeof walletQuery !== 'undefined' && walletQuery) ? 'wallet'
     : (typeof getnameQuery !== 'undefined' && getnameQuery) ? (location.hash === '#myNames' ? 'mynames' : 'getname')
     : (typeof lookupQuery !== 'undefined' && lookupQuery) ? 'search' : 'home';
@@ -4740,13 +5114,21 @@ const postQuery = new URLSearchParams(location.search).get('post');
 const searchQuery = new URLSearchParams(location.search).get('q');
 const bmQuery = new URLSearchParams(location.search).get('bookmarks');
 const reactionsQuery = new URLSearchParams(location.search).get('reactions');
+/* v19: the mirror inbox — ?mirror=1 opens it; the item deep
+   link is ?mirror=1&item=<id>, and ?mirror=<id> is accepted as
+   the same deep link (the push worker lands on the first form). */
+const mirrorParam = new URLSearchParams(location.search).get('mirror');
+const mirrorItemParam = new URLSearchParams(location.search).get('item');
+const mirrorQuery = mirrorParam != null ? '1' : null;
+mirrorItemId = mirrorItemParam != null ? mirrorItemParam
+  : (mirrorParam != null && mirrorParam !== '' && mirrorParam !== '1' ? mirrorParam : null);
 /* v15: the posting wallet, the lookup desk and the name desk
    are views of their own, opened from the drawer / sidebar
    rows (and the phone tab bar) — the home view is the timeline
    alone. Links saved before v15 point at the old stacked
    blocks (#pwallet / #lookup / #getname); treat those hashes
    as the matching view so old bookmarks still land right. */
-const hashView = (!postQuery && !profileQuery && !bmQuery && !searchQuery)
+const hashView = (!postQuery && !profileQuery && !bmQuery && !searchQuery && !mirrorQuery)
   ? { '#pwallet': 'wallet', '#lookup': 'lookup', '#getname': 'getname' }[location.hash] : null;
 const walletQuery = new URLSearchParams(location.search).get('wallet') || (hashView === 'wallet' ? '1' : null);
 const getnameQuery = new URLSearchParams(location.search).get('getname') || (hashView === 'getname' ? '1' : null);
@@ -4793,6 +5175,10 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
   $('viewReactions').style.display = '';
   loadReactionsView();
   $('ntMoreBtn').onclick = () => ntWalk();
+} else if (mirrorQuery) {
+  document.body.classList.add('mirror-mode');
+  $('viewMirror').style.display = '';
+  loadMirrorView();
 } else if (searchQuery) {
   $('viewSearch').style.display = '';
   $('searchTitle').textContent = T.searchTitle.replace('{q}', searchQuery);
@@ -4863,6 +5249,7 @@ const mni = $('mintNameInput');
 if (mni) mni.addEventListener('keydown', e => { if (e.key === 'Enter') doMintCheck(); });
 refreshWallet();
 renderPw();
+mirrorAdoptDraft(); /* v19: a pending mirror draft becomes the composer draft */
 renderComposer();
 /* v13 chrome wiring: the mobile drawer (avatar button, scrim,
    close, Escape), the floating compose button and the sidebar
@@ -4955,6 +5342,8 @@ if (typeof module !== 'undefined' && module.exports) {
     scanMarkedBurns, superlikeCount, superlikeCountCached, superRecawCached,
     hasSuperRecaw, mbCursor, pendingSrcBurnFor, recordSrcBurn, clearSrcBurn,
     ntClassify, mbEventsFor, mbEventRecord, MB_EVENTS_KEY,
+    MIRROR, MIRROR_TOKEN_KEY, MIRROR_DRAFT_KEY,
+    truncateToPostBytes, mirrorDraftSave, mirrorDraftLoad, mirrorDraftClear,
     pendingAuthorPayFor, recordAuthorPay, clearAuthorPay, authorPayAmountFor,
     SEL, CAW_NAME, CAW_ACTIONS, MINTER, QCAW, CHAIN_ID_HEX, word,
   };

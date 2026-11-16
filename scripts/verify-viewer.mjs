@@ -275,9 +275,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v18: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=18') && jaHtml.includes('?v=18'), 'shells reference ?v=18 assets');
-ok(swSrc.includes("caw-view-v18"), 'sw.js cache name is caw-view-v18');
+console.log('— v19: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=19') && jaHtml.includes('?v=19'), 'shells reference ?v=19 assets');
+ok(swSrc.includes("caw-view-v19"), 'sw.js cache name is caw-view-v19');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -858,6 +858,85 @@ console.log('— v17: tab bar order + the notifications view (reactions to your 
   ok(viewerSrc.includes("const NT_SEEN_KEY = 'caw-notif-seen-v1'") && viewerSrc.includes('ntSeenBlock') &&
      viewerSrc.includes('ntTapItems(page.items)'),
      'the unread dot is driven only by real scans against the stored last-seen block');
+}
+
+console.log('— v19: X -> CAW mirror inbox (receive side, the ETH web inbox pattern) —');
+{
+  const indexHtml = read('../docs/index.html');
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    ok(html.includes('id="viewMirror"') && html.includes('id="mirrorArea"'),
+      label + ' carries the mirror inbox view');
+    const chrome = html.slice(0, html.indexOf('<nav class="bottomnav"'));
+    ok(chrome.indexOf('data-nav="mirror"') > chrome.indexOf('data-nav="bookmarks"') &&
+       chrome.indexOf('data-nav="bookmarks"') >= 0 && chrome.includes('?mirror=1'),
+      label + ': the sidebar mirror row sits right after bookmarks and opens ?mirror=1');
+    const dr = html.slice(html.indexOf('id="drawer"'));
+    ok(dr.indexOf('data-nav="mirror"') > dr.indexOf('data-nav="bookmarks"'),
+      label + ': the drawer mirror row sits right after bookmarks too');
+    const rail = html.slice(html.indexOf('class="rightrail"'), html.indexOf('id="drawer"'));
+    ok(!rail.includes('mirror'),
+      label + ': the right rail does NOT advertise the mirror inbox (personal, token-gated)');
+  }
+  ok(indexHtml.includes('location.search'),
+    'the language gate keeps the query string (?mirror=1&item=<id> survives to the shell)');
+  ok(V.MIRROR.baseUrl === 'https://eth-caw-mirror.nepicobsv.workers.dev',
+    'the mirror client points at the eth-caw-mirror Worker');
+  ok(viewerSrc.includes("mirrorFetch('/pending'") && viewerSrc.includes("mirrorFetch('/done'") &&
+     viewerSrc.includes("mirrorFetch('/subscribe'") && viewerSrc.includes("mirrorFetch('/vapid-public'"),
+    'viewer.js reads /pending + /vapid-public and posts only /done + /subscribe');
+  ok(V.MIRROR_TOKEN_KEY === 'caw-mirror-token' && viewerSrc.includes("headers['X-Inbox-Token'] = token"),
+    'the inbox token rides the X-Inbox-Token header, from the caw-mirror-token storage key');
+  ok(!/X-Inbox-Token['"]?\s*[:=]\s*['"][A-Za-z0-9]/.test(viewerSrc) &&
+     !enHtml.includes('X-Inbox-Token') && !jaHtml.includes('X-Inbox-Token'),
+    'no token VALUE is baked into any source (the header is set from the stored token only)');
+  ok(swSrc.includes("addEventListener('push'") && swSrc.includes("addEventListener('notificationclick'"),
+    'sw.js handles push + notificationclick for the mirror inbox');
+  ok(swSrc.includes("'?mirror=1&item=' + encodeURIComponent(data.id)") && swSrc.includes("'?mirror=1'"),
+    'sw.js lands taps on ?mirror=1&item=<id> (plain ?mirror=1 without an id), resolved against its scope');
+  /* the byte-limit truncation: the QL1 limit is 420 BYTES,
+     not the ETH inbox's 420 characters */
+  const tShort = V.truncateToPostBytes('hello');
+  ok(tShort.text === 'hello' && tShort.truncated === false, 'truncate: short text passes through');
+  ok(V.truncateToPostBytes('a'.repeat(420)).truncated === false, 'truncate: exactly 420 bytes is kept whole');
+  const tOver = V.truncateToPostBytes('a'.repeat(421));
+  ok(tOver.truncated && V.textBytes(tOver.text) === 420, 'truncate: 421 ASCII bytes cut to exactly 420');
+  const tJp = V.truncateToPostBytes('あ'.repeat(200));
+  ok(tJp.truncated && V.textBytes(tJp.text) === 420 && !tJp.text.includes('\uFFFD'),
+    'truncate: multibyte text cuts on a UTF-8 boundary', V.textBytes(tJp.text) + ' bytes');
+  const tSplit = V.truncateToPostBytes('a' + 'あ'.repeat(200));
+  ok(tSplit.truncated && V.textBytes(tSplit.text) <= 420 && !tSplit.text.includes('\uFFFD'),
+    'truncate: a sequence split by the cut leaves no replacement char', V.textBytes(tSplit.text) + ' bytes');
+  const tWords = V.truncateToPostBytes('word '.repeat(120));
+  ok(tWords.truncated && tWords.text.endsWith('word') && V.textBytes(tWords.text) <= 420,
+    'truncate: a late word break is preferred over a mid-word cut');
+  /* the draft record: text + item id + truncation flag */
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: k => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+    removeItem: k => store.delete(k),
+  };
+  try {
+    V.mirrorDraftSave('hello mirror', 'item-7', true);
+    const md = V.mirrorDraftLoad();
+    ok(md && md.text === 'hello mirror' && String(md.id) === 'item-7' && md.truncated === true &&
+       store.has(V.MIRROR_DRAFT_KEY),
+      'the mirror draft record round-trips under ' + V.MIRROR_DRAFT_KEY);
+    V.mirrorDraftSave('manual text', null, false);
+    ok(V.mirrorDraftLoad().id === null, 'manual intake stores a null item id (nothing to resolve)');
+    V.mirrorDraftClear();
+    ok(V.mirrorDraftLoad() === null, 'the mirror draft record clears');
+  } finally {
+    delete globalThis.localStorage;
+  }
+  /* /done wiring: dismiss + the post-success resolver only */
+  ok((viewerSrc.match(/mirrorDone\(/g) || []).length === 3,
+    '/done fires from exactly two call sites — dismiss and the post-success resolver (plus its definition)');
+  const composerBlock = viewerSrc.slice(viewerSrc.indexOf('postBtn.onclick'), viewerSrc.indexOf('async function doSimpleAction'));
+  ok(composerBlock.includes('mirrorResolveAfterPost()'),
+    'the composer post-success path resolves the mirrored item (a failed send never reaches it)');
+  ok(viewerSrc.includes("get('mirror')") && viewerSrc.includes("get('item')"),
+    'viewer.js opens the mirror view from ?mirror= and reads the ?item= deep link');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

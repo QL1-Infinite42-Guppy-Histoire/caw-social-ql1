@@ -16,7 +16,7 @@
    users on 2026-11-08). viewer.js is in no old cache and matches no
    stub rule, so it reaches the network untouched; once this worker
    installs (skipWaiting + clients.claim) it takes over cleanly. */
-const CACHE = 'caw-view-v18';
+const CACHE = 'caw-view-v19';
 const SHELL = [
   './', 'index.html', 'en.html', 'ja.html',
   'style.css', 'viewer.js', 'bip39-words.js', 'manifest.webmanifest',
@@ -48,5 +48,54 @@ self.addEventListener('fetch', event => {
       }
       return res;
     }).catch(() => caches.match(event.request, { ignoreSearch: true }))
+  );
+});
+
+/* Web Push for the X -> CAW mirror inbox (v19, the ETH web
+   inbox's worker pattern): a push from the eth-caw-mirror
+   Worker shows a notification; tapping it focuses/opens the
+   viewer at the mirror inbox — ?mirror=1&item=<id> when the
+   payload carries an item id, plain ?mirror=1 otherwise —
+   resolved against this worker's scope (the language gate at
+   the scope root keeps the query string, so the deep link
+   survives to the en/ja shell). Push handling never touches
+   the cache strategy above. */
+self.addEventListener('push', event => {
+  let data = {};
+  if (event.data) {
+    try { data = event.data.json(); }
+    catch (e) {
+      try { data = { text: event.data.text() }; } catch (e2) { data = {}; }
+    }
+  }
+  const title = data.title || 'CAW Mirror';
+  const body = data.body || data.text || '';
+  const target = data.id != null ? '?mirror=1&item=' + encodeURIComponent(data.id) : '?mirror=1';
+  event.waitUntil(
+    self.registration.showNotification(title, {
+      body,
+      icon: 'icon-192.png',
+      badge: 'icon-192.png',
+      data: { target },
+    })
+  );
+});
+
+self.addEventListener('notificationclick', event => {
+  event.notification.close();
+  const target = (event.notification.data && event.notification.data.target) || '?mirror=1';
+  const url = new URL(target, self.registration.scope).href;
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (let i = 0; i < list.length; i++) {
+        const client = list[i];
+        if (client.url.indexOf(self.registration.scope) === 0 && 'focus' in client) {
+          const nav = client.navigate ? client.navigate(url).catch(() => null) : Promise.resolve(null);
+          return nav.then(() => client.focus());
+        }
+      }
+      if (self.clients.openWindow) return self.clients.openWindow(url);
+      return null;
+    })
   );
 });

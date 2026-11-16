@@ -6,14 +6,18 @@
 <title>CAW Social — QL1</title>
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png?v=18">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=18">
+<link rel="icon" type="image/png" href="icon-192.png?v=19">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=19">
 <script>
   (function () {
     var saved = null;
     try { saved = localStorage.getItem('caw-lang'); } catch (e) {}
     var lang = saved || ((navigator.language || 'en').toLowerCase().indexOf('ja') === 0 ? 'ja' : 'en');
-    location.replace(lang === 'ja' ? 'ja.html' : 'en.html');
+    /* Keep the query string (and fragment) across the redirect:
+       deep links such as ?mirror=1&item=<id> (the push-notification
+       landing), ?post=, ?name= and ?reactions=1 must survive the
+       language gate or they land on a plain home page. */
+    location.replace((lang === 'ja' ? 'ja.html' : 'en.html') + location.search + location.hash);
   })();
 </script>
 </head>

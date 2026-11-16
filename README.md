@@ -28,6 +28,41 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   drawer on phones. Also a **PWA**: add it to the home screen
   and it opens standalone.
 
+## What's new in v19 (2026-11-16)
+
+- **X → CAW mirror inbox (receive side), the same shape as
+  the ETH web viewer's.** A new "Mirror / X転写" view
+  (`?mirror=1`, deep link `?mirror=1&item=<id>`; the drawer /
+  sidebar row sits right after Bookmarks) talks to the
+  `eth-caw-mirror` Worker: paste your inbox token once (it
+  lives only in this browser's localStorage,
+  `caw-mirror-token`, sent as the `X-Inbox-Token` header —
+  never in the page source), read the pending list, and either
+  dismiss an item (`POST /done`) or press "Post to CAW", which
+  prefills the home composer; the item is resolved with
+  `/done` only once that post has actually gone out, through
+  the composer's existing success path. A manual-intake card
+  (paste text + optional source URL) prefills the composer
+  the same way without touching the Worker. Mirrored text is
+  cut to this chain's **420-byte** post limit on a UTF-8
+  boundary (the ETH side counts characters; QL1 counts bytes,
+  like its composer), with a notice when it was shortened.
+  With the wallet locked or no name chosen, the text is kept
+  as a draft (`caw-mirror-draft`) and the view guides the
+  unlock. Web Push: the service worker gained `push` /
+  `notificationclick` handlers (the PWA cache strategy is
+  unchanged) that land taps on `?mirror=1&item=<id>`, and the
+  view can register a subscription (`/vapid-public` +
+  `/subscribe`). The language gate now keeps the query string
+  across its redirect, so those deep links survive. Honest
+  edges, stated in the view itself: the Worker's automatic X
+  watch is **not configured yet** (the inbox and manual intake
+  work now), and no real mirrored post has been sent from this
+  web version yet — the first one is the end-to-end check.
+  The inbox is a personal, token-gated receive slot, so it is
+  deliberately not advertised on the site's public surfaces
+  (no right-rail card), same as on the ETH side.
+
 ## What's new in v18 (2026-11-16)
 
 - **Sharing is a link, and only a link — shortened, CAW

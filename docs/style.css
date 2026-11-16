@@ -835,6 +835,24 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .bm-note{padding:16px;color:var(--sub);font-size:14.5px}
 .bm-missing{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--line)}
 .bm-missing .bm-del{margin-left:auto}
+/* mirror inbox view (v19): the ETH web inbox's cards, in this
+   viewer's flat idiom — hairline-separated blocks, no new tokens */
+.mirror-card{padding:16px;border-bottom:1px solid var(--line)}
+.mirror-card h3{font-size:17px;font-weight:800;margin:0 0 8px}
+.mirror-card .small{line-height:1.55}
+.mirror-tokenrow{display:flex;gap:8px;align-items:center}
+.mirror-tokenrow input{flex:1 1 auto;margin:8px 0}
+.mirror-tokenrow button{flex:0 0 auto}
+.mirror-card textarea{width:100%;border:1px solid var(--line2);background:var(--input-bg);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;font-size:15px;resize:vertical;margin:4px 0 8px}
+.mirror-card textarea:focus{outline:2px solid var(--accent);border-color:transparent}
+.mirror-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.mirror-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 4px}
+.mirror-head h3{font-size:16px;font-weight:800;margin:0}
+.mirror-item{padding:14px 16px 12px;border-bottom:1px solid var(--line)}
+.mirror-item.hl{background:var(--accent-soft)}
+.mi-text{font-size:15px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.mi-meta{display:flex;gap:14px;align-items:center;margin-top:6px;font-size:13px;color:var(--sub)}
+.mi-actions{display:flex;gap:8px;margin-top:10px}
 /* drawer follow line numbers */
 .drawer-follow b{color:var(--ink)}
 /* stats body rows reuse .stats-row (defined with the rail card) */
