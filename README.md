@@ -28,6 +28,18 @@ A simple front end for the **community port of CAW (A Hunters Dream) on QL1**.
   drawer on phones. Also a **PWA**: add it to the home screen
   and it opens standalone.
 
+## What's new in v18 (2026-11-16)
+
+- **Sharing is a link, and only a link — shortened, CAW
+  style.** The post share button and the post/profile page
+  share buttons no longer send the post's text: they share
+  the page's URL shortened through the community link
+  service **cawl** (`https://cawl.nepicobsv.workers.dev/<code>`
+  → 302 to the post's `?post=` page here) — the same payload
+  the Android app shares since its v0.6.7. If the shortener
+  is unreachable, the full URL is shared/copied instead; the
+  clipboard fallback and its "Copied" feedback are unchanged.
+
 ## What's new in v17 (2026-11-13)
 
 - **Notifications: a "reactions to you" view, and the tab

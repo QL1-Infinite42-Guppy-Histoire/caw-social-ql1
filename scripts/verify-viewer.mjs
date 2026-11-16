@@ -275,11 +275,22 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v17: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=17') && jaHtml.includes('?v=17'), 'shells reference ?v=17 assets');
-ok(swSrc.includes("caw-view-v17"), 'sw.js cache name is caw-view-v17');
+console.log('— v18: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=18') && jaHtml.includes('?v=18'), 'shells reference ?v=18 assets');
+ok(swSrc.includes("caw-view-v18"), 'sw.js cache name is caw-view-v18');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
+
+console.log('— v18: link-only share, shortened through cawl —');
+ok(viewerSrc.includes("const CAWL_BASE = 'https://cawl.nepicobsv.workers.dev'") &&
+  viewerSrc.includes('async function shortenViaCawl'),
+  'shares shorten through the cawl service (the app\u2019s shortener)');
+ok(viewerSrc.includes('navigator.share({ url })'),
+  'post share hands the OS sheet the (short) URL only — no text');
+ok(!viewerSrc.includes('navigator.share({ text })') &&
+  !viewerSrc.includes('· CAW Social\';') &&
+  viewerSrc.includes('(await shortenViaCawl(location.href)) || location.href'),
+  'no text-share composition remains; the page share shortens location.href with a full-URL fallback');
 
 console.log('— v10: new-head comparison helper —');
 {

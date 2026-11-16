@@ -2236,23 +2236,48 @@ function originalFrame(cawId) {
   return d;
 }
 
-/* Share one post's text with the OS share sheet / clipboard —
-   the app's share: the post text plus "— @handle · CAW Social",
-   never a URL (posts have no canonical public URL to share). */
+/* The community link shortener (cawl — the same service the
+   app uses since its v0.6.5): POST {url} → {code, short}. Its
+   API sends CORS headers, so this page may call it directly.
+   Returns the short URL, or null on any failure — callers
+   then fall back to the full URL. */
+const CAWL_BASE = 'https://cawl.nepicobsv.workers.dev';
+async function shortenViaCawl(url) {
+  try {
+    const res = await fetch(CAWL_BASE + '/api/shorten', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url }),
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data && typeof data.short === 'string' && data.short
+      ? data.short
+      : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+/* Share one post as a LINK only (v18) — the post's own page
+   on this viewer, shortened through cawl, CAW style; the same
+   payload the app shares since its v0.6.7 (no post text, no
+   author line — the user's call). The OS share sheet gets the
+   short URL; the clipboard fallback copies it. If shortening
+   fails, the full absolute post URL is shared/copied instead. */
 async function sharePostText(post, btn) {
-  const nm = await resolveName(post.senderId).catch(() => null);
-  const who = nm ? '@' + nm : T.unknownName + post.senderId;
-  const text = parsePostText(post.text).body + '\n— ' + who + ' · CAW Social';
+  const full = new URL(postUrl(post.cawId), location.href).href;
+  const url = (await shortenViaCawl(full)) || full;
   if (typeof navigator !== 'undefined' && navigator.share) {
-    try { await navigator.share({ text }); return; }
+    try { await navigator.share({ url }); return; }
     catch (e) { if (e && e.name === 'AbortError') return; }
   }
   let okCopy = false;
-  try { await navigator.clipboard.writeText(text); okCopy = true; }
+  try { await navigator.clipboard.writeText(url); okCopy = true; }
   catch (e) {
     try {
       const ta = document.createElement('textarea');
-      ta.value = text;
+      ta.value = url;
       document.body.appendChild(ta);
       ta.select();
       okCopy = document.execCommand('copy');
@@ -2486,12 +2511,15 @@ function startNewPostPolling() {
   }, 60000);
 }
 
-/* ---------- share button (v10) ----------
+/* ---------- share button (v10; shortened since v18) ----------
    The system share sheet when the browser offers one; otherwise
    the page URL is copied and the button says so briefly. No
-   external share intents are used. */
+   external share intents are used. Since v18 the page URL is
+   first shortened through cawl (see shortenViaCawl) — the
+   shared/copied link is the short one, CAW style; if
+   shortening fails the full URL is used. */
 async function shareCurrentPage(btn) {
-  const url = location.href;
+  const url = (await shortenViaCawl(location.href)) || location.href;
   if (typeof navigator !== 'undefined' && navigator.share) {
     try { await navigator.share({ title: document.title, url }); return; }
     catch (e) { if (e && e.name === 'AbortError') return; }
