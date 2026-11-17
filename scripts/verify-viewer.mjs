@@ -34,6 +34,15 @@
    injected-provider send site for mint, exactly one raw send
    site for the local wallet, the safety copy in both shells,
    the wordlist file holding exactly 2048 words).
+   v22 adds: the app v0.7.0 parity screens — drawer rows for
+   HuntersDEX + BurnHawk in both navs of both shells, the
+   BurnHawk money rules byte-checked (burnToMint selector,
+   100:1, round-down), the wallet page's KET / HAWK / PHOENIX
+   rows, the DEX quote wiring (router + selectors cross-read
+   from the app repo, quotes proven live — direct where a
+   pool exists, two-hop via QOM where it does not), the swap
+   calldata layouts, and the corrected 5,000,000 O SuperRecaw
+   button label with the legacy-burn constants untouched.
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -275,9 +284,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v21: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=21') && jaHtml.includes('?v=21'), 'shells reference ?v=21 assets');
-ok(swSrc.includes("caw-view-v21"), 'sw.js cache name is caw-view-v21');
+console.log('— v22: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=22') && jaHtml.includes('?v=22'), 'shells reference ?v=22 assets');
+ok(swSrc.includes("caw-view-v22"), 'sw.js cache name is caw-view-v22');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -956,6 +965,174 @@ console.log('— v19: X -> CAW mirror inbox (receive side, the ETH web inbox pat
     'the composer post-success path resolves the mirrored item (a failed send never reaches it)');
   ok(viewerSrc.includes("get('mirror')") && viewerSrc.includes("get('item')"),
     'viewer.js opens the mirror view from ?mirror= and reads the ?item= deep link');
+}
+
+console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
+{
+  const E18 = 10n ** 18n;
+  const word = v => BigInt(v).toString(16).padStart(64, '0');
+  /* drawer parity: in BOTH shells, BOTH navs (sidebar +
+     drawer) carry HuntersDEX and BurnHawk between Get a name
+     and Bookmarks — the app drawer's order. */
+  for (const [name, html, file] of [['en', enHtml, 'en.html'], ['ja', jaHtml, 'ja.html']]) {
+    const seq = [...html.matchAll(/data-nav="([a-z]+)"/g)].map(m => m[1])
+      .filter(k => ['profile', 'wallet', 'mynames', 'getname', 'dex', 'burnhawk', 'bookmarks', 'mirror'].includes(k))
+      .slice(0, 16);   // sidebar + drawer (a phone tab bar trails the file)
+    const want = ['profile', 'wallet', 'mynames', 'getname', 'dex', 'burnhawk', 'bookmarks', 'mirror'];
+    ok(JSON.stringify(seq) === JSON.stringify([...want, ...want]),
+      name + ': nav order is getname → dex → burnhawk → bookmarks in sidebar AND drawer');
+    ok(html.includes('href="' + file + '?dex=1"') && html.includes('href="' + file + '?burnhawk=1"'),
+      name + ': the new rows link at ?dex=1 / ?burnhawk=1');
+    ok(html.includes('id="viewDex"') && html.includes('id="dexArea"') &&
+       html.includes('id="viewBurn"') && html.includes('id="burnArea"'),
+      name + ': the viewDex / viewBurn sections exist');
+  }
+  ok(viewerSrc.includes("get('dex')") && viewerSrc.includes("get('burnhawk')"),
+    'viewer.js opens the new views from ?dex= / ?burnhawk=');
+  ok(viewerSrc.includes('function loadDexView') && viewerSrc.includes('function loadBurnView'),
+    'viewer.js defines loadDexView / loadBurnView');
+
+  /* the corrected SuperRecaw label — and no user-facing
+     25,000,000 left anywhere, while the legacy-detection
+     constants keep their old values. */
+  ok(enHtml.includes('SuperRecaw (5,000,000 O)'), 'en: the SuperRecaw button says 5,000,000 O');
+  ok(jaHtml.includes('SuperRecaw（5,000,000 O）'), 'ja: the SuperRecaw button says 5,000,000 O');
+  ok(!enHtml.includes('25,000,000') && !jaHtml.includes('25,000,000') && !viewerSrc.includes('25,000,000'),
+    'no 25,000,000 text remains in the shells or viewer.js');
+  ok(V.SUPERLIKE_TOTAL_O === 5000000 && V.SUPERRECAW_TOTAL_O === 5000000 &&
+     V.SUPERLIKE_BURN_O === 1000000 && V.SUPERRECAW_BURN_O === 3000000,
+    'the current Super prices are the v21 5,000,000 O totals');
+  ok(V.V063_SUPERLIKE_BURN_O === 10000000 && V.V063_SUPERRECAW_BURN_O === 20000000 &&
+     V.LEGACY_MARKED_BURN_O === 1000000,
+    'legacy-burn detection constants are untouched');
+
+  /* token addresses — cross-checked against the app repo
+     (the source of truth this port mirrors). */
+  const appAgg = fs.readFileSync(new URL('../../caw-social-app/src/lib/aggEngine.ts', import.meta.url), 'utf8');
+  const appBurn = fs.readFileSync(new URL('../../caw-social-app/src/lib/burnHawk.ts', import.meta.url), 'utf8');
+  const inApp = (src, addr) => src.toLowerCase().includes(addr.toLowerCase());
+  ok(V.HAWK_TOKEN === '0xbC85F14059d60458b614052b4a84734E463878cc' && inApp(appAgg, V.HAWK_TOKEN),
+    'HAWK address matches the app', V.HAWK_TOKEN);
+  ok(V.PHOENIX_TOKEN === '0xDFe660C5a29c8AADF1daA096543D249135e1938A' && inApp(appAgg, V.PHOENIX_TOKEN),
+    'PHOENIX address matches the app', V.PHOENIX_TOKEN);
+  ok(V.KET_TOKEN === '0x034c1fe794ab9d30e27e1ce0d89a4591fc9f1fb4' && inApp(appAgg, V.KET_TOKEN),
+    'KET address is the QL1 one from the app (not the 42 Chain one)', V.KET_TOKEN);
+  ok(V.WQOM_TOKEN === '0xa26dfbf98dd1a32fae56a3d2b2d60a8a41b0bdf0' && inApp(appAgg, V.WQOM_TOKEN),
+    'WQOM address matches the app', V.WQOM_TOKEN);
+  ok(V.DEX_TOKENS.length === 6 &&
+     JSON.stringify(V.DEX_TOKENS.map(t => t.sym)) === JSON.stringify(['QOM', 'qCAW', 'O', 'KET', 'HAWK', 'PHOENIX']),
+    'the DEX trades exactly the six app tokens');
+
+  /* BurnHawk money rules (offline, exact) */
+  ok(V.BURN_TO_MINT_SELECTOR === '0x05737aae' && appBurn.includes('0x05737aae'),
+    'burnToMint selector matches the app', V.BURN_TO_MINT_SELECTOR);
+  ok(V.BURN_RATIO === 100n, 'the burn ratio is exactly 100:1');
+  ok(V.roundDownBurnRaw(27550n * E18, 18) === 27500n * E18,
+    'round-down: 27,550 HAWK burns as 27,500 (the site\'s first real burn)');
+  ok(V.roundDownBurnRaw(99n * E18, 18) === 0n && V.roundDownBurnRaw(100n * E18, 18) === 100n * E18,
+    'round-down: under 100 HAWK rounds to nothing; exactly 100 stays');
+  ok(V.burnReceiveRaw(27500n * E18, 18, 18) === 275n * E18,
+    'receive: 27,500 HAWK -> 275 PHOENIX');
+  ok(V.buildBurnToMintData(100n) === '0x05737aae' + word(100n),
+    'burnToMint calldata is selector + one amount word');
+  ok(V.buildApproveToCalldata(V.PHOENIX_TOKEN, 500n) ===
+     '0x095ea7b3' + V.PHOENIX_TOKEN.slice(2).toLowerCase().padStart(64, '0') + word(500n),
+    'the burn approval targets the PHOENIX contract for the exact amount');
+
+  /* the wallet page reads the three new balances the same
+     balanceOf way, formatted at each contract's decimals */
+  for (const [sym, id] of [['KET', 'pwKetBal'], ['HAWK', 'pwHawkBal'], ['PHOENIX', 'pwPhoenixBal']]) {
+    ok(viewerSrc.includes('id="' + id + '"'), 'wallet page has the ' + sym + ' balance row');
+    ok(viewerSrc.includes('readUint(' + sym + '_TOKEN, SEL.balanceOf'), 'wallet page reads ' + sym + ' via balanceOf');
+    ok(viewerSrc.includes('readUint(' + sym + '_TOKEN, SEL.decimals'), 'wallet page reads ' + sym + ' decimals from the contract');
+  }
+
+  /* DEX wiring: router + selectors match the app; quotes
+     are live reads; calldata byte-checked offline */
+  ok(inApp(appAgg, V.DEX_ROUTER) && appAgg.includes('0xd06ca61f'),
+    'the DEX router + getAmountsOut selector match the app', V.DEX_ROUTER);
+  ok(V.GET_AMOUNTS_OUT_SELECTOR === '0xd06ca61f' &&
+     V.SWAP_TOKENS_FOR_TOKENS_SELECTOR === '0x38ed1739' &&
+     V.SWAP_ETH_FOR_TOKENS_SELECTOR === '0x7ff36ab5' &&
+     V.SWAP_TOKENS_FOR_ETH_SELECTOR === '0x18cbafe5',
+    'the swap selectors match the app');
+  ok(appAgg.toLowerCase().includes(V.DEX_ROUTER.toLowerCase()) &&
+     viewerSrc.includes('ethCall(DEX_ROUTER, encodeGetAmountsOut(amountIn, p))'),
+    'quotes are eth_call getAmountsOut reads against the router — no other quote source');
+  ok(V.encodeGetAmountsOut(1000n, [V.WQOM_TOKEN, V.O_TOKEN]) ===
+     '0xd06ca61f' + word(1000n) + word(64) + word(2) +
+     V.WQOM_TOKEN.slice(2).toLowerCase().padStart(64, '0') +
+     V.O_TOKEN.slice(2).toLowerCase().padStart(64, '0'),
+    'getAmountsOut calldata layout matches the app encoding');
+  {
+    const fake = '0x' + word(32) + word(2) + word(1000n) + word(777n);
+    const dec = V.decodeAmountsOut(fake);
+    ok(dec && dec.length === 2 && dec[0] === 1000n && dec[1] === 777n, 'decodeAmountsOut reads the amounts array');
+    ok(V.decodeAmountsOut('0x') === null, 'decodeAmountsOut: an empty return is no quote');
+  }
+  {
+    const paths = V.dexCandidatePaths(V.KET_TOKEN, V.O_TOKEN);
+    ok(paths.length === 2 && paths[0].length === 2 && paths[1].length === 3 &&
+       paths[1][1] === V.WQOM_TOKEN.toLowerCase(),
+      'candidate paths: direct + via-WQOM for KET->O (via-O is the target itself, dropped)');
+    const paths2 = V.dexCandidatePaths(V.KET_TOKEN, V.HAWK_TOKEN);
+    ok(paths2.length === 3, 'candidate paths: direct + via-WQOM + via-O when both are free');
+    const best = V.dexBestRoute(100n, [
+      { path: paths2[0], amounts: [100n, 5n] },
+      { path: paths2[1], amounts: [100n, 50n, 9n] },
+      { path: paths2[2], amounts: null },
+    ]);
+    ok(best && best.amountOut === 9n && best.path === paths2[1], 'dexBestRoute picks the largest live output');
+    ok(V.dexBestRoute(100n, [{ path: paths2[0], amounts: null }]) === null,
+      'dexBestRoute: every path silent -> no route (never an invented quote)');
+  }
+  ok(V.dexMinOut(1000n, 1) === 990n && V.DEX_SLIPPAGE_PCT === 1, 'min-out applies the stated 1% slippage');
+  {
+    const to = '0x1111111111111111111111111111111111111111';
+    const tt = V.buildSwapCalldata({ fromNative: false, toNative: false, amountIn: 1000n,
+      amountOut: 2000n, slippagePct: 1, path: [V.KET_TOKEN, V.WQOM_TOKEN], to, nowSec: 1700000000 });
+    ok(tt.data.startsWith('0x38ed1739') && tt.value === 0n && tt.data.length === 2 + 260 * 2,
+      'swap tokens->tokens: selector, zero value, app layout length (260 bytes)');
+    ok(tt.data.includes(word(1700000000n + 1200n)), 'swap deadline is send time + 20 minutes');
+    ok(tt.data.includes(word(1980n)), 'swap calldata carries the 1% min-out (2,000 -> 1,980)');
+    const et = V.buildSwapCalldata({ fromNative: true, toNative: false, amountIn: 1000n,
+      amountOut: 2000n, slippagePct: 1, path: [V.WQOM_TOKEN, V.O_TOKEN], to, nowSec: 1700000000 });
+    ok(et.data.startsWith('0x7ff36ab5') && et.value === 1000n,
+      'swap QOM->token: swapExactETHForTokens with the amount as tx value');
+    const te = V.buildSwapCalldata({ fromNative: false, toNative: true, amountIn: 1000n,
+      amountOut: 2000n, slippagePct: 1, path: [V.O_TOKEN, V.WQOM_TOKEN], to, nowSec: 1700000000 });
+    ok(te.data.startsWith('0x18cbafe5') && te.value === 0n,
+      'swap token->QOM: swapExactTokensForETH');
+  }
+  ok(viewerSrc.includes("if (fresh.amountOut * 100n < shown.amountOut * 95n) throw new Error('dex-moved')"),
+    'the DEX send re-quotes and stops on a >5% adverse move, like the app');
+  ok(viewerSrc.includes("throw new Error('dex-noroute')"),
+    'the DEX send stops when the route vanished');
+
+  /* live reads: the three new tokens answer decimals() +
+     symbol() as the app's table says, and the router quotes
+     the viewer's own calldata — direct where a pool exists,
+     two-hop where it does not */
+  for (const [sym, addr] of [['KET', V.KET_TOKEN], ['HAWK', V.HAWK_TOKEN], ['PHOENIX', V.PHOENIX_TOKEN]]) {
+    const dec = Number(BigInt(await rawCall(addr, '0x313ce567')));
+    const s = rawString(await rawCall(addr, '0x95d89b41'));
+    ok(dec === 18 && s === sym, 'live: ' + sym + ' is ' + sym + ' with 18 decimals', addr);
+  }
+  {
+    const r = await rawCall(V.DEX_ROUTER, V.encodeGetAmountsOut(100n * E18, [V.WQOM_TOKEN, V.O_TOKEN]));
+    const amounts = V.decodeAmountsOut(r);
+    ok(amounts && amounts.length === 2 && amounts[1] > 0n,
+      'live quote: 100 QOM -> O via the direct pair', amounts ? amounts[1].toString() : 'none');
+    let directErr = false;
+    try { await rawCall(V.DEX_ROUTER, V.encodeGetAmountsOut(100n * E18, [V.KET_TOKEN, V.O_TOKEN])); }
+    catch (e) { directErr = true; }
+    ok(directErr, 'live quote: KET -> O has NO direct pair (the read reverts)');
+    const r2 = await rawCall(V.DEX_ROUTER,
+      V.encodeGetAmountsOut(100n * E18, [V.KET_TOKEN, V.WQOM_TOKEN, V.O_TOKEN]));
+    const amounts2 = V.decodeAmountsOut(r2);
+    ok(amounts2 && amounts2.length === 3 && amounts2[2] > 0n,
+      'live quote: KET -> O routes two-hop via QOM', amounts2 ? amounts2[2].toString() : 'none');
+  }
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

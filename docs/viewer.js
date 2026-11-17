@@ -52,6 +52,7 @@ const SEL = {
   tokenURI: '0xc87b56dd', cawBalanceOf: '0x532f3a34', totalSupply: '0x18160ddd',
   idByUsername: '0x9ebf19e8', followerCount: '0x9f46a705', likes: '0x14ce3e7d',
   balanceOf: '0x70a08231', allowance: '0xdd62ed3e', approve: '0x095ea7b3',
+  decimals: '0x313ce567', transfer: '0xa9059cbb',
   costOfName: '0x8c87aa8a', isValidUsername: '0x3b032005', mint: '0xd85d3d27',
   deposit: '0x6170c4b1', withdraw: '0x43387983',
 };
@@ -261,6 +262,38 @@ const T = {
     payConfirm: 'Send {amount} O', payDone: 'Payment sent — all done ⭐',
     payShortfall: 'Not enough O to finish the payment. Get O on QL1, then try again from the post.',
     recawChoiceTitle: 'Recaw this post?',
+    /* v22: HuntersDEX + BurnHawk (the app's v0.7.0 screens) */
+    navDex: 'HuntersDEX', navBurn: 'BurnHawk',
+    tradeNeedUnlock: 'This signs inside this page with the built-in posting wallet — set it up or unlock it first (in the menu). It spends from that wallet, not from a wallet app.',
+    tradeGasWarn: 'This posting wallet holds no QOM, so it cannot pay the small fees. Send a little QOM to it first — its address is on the Wallet page.',
+    balLbl: 'Balance',
+    dexIntro: 'Swap on QL1 through the QomSwap router — the same router the Android app uses. Every quote is read live from the chain: a pair with no route shows no quote and cannot be swapped.',
+    dexFrom: 'From', dexTo: 'To',
+    dexChecking: 'Reading the live quote…',
+    dexYouGet: 'You receive (estimate)',
+    dexRoute: 'Route',
+    dexMin: 'Minimum received (1% slippage)',
+    dexNoRoute: 'No route for this pair — there is no pool to swap through, so no quote is shown and the swap stays off.',
+    dexOverBal: 'That is more than you have.',
+    dexCta: 'Swap',
+    dexConfirmTitle: 'Make this swap?',
+    dexApproveStep: 'Approving the router first…',
+    dexSwapStep: 'Swapping…',
+    dexDone: 'Swap done.',
+    dexMoved: 'The price moved more than 5% while sending, so the swap stopped. Check the new quote and try again.',
+    dexRouteGone: 'That route is gone now, so the swap stopped. Try again for a fresh quote.',
+    bhIntro: 'Burn HAWK and receive PHOENIX at exactly 100 : 1, through the PHOENIX contract itself (burnToMint) — the same mechanism as the HAWK burn site. Burned HAWK is gone for good.',
+    bhAmountLbl: 'HAWK to burn',
+    bhRoundNote: 'The amount is rounded DOWN to a whole multiple of 100 HAWK before sending — the remainder is not burned.',
+    bhYouBurn: 'You burn', bhYouGet: 'You receive',
+    bhTooSmall: 'At least 100 HAWK is needed.',
+    bhOverBal: 'That is more HAWK than you have.',
+    bhCta: 'Burn HAWK',
+    bhConfirmTitle: 'Burn this HAWK?',
+    bhApproveStep: 'Step 1 of 2 — approving the PHOENIX contract…',
+    bhBurnStep: 'Step 2 of 2 — burning…',
+    bhDone: 'Done — PHOENIX received.',
+    bhFail: 'The burn did not go through.',
   },
   ja: {
     loading: '読み込み中…', loadFail: '読み込めませんでした。しばらくしてからお試しください。',
@@ -464,6 +497,38 @@ const T = {
     payConfirm: '{amount} O を送る', payDone: '支払いを送りました — 完了です ⭐',
     payShortfall: '支払いに必要な O が足りません。QL1 で O を用意して、もう一度お試しください。',
     recawChoiceTitle: 'Recaw しますか？',
+    /* v22: HuntersDEX + BurnHawk (the app's v0.7.0 screens) */
+    navDex: 'HuntersDEX', navBurn: 'BurnHawk',
+    tradeNeedUnlock: 'これはこのページ内蔵の投稿用ウォレットで署名します — 先に（メニューから）用意するか開いてください。ウォレットアプリではなく、このウォレットから支払います。',
+    tradeGasWarn: 'この投稿用ウォレットに QOM がありません。手数料が払えないので、先に少し QOM を送ってください — アドレスはウォレットのページにあります。',
+    balLbl: '残高',
+    dexIntro: 'QomSwap ルーターで QL1 上の交換をします — Android アプリと同じルーターです。見積もりはすべてチェーンからその場で読みます。ルートのないペアは見積もりが出ず、交換もできません。',
+    dexFrom: '交換元', dexTo: '交換先',
+    dexChecking: '見積もりを読んでいます…',
+    dexYouGet: '受け取る量（見積もり）',
+    dexRoute: 'ルート',
+    dexMin: '最低受取量（スリッページ 1%）',
+    dexNoRoute: 'このペアにはルートがありません — 交換に使えるプールがないため、見積もりは表示されず、交換もできません。',
+    dexOverBal: '持っている量を超えています。',
+    dexCta: '交換する',
+    dexConfirmTitle: 'この交換をしますか？',
+    dexApproveStep: 'まずルーターへの承認を送っています…',
+    dexSwapStep: '交換しています…',
+    dexDone: '交換しました。',
+    dexMoved: '送信中に価格が 5% を超えて動いたため、交換を止めました。新しい見積もりを確認してもう一度どうぞ。',
+    dexRouteGone: 'そのルートは今は使えなくなっていたため、交換を止めました。もう一度見積もりを取り直してください。',
+    bhIntro: 'HAWK をバーンして、ちょうど 100 : 1 で PHOENIX を受け取ります。PHOENIX コントラクト自体の仕組み（burnToMint）を使います — HAWK バーンサイトと同じものです。バーンした HAWK は戻りません。',
+    bhAmountLbl: 'バーンする HAWK',
+    bhRoundNote: '数量は送信前に 100 HAWK 単位に切り下げられます — 端数はバーンされません。',
+    bhYouBurn: 'バーンする量', bhYouGet: '受け取る量',
+    bhTooSmall: '100 HAWK 以上が必要です。',
+    bhOverBal: '持っている HAWK を超えています。',
+    bhCta: 'HAWK をバーン',
+    bhConfirmTitle: 'この HAWK をバーンしますか？',
+    bhApproveStep: 'ステップ 1/2 — PHOENIX コントラクトへの承認を送っています…',
+    bhBurnStep: 'ステップ 2/2 — バーンしています…',
+    bhDone: 'できました — PHOENIX を受け取りました。',
+    bhFail: 'バーンできませんでした。',
   },
 }[LANG];
 
@@ -1559,6 +1624,169 @@ function superlikeBlockReason(args) {
   return null;
 }
 const superlikeShortfall = balance => balance < SUPERLIKE_TOTAL_RAW;
+
+/* ---------- v22: BurnHawk + HuntersDEX (the app's v0.7.0) ----------
+   Pure constants + calldata builders, ported from the app
+   (caw-social-app src/lib/burnHawk.ts, src/lib/aggEngine.ts,
+   src/screens/DexSwapSection.tsx) — same addresses, same
+   selectors, same encodings, so the harness can byte-check
+   them and the UI below stays a thin shell.
+
+   BurnHawk: the PHOENIX contract's burnToMint(uint256)
+   (selector 0x05737aae) burns the caller's HAWK and mints
+   PHOENIX at exactly 100:1. Flow: approve HAWK to PHOENIX
+   (exact amount, only when the allowance is short), then
+   burnToMint. Amounts round DOWN to a whole multiple of
+   100 HAWK before sending; the UI says so and previews both
+   sides.
+
+   HuntersDEX: a plain Uniswap-V2-style swap through the
+   QomSwap router the app uses. Quotes are getAmountsOut
+   reads — direct pair first, then two-hop routes via WQOM
+   and via O, best output wins; a pair no route quotes for
+   is shown unavailable and cannot be swapped. Execution
+   mirrors the app's single-route flow: fresh re-quote at
+   send time (a >5% adverse move or a vanished route stops
+   the send), approve only when the router allowance is
+   short, then the router swap with a 20-minute deadline
+   and a 1% slippage floor. All sends go through the posting
+   wallet's one broadcast helper (sendLocalTx). */
+const HAWK_TOKEN = '0xbC85F14059d60458b614052b4a84734E463878cc';
+const PHOENIX_TOKEN = '0xDFe660C5a29c8AADF1daA096543D249135e1938A';
+const KET_TOKEN = '0x034c1fe794ab9d30e27e1ce0d89a4591fc9f1fb4';
+const WQOM_TOKEN = '0xa26dfbf98dd1a32fae56a3d2b2d60a8a41b0bdf0';
+const DEX_ROUTER = '0xc1f90231035a52091ebcb7dddaCa3051a5F44f30';
+const BURN_TO_MINT_SELECTOR = '0x05737aae';
+const GET_AMOUNTS_OUT_SELECTOR = '0xd06ca61f';
+const SWAP_TOKENS_FOR_TOKENS_SELECTOR = '0x38ed1739';
+const SWAP_ETH_FOR_TOKENS_SELECTOR = '0x7ff36ab5';
+const SWAP_TOKENS_FOR_ETH_SELECTOR = '0x18cbafe5';
+const BURN_RATIO = 100n;
+const DEX_SLIPPAGE_PCT = 1;
+/* The six tradable tokens (the app's HuntersDEX set). QOM is
+   the native coin; in router paths it is its wrapped form. */
+const DEX_TOKENS = [
+  { id: 'qom', sym: 'QOM', address: WQOM_TOKEN, native: true },
+  { id: 'qcaw', sym: 'qCAW', address: QCAW, native: false },
+  { id: 'o', sym: 'O', address: O_TOKEN, native: false },
+  { id: 'ket', sym: 'KET', address: KET_TOKEN, native: false },
+  { id: 'hawk', sym: 'HAWK', address: HAWK_TOKEN, native: false },
+  { id: 'phoenix', sym: 'PHOENIX', address: PHOENIX_TOKEN, native: false },
+];
+const dexTokenById = id => DEX_TOKENS.find(t => t.id === id) || null;
+/* Decimal-places amount formatting (fmtQcaw generalised):
+   thousands separators, fraction trimmed to at most 6
+   digits, trailing zeros dropped. */
+function fmtAmt(raw, decimals) {
+  const dec = Number(decimals);
+  const s = BigInt(raw).toString().padStart(dec + 1, '0');
+  const whole = (dec ? s.slice(0, -dec) : s).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const frac = dec ? s.slice(-dec).replace(/0+$/, '') : '';
+  return frac ? whole + '.' + frac.slice(0, 6) : whole;
+}
+/* Plain decimal amount -> raw units at the given decimals
+   (the parseAmount rule, parameterised). Null on bad input. */
+function parseAmountDec(str, decimals) {
+  const dec = Number(decimals);
+  const m = new RegExp('^(\\d+)(?:\\.(\\d{1,' + dec + '}))?$').exec(String(str || '').trim());
+  if (!m) return null;
+  return BigInt(m[1]) * 10n ** BigInt(dec) + BigInt((m[2] || '').padEnd(dec, '0'));
+}
+/* --- BurnHawk money rules (the app's burnHawk.ts) --- */
+const burnUnit = dec => 10n ** BigInt(dec);
+const burnStepRaw = dec => BURN_RATIO * burnUnit(dec);
+function roundDownBurnRaw(raw, dec) {
+  raw = BigInt(raw);
+  if (raw <= 0n) return 0n;
+  const step = burnStepRaw(dec);
+  return raw - (raw % step);
+}
+function burnReceiveRaw(burnRaw, hawkDec, phoenixDec) {
+  const whole = BigInt(burnRaw) / burnUnit(hawkDec);
+  return (whole / BURN_RATIO) * burnUnit(phoenixDec);
+}
+const buildBurnToMintData = amountRaw => BURN_TO_MINT_SELECTOR + word(amountRaw);
+/* --- DEX quoting (the app's aggEngine encodings) --- */
+function encodeGetAmountsOut(amountIn, path) {
+  return GET_AMOUNTS_OUT_SELECTOR + word(amountIn) + word(64) +
+    word(path.length) + path.map(encAddr).join('');
+}
+function decodeAmountsOut(hex) {
+  const h = strip(hex);
+  if (!h || h.length < 128) return null;
+  try {
+    const len = Number(BigInt('0x' + h.slice(64, 128)));
+    if (!len || h.length < 128 + len * 64) return null;
+    const out = [];
+    for (let i = 0; i < len; i++) out.push(BigInt('0x' + h.slice(128 + i * 64, 192 + i * 64)));
+    return out;
+  } catch (e) { return null; }
+}
+/* Candidate paths for a quote: the direct pair, then two-hop
+   routes via WQOM and via O (the brief's set; intermediates
+   equal to an endpoint, and duplicate paths, are dropped). */
+function dexCandidatePaths(fromAddr, toAddr) {
+  const from = fromAddr.toLowerCase(), to = toAddr.toLowerCase();
+  const paths = [[from, to]];
+  for (const mid of [WQOM_TOKEN.toLowerCase(), O_TOKEN.toLowerCase()]) {
+    if (mid !== from && mid !== to) paths.push([from, mid, to]);
+  }
+  const seen = new Set();
+  return paths.filter(p => {
+    const k = p.join(',');
+    if (seen.has(k)) return false;
+    seen.add(k);
+    return true;
+  });
+}
+/* Pick the best route from aligned quote results: entries are
+   {path, amounts} with amounts the decoded getAmountsOut
+   array (or null when that path reverted / read nothing).
+   The winner is the largest final amount; ties keep the
+   earlier (simpler) path. Null when nothing quoted. */
+function dexBestRoute(amountIn, quoted) {
+  let best = null;
+  for (const q of quoted || []) {
+    if (!q || !q.amounts || !q.amounts.length) continue;
+    const out = q.amounts[q.amounts.length - 1];
+    if (out <= 0n) continue;
+    if (!best || out > best.amountOut) {
+      best = { path: q.path, amounts: q.amounts, amountOut: out, amountIn: BigInt(amountIn) };
+    }
+  }
+  return best;
+}
+const dexMinOut = (amountOut, slippagePct) =>
+  (BigInt(amountOut) * BigInt(10000 - Math.round(Number(slippagePct) * 100))) / 10000n;
+const dexDeadline = nowSec => BigInt(nowSec) + 1200n;
+/* The router swap calldata, byte-for-byte the app's
+   buildSwapTx layout for the three shapes. Returns
+   {data, value} — value is the amountIn for a native-from
+   swap (sent as the tx value), else 0. */
+function buildSwapCalldata(args) {
+  const tail = addrs => word(addrs.length) + addrs.map(encAddr).join('');
+  const min = dexMinOut(args.amountOut, args.slippagePct);
+  const deadline = dexDeadline(args.nowSec);
+  if (args.fromNative) {
+    return {
+      data: SWAP_ETH_FOR_TOKENS_SELECTOR + word(min) + word(128) +
+        encAddr(args.to) + word(deadline) + tail(args.path),
+      value: BigInt(args.amountIn),
+    };
+  }
+  if (args.toNative) {
+    return {
+      data: SWAP_TOKENS_FOR_ETH_SELECTOR + word(args.amountIn) + word(min) + word(160) +
+        encAddr(args.to) + word(deadline) + tail(args.path),
+      value: 0n,
+    };
+  }
+  return {
+    data: SWAP_TOKENS_FOR_TOKENS_SELECTOR + word(args.amountIn) + word(min) + word(160) +
+      encAddr(args.to) + word(deadline) + tail(args.path),
+    value: 0n,
+  };
+}
 
 /* ----- the marked-burn index (store + scanner) ----- */
 let mbRecord = { to: MARKED_BURN_START_BLOCK - 1, sl: {}, src: {} };
@@ -3477,6 +3705,8 @@ function refreshViewsForWallet() {
   else if (typeof bmQuery !== 'undefined' && bmQuery) loadBookmarksView();
   else if (typeof reactionsQuery !== 'undefined' && reactionsQuery) loadReactionsView();
   else if (typeof mirrorQuery !== 'undefined' && mirrorQuery) loadMirrorView();
+  else if (typeof dexQuery !== 'undefined' && dexQuery) loadDexView();
+  else if (typeof burnQuery !== 'undefined' && burnQuery) loadBurnView();
   else if (typeof searchQuery !== 'undefined' && searchQuery) { /* search rows keep their buttons state; a fresh search re-adds them */ }
   else loadTimeline(false);
 }
@@ -3681,6 +3911,9 @@ function renderPwUnlocked(area) {
     '<div class="asset-row"><span class="asset-sym">QOM</span><span class="asset-amt" id="pwQomBal">…</span></div>' +
     '<div class="asset-row"><span class="asset-sym">qCAW</span><span class="asset-amt" id="pwQcawBal">…</span></div>' +
     '<div class="asset-row"><span class="asset-sym">O</span><span class="asset-amt" id="pwOBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">KET</span><span class="asset-amt" id="pwKetBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">HAWK</span><span class="asset-amt" id="pwHawkBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">PHOENIX</span><span class="asset-amt" id="pwPhoenixBal">…</span></div>' +
     '</div>' +
     '<p id="pwGasWarn"></p>';
   if (!pwNames.length) {
@@ -3744,15 +3977,28 @@ function renderPwUnlocked(area) {
   /* balances fill in async */
   (async () => {
     try {
-      const [qom, qc, ob] = await Promise.all([
+      const [qom, qc, ob, ket, hawk, phx, ketDec, hawkDec, phxDec] = await Promise.all([
         rpc('eth_getBalance', [s.address, 'latest']).then(h => BigInt(h)),
         readUint(QCAW, SEL.balanceOf + encAddr(s.address)),
         (typeof O_TOKEN !== 'undefined' ? readUint(O_TOKEN, SEL.balanceOf + encAddr(s.address)) : Promise.resolve(null)).catch(() => null),
+        /* v22: the app's wallet set — KET / HAWK / PHOENIX join
+           the list, read the same balanceOf way, formatted at
+           each contract's own decimals. */
+        readUint(KET_TOKEN, SEL.balanceOf + encAddr(s.address)).catch(() => null),
+        readUint(HAWK_TOKEN, SEL.balanceOf + encAddr(s.address)).catch(() => null),
+        readUint(PHOENIX_TOKEN, SEL.balanceOf + encAddr(s.address)).catch(() => null),
+        readUint(KET_TOKEN, SEL.decimals).then(Number).catch(() => 18),
+        readUint(HAWK_TOKEN, SEL.decimals).then(Number).catch(() => 18),
+        readUint(PHOENIX_TOKEN, SEL.decimals).then(Number).catch(() => 18),
       ]);
       const a = $('pwQomBal'), b = $('pwQcawBal'), o = $('pwOBal'), w = $('pwGasWarn');
       if (a) a.textContent = fmtQcaw(qom);
       if (b) b.textContent = fmtQcaw(qc);
       if (o) o.textContent = ob === null ? '—' : fmtQcaw(ob);
+      const kEl = $('pwKetBal'), hEl = $('pwHawkBal'), pEl = $('pwPhoenixBal');
+      if (kEl) kEl.textContent = ket === null ? '—' : fmtAmt(ket, ketDec);
+      if (hEl) hEl.textContent = hawk === null ? '—' : fmtAmt(hawk, hawkDec);
+      if (pEl) pEl.textContent = phx === null ? '—' : fmtAmt(phx, phxDec);
       if (w && qom === 0n) w.innerHTML = '<span class="warn">' + esc(T.pwNeedGas) + '</span>';
     } catch (e) { /* balances are a nicety; the sends re-read anyway */ }
   })();
@@ -3805,9 +4051,364 @@ function confirmErrHtml(e) {
   if (e && e.message === 'shortfall-src') return '<span class="err">' + esc(T.srcShortfall) + '</span>';
   if (e && e.message === 'shortfall-burn') return '<span class="err">' + esc(T.srcBurnShortfall) + '</span>';
   if (e && e.message === 'shortfall-pay') return '<span class="err">' + esc(T.payShortfall) + '</span>';
+  /* v22: the HuntersDEX send-time guards. */
+  if (e && e.message === 'dex-moved') return '<span class="err">' + esc(T.dexMoved) + '</span>';
+  if (e && e.message === 'dex-noroute') return '<span class="err">' + esc(T.dexRouteGone) + '</span>';
   if (e && e.unconfirmed) return '<span class="warn">' + esc(T.actUnconfirmed) + '</span>' + txLinkHtml(e.txHash);
   return '<span class="err">' + esc(T.actFail) + '</span>' + txLinkHtml(e && e.txHash) + errDetailHtml(e);
 }
+
+/* ================= v22: BurnHawk + HuntersDEX views =================
+   The app's v0.7.0 screens, in the viewer's shape. Both sign
+   with the posting wallet through sendLocalTx (its one
+   broadcast path) and show the wallet page's gas warning,
+   reworded for a page with no address on it, when the
+   posting wallet holds no QOM. Locked: the mirror-style
+   guide plus a wallet link. Quotes are live getAmountsOut
+   reads only — nothing here invents a number. */
+const tradeUnlockedHtml = () =>
+  '<div class="nt-guide"><p>' + esc(T.tradeNeedUnlock) + '</p>' +
+  '<p><a class="nt-wallet-link" href="' + pageFile + '?wallet=1">' + esc(T.mirrorOpenWallet) + '</a></p></div>';
+const assetRowHtml = (sym, id) =>
+  '<div class="asset-row"><span class="asset-sym">' + esc(sym) + '</span>' +
+  '<span class="asset-amt" id="' + id + '">…</span></div>';
+const rawToInputStr = (raw, dec) => {
+  const s = BigInt(raw).toString().padStart(dec + 1, '0');
+  const whole = dec ? s.slice(0, -dec) : s;
+  const frac = dec ? s.slice(-dec).replace(/0+$/, '') : '';
+  return frac ? whole + '.' + frac : whole;
+};
+const pctChipsHtml = (attr) =>
+  [25, 50, 75, 100].map(p => '<button type="button" class="ghost" data-' + attr + '="' + p + '">' +
+    (p === 100 ? 'MAX' : p + '%') + '</button>').join('');
+
+/* ---------- BurnHawk ---------- */
+let burnState = null;   // {hawkBal, phoenixBal, hawkDec, phoenixDec}
+function loadBurnView() {
+  const area = $('burnArea');
+  if (!area) return;
+  if (!pwSession) { area.innerHTML = tradeUnlockedHtml(); return; }
+  area.innerHTML =
+    '<section class="block"><p>' + esc(T.bhIntro) + '</p>' +
+    '<div class="asset-list">' + assetRowHtml('HAWK', 'bhHawkBal') + assetRowHtml('PHOENIX', 'bhPhoenixBal') + '</div>' +
+    '<p id="bhGasWarn"></p>' +
+    '<div class="pw-card">' +
+    '<label class="small" for="bhAmount">' + esc(T.bhAmountLbl) + '</label>' +
+    '<div class="swap-amtrow"><input id="bhAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0.0"></div>' +
+    '<div class="row">' + pctChipsHtml('bhchip') + '</div>' +
+    '<p class="small">' + esc(T.bhRoundNote) + '</p>' +
+    '<div id="bhPreview"></div>' +
+    '<div class="row"><button type="button" id="bhGoBtn" disabled>' + esc(T.bhCta) + '</button></div>' +
+    '</div></section>';
+  $('bhAmount').addEventListener('input', paintBurnPreview);
+  area.querySelectorAll('[data-bhchip]').forEach(btn => {
+    btn.onclick = () => {
+      if (!burnState || burnState.hawkBal === null) return;
+      /* The app's chip rule: that share of the balance in
+         WHOLE HAWK — dust under one token is rounded away
+         by the burn's own rounding anyway. */
+      const whole = burnState.hawkBal / burnUnit(burnState.hawkDec);
+      const part = (whole * BigInt(btn.getAttribute('data-bhchip'))) / 100n;
+      $('bhAmount').value = part.toString();
+      paintBurnPreview();
+    };
+  });
+  $('bhGoBtn').onclick = onBurnGo;
+  burnLoadBalances();
+}
+async function burnLoadBalances() {
+  if (!pwSession) return;
+  const addr = pwSession.address;
+  const [qom, hawk, phoenix, hawkDec, phoenixDec] = await Promise.all([
+    rpc('eth_getBalance', [addr, 'latest']).then(h => BigInt(h)).catch(() => null),
+    readUint(HAWK_TOKEN, SEL.balanceOf + encAddr(addr)).catch(() => null),
+    readUint(PHOENIX_TOKEN, SEL.balanceOf + encAddr(addr)).catch(() => null),
+    readUint(HAWK_TOKEN, SEL.decimals).then(Number).catch(() => 18),
+    readUint(PHOENIX_TOKEN, SEL.decimals).then(Number).catch(() => 18),
+  ]);
+  burnState = { hawkBal: hawk, phoenixBal: phoenix, hawkDec, phoenixDec };
+  if ($('bhHawkBal')) $('bhHawkBal').textContent = hawk === null ? '—' : fmtAmt(hawk, hawkDec);
+  if ($('bhPhoenixBal')) $('bhPhoenixBal').textContent = phoenix === null ? '—' : fmtAmt(phoenix, phoenixDec);
+  const w = $('bhGasWarn');
+  if (w && qom === 0n) w.innerHTML = '<span class="warn">' + esc(T.tradeGasWarn) + '</span>';
+  paintBurnPreview();
+}
+function burnEffective() {
+  if (!burnState) return null;
+  const parsed = parseAmountDec(($('bhAmount') || {}).value || '', burnState.hawkDec);
+  if (parsed === null) return null;
+  return { parsed, eff: roundDownBurnRaw(parsed, burnState.hawkDec) };
+}
+function paintBurnPreview() {
+  const pv = $('bhPreview'), btn = $('bhGoBtn');
+  if (!pv || !btn) return;
+  const cur = burnEffective();
+  if (!burnState || burnState.hawkBal === null || !cur || cur.parsed <= 0n) {
+    pv.innerHTML = ''; btn.disabled = true; return;
+  }
+  if (cur.parsed > burnState.hawkBal) {
+    pv.innerHTML = '<p class="err">' + esc(T.bhOverBal) + '</p>'; btn.disabled = true; return;
+  }
+  if (cur.eff <= 0n) {
+    pv.innerHTML = '<p class="err">' + esc(T.bhTooSmall) + '</p>'; btn.disabled = true; return;
+  }
+  const receive = burnReceiveRaw(cur.eff, burnState.hawkDec, burnState.phoenixDec);
+  pv.innerHTML =
+    '<p>' + esc(T.bhYouBurn) + ': <b>' + esc(fmtAmt(cur.eff, burnState.hawkDec)) + ' HAWK</b></p>' +
+    '<p>' + esc(T.bhYouGet) + ': <b>' + esc(fmtAmt(receive, burnState.phoenixDec)) + ' PHOENIX</b></p>';
+  btn.disabled = false;
+}
+function onBurnGo() {
+  if (!pwSession || !burnState) return;
+  const cur = burnEffective();
+  if (!cur || cur.eff <= 0n || burnState.hawkBal === null || cur.parsed > burnState.hawkBal) return;
+  const eff = cur.eff;
+  const receive = burnReceiveRaw(eff, burnState.hawkDec, burnState.phoenixDec);
+  openConfirmPanel({
+    title: T.bhConfirmTitle,
+    lines: [
+      [T.bhYouBurn, fmtAmt(eff, burnState.hawkDec) + ' HAWK'],
+      [T.bhYouGet, fmtAmt(receive, burnState.phoenixDec) + ' PHOENIX'],
+    ],
+    signLabel: T.bhCta,
+    doneText: T.bhDone,
+    onSign: async setStatus => {
+      pwTouch();
+      const allowance = await readUint(HAWK_TOKEN,
+        SEL.allowance + encAddr(pwSession.address) + encAddr(PHOENIX_TOKEN));
+      if (allowance < eff) {
+        setStatus('<span class="small">' + esc(T.bhApproveStep) + '</span>');
+        await sendLocalTx(pwSession.keyBytes, {
+          to: HAWK_TOKEN, data: buildApproveToCalldata(PHOENIX_TOKEN, eff),
+          value: 0n, gasFallback: 60000,
+        });
+      }
+      setStatus('<span class="small">' + esc(T.bhBurnStep) + '</span>');
+      return await sendLocalTx(pwSession.keyBytes, {
+        to: PHOENIX_TOKEN, data: buildBurnToMintData(eff),
+        value: 0n, gasFallback: 150000,
+      });
+    },
+    afterSuccess: () => { loadBurnView(); },
+  });
+}
+
+/* ---------- HuntersDEX ---------- */
+let dexState = null;   // {fromId, toId, balances, decimals, qomBal, quote, quoteState, seq}
+let dexQuoteTimer = 0;
+function loadDexView() {
+  const area = $('dexArea');
+  if (!area) return;
+  if (!pwSession) { area.innerHTML = tradeUnlockedHtml(); return; }
+  if (!dexState) {
+    dexState = { fromId: 'qom', toId: 'o', balances: {}, decimals: {}, qomBal: null,
+      quote: null, quoteState: 'idle', seq: 0, amountStr: '' };
+  }
+  const chips = side => DEX_TOKENS.map(t =>
+    '<button type="button" class="tokchip' + ((side === 'from' ? dexState.fromId : dexState.toId) === t.id ? ' on' : '') +
+    '" data-dtok="' + side + ':' + t.id + '">' + esc(t.sym) + '</button>').join('');
+  area.innerHTML =
+    '<section class="block"><p>' + esc(T.dexIntro) + '</p>' +
+    '<p id="dexGasWarn"></p>' +
+    '<div class="pw-card">' +
+    '<div class="small">' + esc(T.dexFrom) + ' · ' + esc(T.balLbl) + ': <span id="dexFromBal">…</span></div>' +
+    '<div class="row tokchips">' + chips('from') + '</div>' +
+    '<div class="swap-amtrow"><input id="dexAmount" type="text" inputmode="decimal" autocomplete="off" placeholder="0.0"></div>' +
+    '<div class="row">' + pctChipsHtml('dexchip') + '</div>' +
+    '<div class="small" style="margin-top:12px">' + esc(T.dexTo) + ' · ' + esc(T.balLbl) + ': <span id="dexToBal">…</span></div>' +
+    '<div class="row tokchips">' + chips('to') + '</div>' +
+    '<div id="dexQuoteArea"></div>' +
+    '<div class="row"><button type="button" id="dexGoBtn" disabled>' + esc(T.dexCta) + '</button></div>' +
+    '</div></section>';
+  area.querySelectorAll('[data-dtok]').forEach(btn => {
+    btn.onclick = () => {
+      const [side, id] = btn.getAttribute('data-dtok').split(':');
+      if (side === 'from') {
+        if (id === dexState.toId) dexState.toId = dexState.fromId;
+        dexState.fromId = id;
+      } else {
+        if (id === dexState.fromId) dexState.fromId = dexState.toId;
+        dexState.toId = id;
+      }
+      dexState.quote = null; dexState.quoteState = 'idle';
+      dexState.amountStr = ($('dexAmount') || {}).value || '';
+      loadDexView();
+    };
+  });
+  $('dexAmount').value = dexState.amountStr;
+  $('dexAmount').addEventListener('input', () => {
+    dexState.amountStr = $('dexAmount').value;
+    dexScheduleQuote();
+  });
+  area.querySelectorAll('[data-dexchip]').forEach(btn => {
+    btn.onclick = () => {
+      const tok = dexTokenById(dexState.fromId);
+      const bal = dexState.balances[tok.id], dec = dexState.decimals[tok.id];
+      if (bal === undefined || bal === null || dec === undefined) return;
+      const part = (bal * BigInt(btn.getAttribute('data-dexchip'))) / 100n;
+      $('dexAmount').value = rawToInputStr(part, dec);
+      dexState.amountStr = $('dexAmount').value;
+      dexScheduleQuote();
+    };
+  });
+  $('dexGoBtn').onclick = onDexGo;
+  paintDexBalances();
+  dexLoadBalances();
+  dexScheduleQuote();
+}
+async function dexLoadBalances() {
+  if (!pwSession || !dexState) return;
+  const addr = pwSession.address;
+  const erc = DEX_TOKENS.filter(t => !t.native);
+  const [qom, bals, decs] = await Promise.all([
+    rpc('eth_getBalance', [addr, 'latest']).then(h => BigInt(h)).catch(() => null),
+    Promise.all(erc.map(t => readUint(t.address, SEL.balanceOf + encAddr(addr)).catch(() => null))),
+    Promise.all(DEX_TOKENS.map(t => t.native
+      ? Promise.resolve(18)
+      : readUint(t.address, SEL.decimals).then(Number).catch(() => 18))),
+  ]);
+  if (!dexState) return;
+  dexState.qomBal = qom;
+  dexState.balances.qom = qom;
+  erc.forEach((t, i) => { dexState.balances[t.id] = bals[i]; });
+  DEX_TOKENS.forEach((t, i) => { dexState.decimals[t.id] = decs[i]; });
+  paintDexBalances();
+  dexScheduleQuote();
+}
+function paintDexBalances() {
+  if (!dexState) return;
+  const paint = (elId, tokId) => {
+    const el = $(elId);
+    if (!el) return;
+    const bal = dexState.balances[tokId], dec = dexState.decimals[tokId];
+    el.textContent = (bal === undefined || bal === null || dec === undefined)
+      ? '…' : fmtAmt(bal, dec) + ' ' + dexTokenById(tokId).sym;
+  };
+  paint('dexFromBal', dexState.fromId);
+  paint('dexToBal', dexState.toId);
+  const w = $('dexGasWarn');
+  if (w && dexState.qomBal === 0n) w.innerHTML = '<span class="warn">' + esc(T.tradeGasWarn) + '</span>';
+}
+function dexScheduleQuote() {
+  clearTimeout(dexQuoteTimer);
+  dexQuoteTimer = setTimeout(dexRefreshQuote, 700);
+}
+async function dexQuoteOnce(fromTok, toTok, amountIn) {
+  const paths = dexCandidatePaths(fromTok.address, toTok.address);
+  const quoted = await Promise.all(paths.map(async p => {
+    try {
+      const r = await ethCall(DEX_ROUTER, encodeGetAmountsOut(amountIn, p));
+      return { path: p, amounts: decodeAmountsOut(r) };
+    } catch (e) { return { path: p, amounts: null }; }
+  }));
+  return dexBestRoute(amountIn, quoted);
+}
+function dexAmountIn() {
+  if (!dexState) return null;
+  const dec = dexState.decimals[dexState.fromId];
+  if (dec === undefined) return null;
+  return parseAmountDec(($('dexAmount') || {}).value || '', dec);
+}
+async function dexRefreshQuote() {
+  if (!dexState || !pwSession) return;
+  const fromTok = dexTokenById(dexState.fromId), toTok = dexTokenById(dexState.toId);
+  const amountIn = dexAmountIn();
+  const fromBal = dexState.balances[dexState.fromId];
+  if (amountIn === null || amountIn <= 0n) {
+    dexState.quote = null; dexState.quoteState = 'idle'; paintDexQuote(); return;
+  }
+  if (fromBal !== undefined && fromBal !== null && amountIn > fromBal) {
+    dexState.quote = null; dexState.quoteState = 'over'; paintDexQuote(); return;
+  }
+  dexState.quoteState = 'loading'; paintDexQuote();
+  const seq = ++dexState.seq;
+  const best = await dexQuoteOnce(fromTok, toTok, amountIn);
+  if (seq !== dexState.seq || !dexState) return;
+  dexState.quote = best;
+  dexState.quoteState = best ? 'ok' : 'none';
+  paintDexQuote();
+}
+const dexPathSyms = path => path.map(a => {
+  const t = DEX_TOKENS.find(x => x.address.toLowerCase() === a.toLowerCase());
+  return t ? t.sym : a;
+}).join(' → ');
+function paintDexQuote() {
+  const qa = $('dexQuoteArea'), btn = $('dexGoBtn');
+  if (!qa || !btn || !dexState) return;
+  const toTok = dexTokenById(dexState.toId);
+  const toDec = dexState.decimals[dexState.toId];
+  btn.disabled = true;
+  if (dexState.quoteState === 'loading') {
+    qa.innerHTML = '<p class="small">' + esc(T.dexChecking) + '</p>';
+  } else if (dexState.quoteState === 'over') {
+    qa.innerHTML = '<p class="err">' + esc(T.dexOverBal) + '</p>';
+  } else if (dexState.quoteState === 'none') {
+    qa.innerHTML = '<p class="warn">' + esc(T.dexNoRoute) + '</p>';
+  } else if (dexState.quoteState === 'ok' && dexState.quote) {
+    const q = dexState.quote;
+    qa.innerHTML =
+      '<p>' + esc(T.dexYouGet) + ': <b>' + esc(fmtAmt(q.amountOut, toDec)) + ' ' + esc(toTok.sym) + '</b></p>' +
+      '<p class="small">' + esc(T.dexRoute) + ': ' + esc(dexPathSyms(q.path)) + '</p>' +
+      '<p class="small">' + esc(T.dexMin) + ': ' + esc(fmtAmt(dexMinOut(q.amountOut, DEX_SLIPPAGE_PCT), toDec)) + ' ' + esc(toTok.sym) + '</p>';
+    btn.disabled = false;
+  } else {
+    qa.innerHTML = '';
+  }
+}
+function onDexGo() {
+  if (!pwSession || !dexState || !dexState.quote) return;
+  const fromTok = dexTokenById(dexState.fromId), toTok = dexTokenById(dexState.toId);
+  const amountIn = dexAmountIn();
+  const shown = dexState.quote;
+  if (amountIn === null || amountIn <= 0n) return;
+  const fromDec = dexState.decimals[dexState.fromId], toDec = dexState.decimals[dexState.toId];
+  openConfirmPanel({
+    title: T.dexConfirmTitle,
+    lines: [
+      [T.dexFrom, fmtAmt(amountIn, fromDec) + ' ' + fromTok.sym],
+      [T.dexYouGet, fmtAmt(shown.amountOut, toDec) + ' ' + toTok.sym],
+      [T.dexMin, fmtAmt(dexMinOut(shown.amountOut, DEX_SLIPPAGE_PCT), toDec) + ' ' + toTok.sym],
+      [T.dexRoute, dexPathSyms(shown.path)],
+    ],
+    signLabel: T.dexCta,
+    doneText: T.dexDone,
+    onSign: async setStatus => {
+      pwTouch();
+      /* The app re-quotes at send time: a route that vanished,
+         or a quote that moved more than 5% against the user,
+         stops the send instead of filling at a bad price. */
+      const fresh = await dexQuoteOnce(fromTok, toTok, amountIn);
+      if (!fresh) throw new Error('dex-noroute');
+      if (fresh.amountOut * 100n < shown.amountOut * 95n) throw new Error('dex-moved');
+      if (!fromTok.native) {
+        const allowance = await readUint(fromTok.address,
+          SEL.allowance + encAddr(pwSession.address) + encAddr(DEX_ROUTER));
+        if (allowance < amountIn) {
+          setStatus('<span class="small">' + esc(T.dexApproveStep) + '</span>');
+          await sendLocalTx(pwSession.keyBytes, {
+            to: fromTok.address, data: buildApproveToCalldata(DEX_ROUTER, amountIn),
+            value: 0n, gasFallback: 60000,
+          });
+        }
+      }
+      setStatus('<span class="small">' + esc(T.dexSwapStep) + '</span>');
+      const built = buildSwapCalldata({
+        fromNative: fromTok.native, toNative: toTok.native,
+        amountIn, amountOut: fresh.amountOut, slippagePct: DEX_SLIPPAGE_PCT,
+        path: fresh.path, to: pwSession.address,
+        nowSec: Math.floor(Date.now() / 1000),
+      });
+      return await sendLocalTx(pwSession.keyBytes, {
+        to: DEX_ROUTER, data: built.data, value: built.value, gasFallback: 300000,
+      });
+    },
+    afterSuccess: () => {
+      dexState.quote = null; dexState.quoteState = 'idle'; dexState.amountStr = '';
+      loadDexView();
+    },
+  });
+}
+
 function openConfirmPanel(opts) {
   const ov = $('confirmOverlay');
   if (!ov) return;
@@ -5126,6 +5727,8 @@ async function syncChrome() {
     : (typeof bmQuery !== 'undefined' && bmQuery) ? 'bookmarks'
     : (typeof reactionsQuery !== 'undefined' && reactionsQuery) ? 'reactions'
     : (typeof mirrorQuery !== 'undefined' && mirrorQuery) ? 'mirror'
+    : (typeof dexQuery !== 'undefined' && dexQuery) ? 'dex'
+    : (typeof burnQuery !== 'undefined' && burnQuery) ? 'burnhawk'
     : (typeof walletQuery !== 'undefined' && walletQuery) ? 'wallet'
     : (typeof getnameQuery !== 'undefined' && getnameQuery) ? (location.hash === '#myNames' ? 'mynames' : 'getname')
     : (typeof lookupQuery !== 'undefined' && lookupQuery) ? 'search' : 'home';
@@ -5147,6 +5750,10 @@ const mirrorItemParam = new URLSearchParams(location.search).get('item');
 const mirrorQuery = mirrorParam != null ? '1' : null;
 mirrorItemId = mirrorItemParam != null ? mirrorItemParam
   : (mirrorParam != null && mirrorParam !== '' && mirrorParam !== '1' ? mirrorParam : null);
+/* v22: HuntersDEX and BurnHawk are views of their own,
+   opened from the drawer / sidebar rows like the others. */
+const dexQuery = new URLSearchParams(location.search).get('dex');
+const burnQuery = new URLSearchParams(location.search).get('burnhawk');
 /* v15: the posting wallet, the lookup desk and the name desk
    are views of their own, opened from the drawer / sidebar
    rows (and the phone tab bar) — the home view is the timeline
@@ -5204,6 +5811,14 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
   document.body.classList.add('mirror-mode');
   $('viewMirror').style.display = '';
   loadMirrorView();
+} else if (dexQuery) {
+  document.body.classList.add('dex-mode');
+  $('viewDex').style.display = '';
+  loadDexView();
+} else if (burnQuery) {
+  document.body.classList.add('burn-mode');
+  $('viewBurn').style.display = '';
+  loadBurnView();
 } else if (searchQuery) {
   $('viewSearch').style.display = '';
   $('searchTitle').textContent = T.searchTitle.replace('{q}', searchQuery);
@@ -5354,6 +5969,15 @@ if (typeof module !== 'undefined' && module.exports) {
     randomCawId, submitLocalAction,
     bmList, bmHas, bmToggle, BOOKMARKS_KEY_PREFIX,
     O_TOKEN, BURN_ADDRESS,
+    HAWK_TOKEN, PHOENIX_TOKEN, KET_TOKEN, WQOM_TOKEN, DEX_ROUTER,
+    BURN_TO_MINT_SELECTOR, GET_AMOUNTS_OUT_SELECTOR,
+    SWAP_TOKENS_FOR_TOKENS_SELECTOR, SWAP_ETH_FOR_TOKENS_SELECTOR,
+    SWAP_TOKENS_FOR_ETH_SELECTOR, BURN_RATIO, DEX_SLIPPAGE_PCT,
+    DEX_TOKENS, dexTokenById, fmtAmt, parseAmountDec,
+    burnUnit, burnStepRaw, roundDownBurnRaw, burnReceiveRaw,
+    buildBurnToMintData, encodeGetAmountsOut, decodeAmountsOut,
+    dexCandidatePaths, dexBestRoute, dexMinOut, dexDeadline,
+    buildSwapCalldata,
     SUPERLIKE_TOTAL_O, SUPERLIKE_AUTHOR_O, SUPERLIKE_BURN_O,
     SUPERRECAW_TOTAL_O, SUPERRECAW_AUTHOR_O, SUPERRECAW_BURN_O,
     LEGACY_MARKED_BURN_O, V063_SUPERLIKE_BURN_O, V063_SUPERRECAW_BURN_O,

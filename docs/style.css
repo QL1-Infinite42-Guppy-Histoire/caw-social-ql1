@@ -859,3 +859,10 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .drawer-follow b{color:var(--ink)}
 /* stats body rows reuse .stats-row (defined with the rail card) */
 .statsBody p{margin:4px 0}
+/* v22: HuntersDEX token pickers + swap amount rows */
+.tokchips{gap:8px;margin:8px 0 4px}
+.tokchip{background:var(--pill-bg);color:var(--pill-fg);border:0;border-radius:999px;padding:7px 14px;font-size:14px;font-weight:700;cursor:pointer}
+.tokchip:hover{background:var(--pill-hover)}
+.tokchip.on{background:var(--accent);color:#fff}
+.swap-amtrow{margin:10px 0}
+.swap-amtrow input{width:100%;box-sizing:border-box;font-size:20px;font-weight:700}
