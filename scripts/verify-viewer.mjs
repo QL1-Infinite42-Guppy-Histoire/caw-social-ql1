@@ -284,9 +284,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v22: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=22') && jaHtml.includes('?v=22'), 'shells reference ?v=22 assets');
-ok(swSrc.includes("caw-view-v22"), 'sw.js cache name is caw-view-v22');
+console.log('— v23: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=23') && jaHtml.includes('?v=23'), 'shells reference ?v=23 assets');
+ok(swSrc.includes("caw-view-v23"), 'sw.js cache name is caw-view-v23');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -307,7 +307,7 @@ ok(viewerSrc.includes("target.classList.add('pw-flash')") &&
 }
 
 console.log('— v18: link-only share, shortened through cawl —');
-ok(viewerSrc.includes("const CAWL_BASE = 'https://cawl.nepicobsv.workers.dev'") &&
+ok(viewerSrc.includes("const CAWL_BASE = 'https://c.qql1.com'") &&
   viewerSrc.includes('async function shortenViaCawl'),
   'shares shorten through the cawl service (the app\u2019s shortener)');
 ok(viewerSrc.includes('navigator.share({ url })'),

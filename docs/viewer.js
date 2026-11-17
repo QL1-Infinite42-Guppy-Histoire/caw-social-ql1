@@ -2589,7 +2589,7 @@ function originalFrame(cawId) {
    API sends CORS headers, so this page may call it directly.
    Returns the short URL, or null on any failure — callers
    then fall back to the full URL. */
-const CAWL_BASE = 'https://cawl.nepicobsv.workers.dev';
+const CAWL_BASE = 'https://c.qql1.com'; // cawl custom domain (2026-11-18; the original workers.dev host still serves the same worker)
 async function shortenViaCawl(url) {
   try {
     const res = await fetch(CAWL_BASE + '/api/shorten', {
