@@ -275,9 +275,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v20: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=20') && jaHtml.includes('?v=20'), 'shells reference ?v=20 assets');
-ok(swSrc.includes("caw-view-v20"), 'sw.js cache name is caw-view-v20');
+console.log('— v21: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=21') && jaHtml.includes('?v=21'), 'shells reference ?v=21 assets');
+ok(swSrc.includes("caw-view-v21"), 'sw.js cache name is caw-view-v21');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -601,14 +601,15 @@ console.log('— v14: SuperLike / SuperRecaw (app v0.6.3 spec, ported) —');
   ok(V.O_TOKEN === '0x6c39b68a28bA90F4EB80032ec0eB32ad81cbbEd4',
     'O token is the app\'s Childhoods End address on QL1');
   ok(V.BURN_ADDRESS === '0x000000000000000000000000000000000000dEaD', 'burn address matches the app');
-  ok(V.SUPERLIKE_TOTAL_O === 25000000 && V.SUPERLIKE_AUTHOR_O === 15000000 && V.SUPERLIKE_BURN_O === 10000000,
-    'SuperLike split: 25,000,000 total = 15,000,000 author + 10,000,000 burn');
-  ok(V.SUPERRECAW_TOTAL_O === 25000000 && V.SUPERRECAW_AUTHOR_O === 5000000 && V.SUPERRECAW_BURN_O === 20000000,
-    'SuperRecaw split: 25,000,000 total = 5,000,000 author + 20,000,000 burn');
-  ok(V.SUPERLIKE_TOTAL_RAW === 25000000n * E18 && V.SUPERLIKE_AUTHOR_RAW === 15000000n * E18 &&
-     V.SUPERLIKE_BURN_RAW === 10000000n * E18 && V.SUPERRECAW_AUTHOR_RAW === 5000000n * E18 &&
-     V.SUPERRECAW_BURN_RAW === 20000000n * E18 && V.LEGACY_MARKED_BURN_RAW === 1000000n * E18,
-     'raw amounts are the whole-O amounts at 18 decimals');
+  ok(V.SUPERLIKE_TOTAL_O === 5000000 && V.SUPERLIKE_AUTHOR_O === 4000000 && V.SUPERLIKE_BURN_O === 1000000,
+    'SuperLike split: 5,000,000 total = 4,000,000 author + 1,000,000 burn (v21 prices)');
+  ok(V.SUPERRECAW_TOTAL_O === 5000000 && V.SUPERRECAW_AUTHOR_O === 2000000 && V.SUPERRECAW_BURN_O === 3000000,
+    'SuperRecaw split: 5,000,000 total = 2,000,000 author + 3,000,000 burn (v21 prices)');
+  ok(V.SUPERLIKE_TOTAL_RAW === 5000000n * E18 && V.SUPERLIKE_AUTHOR_RAW === 4000000n * E18 &&
+     V.SUPERLIKE_BURN_RAW === 1000000n * E18 && V.SUPERRECAW_AUTHOR_RAW === 2000000n * E18 &&
+     V.SUPERRECAW_BURN_RAW === 3000000n * E18 && V.LEGACY_MARKED_BURN_RAW === 1000000n * E18 &&
+     V.V063_SUPERLIKE_BURN_RAW === 10000000n * E18 && V.V063_SUPERRECAW_BURN_RAW === 20000000n * E18,
+     'raw amounts are the whole-O amounts at 18 decimals (incl. the v0.6.3 detection amounts)');
   ok(V.SUPERLIKE_MAGIC === '534c4b31' && V.SUPERRECAW_MAGIC === '53524331',
     'marker magics are SLK1 / SRC1');
   ok(V.MARKED_BURN_START_BLOCK === 13400000, 'marked-burn scan starts at block 13,400,000');
@@ -628,9 +629,11 @@ console.log('— v14: SuperLike / SuperRecaw (app v0.6.3 spec, ported) —');
      'the parser rejects wrong-length inputs');
   ok(V.burnAmountsForMagic(V.SUPERLIKE_MAGIC).includes(V.LEGACY_MARKED_BURN_RAW) &&
      V.burnAmountsForMagic(V.SUPERRECAW_MAGIC).includes(V.LEGACY_MARKED_BURN_RAW) &&
+     V.burnAmountsForMagic(V.SUPERLIKE_MAGIC).includes(V.V063_SUPERLIKE_BURN_RAW) &&
+     V.burnAmountsForMagic(V.SUPERRECAW_MAGIC).includes(V.V063_SUPERRECAW_BURN_RAW) &&
      V.burnAmountsForMagic(V.SUPERLIKE_MAGIC).includes(V.SUPERLIKE_BURN_RAW) &&
      V.burnAmountsForMagic(V.SUPERRECAW_MAGIC).includes(V.SUPERRECAW_BURN_RAW),
-     'detection sets accept the current burn AND the legacy 1,000,000 burn for both markers');
+     'detection sets accept the current burn, the v0.6.3 burn AND the legacy 1,000,000 burn for both markers');
   ok(V.superlikeBlockReason({ senderId: 5n, myTokenIds: [5n], authorOwner: '0xabc', myAddress: '0xdef' }) === 'self',
      'SuperLike blocked when the post\'s name is one of mine');
   ok(V.superlikeBlockReason({ senderId: 9n, myTokenIds: [], authorOwner: '0xABC', myAddress: '0xabc' }) === 'self',
@@ -638,7 +641,7 @@ console.log('— v14: SuperLike / SuperRecaw (app v0.6.3 spec, ported) —');
   ok(V.superlikeBlockReason({ senderId: 9n, myTokenIds: [1n], authorOwner: '0xabc', myAddress: '0xdef' }) === null,
      'SuperLike allowed for someone else\'s post');
   ok(V.superlikeShortfall(V.SUPERLIKE_TOTAL_RAW - 1n) === true && V.superlikeShortfall(V.SUPERLIKE_TOTAL_RAW) === false,
-     'the shortfall gate is the full 25,000,000 total');
+     'the shortfall gate is the full 5,000,000 total');
   ok(V.MB_KV_KEY === 'caw-marked-burns-v1' && V.SRC_BURN_KV_KEY === 'caw-superrecaw-burn-v1' &&
      V.AUTHOR_PAY_KV_KEY === 'caw-author-pay-v1',
      'pending/scan storage keys match the app');

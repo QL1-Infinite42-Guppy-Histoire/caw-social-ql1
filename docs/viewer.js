@@ -244,18 +244,18 @@ const T = {
     slTitle: 'Send a SuperLike?',
     slTarget: 'Post', slTotal: 'Total', slToAuthor: 'To the author',
     slBurned: 'Burned (goes to nobody)', slBalance: 'Your O balance',
-    slConfirm: 'Send 25,000,000 O ⭐', slDone: 'SuperLike sent ⭐',
+    slConfirm: 'Send 5,000,000 O ⭐', slDone: 'SuperLike sent ⭐',
     slSelf: "You can't SuperLike your own post.",
-    slShortfall: 'Not enough O. A SuperLike costs 25,000,000 O in total (15,000,000 to the author + 10,000,000 burned). Get O on QL1 (for example by swapping on QomSwap), then try again.',
-    slPayPending: 'The burn went through ⭐ — but the 15,000,000 O payment to the author did not. Tap the ⭐ on this post to send just the payment.',
+    slShortfall: 'Not enough O. A SuperLike costs 5,000,000 O in total (4,000,000 to the author + 1,000,000 burned). Get O on QL1 (for example by swapping on QomSwap), then try again.',
+    slPayPending: 'The burn went through ⭐ — but the 4,000,000 O payment to the author did not. Tap the ⭐ on this post to send just the payment.',
     srcTitle: 'Send a SuperRecaw?',
     srcConfirm: 'Recaw + burn O ⭐', srcDone: 'SuperRecaw sent ⭐',
-    srcShortfall: 'Not enough O for a SuperRecaw (25,000,000 O in total: 5,000,000 to the author + 20,000,000 burned). You can still send a normal Recaw.',
+    srcShortfall: 'Not enough O for a SuperRecaw (5,000,000 O in total: 2,000,000 to the author + 3,000,000 burned). You can still send a normal Recaw.',
     srcBurnTitle: 'Finish the SuperRecaw burn?',
-    srcBurnConfirm: 'Burn 20,000,000 O', srcBurnDone: 'Burn done — SuperRecaw complete ⭐',
+    srcBurnConfirm: 'Burn 3,000,000 O', srcBurnDone: 'Burn done — SuperRecaw complete ⭐',
     srcBurnShortfall: 'Not enough O to finish the burn. Get O on QL1, then tap Recaw on this post again.',
     srcBurnPending: 'Your Recaw went out ⭐ — but its O burn did not. Tap Recaw on this post to finish just the burn.',
-    srcPayPending: 'Your SuperRecaw went out ⭐ — but the 5,000,000 O payment to the author did not. Tap Recaw on this post to send just the payment.',
+    srcPayPending: 'Your SuperRecaw went out ⭐ — but the 2,000,000 O payment to the author did not. Tap Recaw on this post to send just the payment.',
     srcSelfNote: 'This is your own post. Only the burn counts — no author payment is made, because the author is you.',
     payTitle: 'Finish the author payment?',
     payConfirm: 'Send {amount} O', payDone: 'Payment sent — all done ⭐',
@@ -447,18 +447,18 @@ const T = {
     slTitle: '超いいねを送りますか？',
     slTarget: '投稿', slTotal: '合計', slToAuthor: '投稿者へ',
     slBurned: 'バーン（誰にも届きません）', slBalance: 'あなたの O 残高',
-    slConfirm: '25,000,000 O を送る ⭐', slDone: '超いいねを送りました ⭐',
+    slConfirm: '5,000,000 O を送る ⭐', slDone: '超いいねを送りました ⭐',
     slSelf: '自分の投稿には超いいねできません。',
-    slShortfall: 'O が足りません。超いいねには合計 25,000,000 O が必要です（投稿者へ 15,000,000 + バーン 10,000,000）。QL1 で O を用意して（QomSwap で交換するなど）もう一度お試しください。',
-    slPayPending: 'バーンは通りました⭐ ただし投稿者への 15,000,000 O の支払いが終わっていません。この投稿の ⭐ を押すと、支払いだけを送れます。',
+    slShortfall: 'O が足りません。超いいねには合計 5,000,000 O が必要です（投稿者へ 4,000,000 + バーン 1,000,000）。QL1 で O を用意して（QomSwap で交換するなど）もう一度お試しください。',
+    slPayPending: 'バーンは通りました⭐ ただし投稿者への 4,000,000 O の支払いが終わっていません。この投稿の ⭐ を押すと、支払いだけを送れます。',
     srcTitle: 'SuperRecaw を送りますか？',
     srcConfirm: 'Recaw して O をバーン ⭐', srcDone: 'SuperRecaw を送りました ⭐',
-    srcShortfall: 'SuperRecaw に必要な O（合計 25,000,000 O: 投稿者へ 5,000,000 + バーン 20,000,000）が足りません。通常の Recaw なら送れます。',
+    srcShortfall: 'SuperRecaw に必要な O（合計 5,000,000 O: 投稿者へ 2,000,000 + バーン 3,000,000）が足りません。通常の Recaw なら送れます。',
     srcBurnTitle: 'SuperRecaw のバーンを仕上げますか？',
-    srcBurnConfirm: '20,000,000 O をバーンする', srcBurnDone: 'バーン完了 — SuperRecaw が成立しました ⭐',
+    srcBurnConfirm: '3,000,000 O をバーンする', srcBurnDone: 'バーン完了 — SuperRecaw が成立しました ⭐',
     srcBurnShortfall: 'バーンに必要な O が足りません。QL1 で O を用意して、この投稿の Recaw をもう一度押してください。',
     srcBurnPending: 'Recaw は送信されました⭐ ただし O のバーンが終わっていません。この投稿の Recaw を押すと、バーンだけを仕上げられます。',
-    srcPayPending: 'Recaw は送信されました⭐ ただし投稿者への 5,000,000 O の支払いが終わっていません。この投稿の Recaw を押すと、支払いだけを送れます。',
+    srcPayPending: 'Recaw は送信されました⭐ ただし投稿者への 2,000,000 O の支払いが終わっていません。この投稿の Recaw を押すと、支払いだけを送れます。',
     srcSelfNote: 'これは自分の投稿です。バーンだけが成立条件で、投稿者への支払いはありません（投稿者はあなた自身です）。',
     payTitle: '投稿者への支払いを仕上げますか？',
     payConfirm: '{amount} O を送る', payDone: '支払いを送りました — 完了です ⭐',
@@ -649,13 +649,19 @@ function escapeHtml(s) {
    parsePostText, so a marker can never be linkified. */
 function linkify(body) {
   const escaped = escapeHtml(body);
-  return escaped.replace(/(https?:\/\/[^\s<]+)|@([A-Za-z0-9_]{1,30})/g, (m, url, mention) => {
+  /* Mentions (aligned with the app in v21): an @name links to
+     the profile only when the @ is not glued to a preceding
+     word character (an email address never yields a mention),
+     the name is letters/digits (the CAW name charset — no
+     underscore), and the profile URL uses the lowercased name
+     while the displayed text keeps the typed case. */
+  return escaped.replace(/(https?:\/\/[^\s<]+)|(^|[^\w])@([A-Za-z0-9]{1,30})/g, (m, url, pre, mention) => {
     if (url) {
       const clean = url.replace(/[.,!?;:)”’]+$/, '');
       const tail = url.slice(clean.length);
       return '<a href="' + clean + '" target="_blank" rel="noopener">' + clean + '</a>' + tail;
     }
-    return '<a class="plink mention" href="' + PAGE_FILE + '?name=' + encodeURIComponent(mention) + '">@' + mention + '</a>';
+    return pre + '<a class="plink mention" href="' + PAGE_FILE + '?name=' + encodeURIComponent(mention.toLowerCase()) + '">@' + mention + '</a>';
   });
 }
 /* Compact relative time ("5m" / "3h" / "2d"; JA「5分」「3時間」
@@ -1442,25 +1448,30 @@ function mirrorDraftClear() {
   try { localStorage.removeItem(MIRROR_DRAFT_KEY); } catch (e) {}
 }
 
-/* ---------- SuperLike / SuperRecaw (v14) ----------
-   A straight port of the Android app's v0.6.3 design
+/* ---------- SuperLike / SuperRecaw (v14; v21 prices) ----------
+   A straight port of the Android app's design (v0.6.3
+   two-leg design; v0.7.0 prices)
    (caw-social-app src/lib/markedBurns.ts, authorPay.ts,
    superRecaw.ts, superlike.ts, actionFlow.ts) — the amounts,
    the marker codec, the detection sets, the debt records and
    the leg order are the app's, copied, not reinvented.
 
-   Both actions cost 25,000,000 O IN TOTAL (O = "Childhoods
+   Both actions cost 5,000,000 O IN TOTAL (O = "Childhoods
    End" on QL1, 18 decimals), split into a marked BURN leg —
    an ordinary O transfer to the burn address with a 4-byte
    magic ("SLK1" / "SRC1") + the post's 32-byte cawId appended
    as trailing calldata — and a plain, unmarked author-payment
    leg:
-     SuperLike:  15,000,000 to the author + 10,000,000 burned
-     SuperRecaw:  5,000,000 to the author + 20,000,000 burned
+     SuperLike:  4,000,000 to the author + 1,000,000 burned
+     SuperRecaw: 2,000,000 to the author + 3,000,000 burned
                  (after the normal Recaw action itself)
-   Burns of exactly 1,000,000 O (the v0.5.0–v0.6.2 spec) still
-   COUNT for both markers, forever — the detection sets accept
-   the current amount and the legacy one.
+   Prices are the app's v0.7.0 spec (user decision
+   2026-11-18), ported the same day. Burns at every earlier
+   era's price still COUNT, forever: the v0.6.3 burns
+   (10,000,000 SLK1 / 20,000,000 SRC1) and the v0.5.0–v0.6.2
+   burns of exactly 1,000,000 O are in both detection sets
+   (for SLK1 the 1,000,000 legacy value coincides with the
+   current burn price).
 
    Counts come from ONE chain-wide scan of O Transfer events
    TO the burn address, indexed by cawId (SuperRecaw also by
@@ -1473,13 +1484,15 @@ function mirrorDraftClear() {
 const O_TOKEN = '0x6c39b68a28bA90F4EB80032ec0eB32ad81cbbEd4';
 const BURN_ADDRESS = '0x000000000000000000000000000000000000dEaD';
 const oWhole = n => BigInt(n) * 10n ** 18n;
-const SUPERLIKE_TOTAL_O = 25000000;
-const SUPERLIKE_AUTHOR_O = 15000000;
-const SUPERLIKE_BURN_O = 10000000;
-const SUPERRECAW_TOTAL_O = 25000000;
-const SUPERRECAW_AUTHOR_O = 5000000;
-const SUPERRECAW_BURN_O = 20000000;
+const SUPERLIKE_TOTAL_O = 5000000;
+const SUPERLIKE_AUTHOR_O = 4000000;
+const SUPERLIKE_BURN_O = 1000000;
+const SUPERRECAW_TOTAL_O = 5000000;
+const SUPERRECAW_AUTHOR_O = 2000000;
+const SUPERRECAW_BURN_O = 3000000;
 const LEGACY_MARKED_BURN_O = 1000000;
+const V063_SUPERLIKE_BURN_O = 10000000;
+const V063_SUPERRECAW_BURN_O = 20000000;
 const SUPERLIKE_TOTAL_RAW = oWhole(SUPERLIKE_TOTAL_O);
 const SUPERLIKE_AUTHOR_RAW = oWhole(SUPERLIKE_AUTHOR_O);
 const SUPERLIKE_BURN_RAW = oWhole(SUPERLIKE_BURN_O);
@@ -1487,8 +1500,10 @@ const SUPERRECAW_TOTAL_RAW = oWhole(SUPERRECAW_TOTAL_O);
 const SUPERRECAW_AUTHOR_RAW = oWhole(SUPERRECAW_AUTHOR_O);
 const SUPERRECAW_BURN_RAW = oWhole(SUPERRECAW_BURN_O);
 const LEGACY_MARKED_BURN_RAW = oWhole(LEGACY_MARKED_BURN_O);
-const SUPERLIKE_BURN_AMOUNTS = [SUPERLIKE_BURN_RAW, LEGACY_MARKED_BURN_RAW];
-const SUPERRECAW_BURN_AMOUNTS = [SUPERRECAW_BURN_RAW, LEGACY_MARKED_BURN_RAW];
+const V063_SUPERLIKE_BURN_RAW = oWhole(V063_SUPERLIKE_BURN_O);
+const V063_SUPERRECAW_BURN_RAW = oWhole(V063_SUPERRECAW_BURN_O);
+const SUPERLIKE_BURN_AMOUNTS = [SUPERLIKE_BURN_RAW, V063_SUPERLIKE_BURN_RAW, LEGACY_MARKED_BURN_RAW];
+const SUPERRECAW_BURN_AMOUNTS = [SUPERRECAW_BURN_RAW, V063_SUPERRECAW_BURN_RAW, LEGACY_MARKED_BURN_RAW];
 const SUPERLIKE_MAGIC = '534c4b31'; // "SLK1"
 const SUPERRECAW_MAGIC = '53524331'; // "SRC1"
 const MARKED_BURN_START_BLOCK = 13400000;
@@ -5341,10 +5356,11 @@ if (typeof module !== 'undefined' && module.exports) {
     O_TOKEN, BURN_ADDRESS,
     SUPERLIKE_TOTAL_O, SUPERLIKE_AUTHOR_O, SUPERLIKE_BURN_O,
     SUPERRECAW_TOTAL_O, SUPERRECAW_AUTHOR_O, SUPERRECAW_BURN_O,
-    LEGACY_MARKED_BURN_O,
+    LEGACY_MARKED_BURN_O, V063_SUPERLIKE_BURN_O, V063_SUPERRECAW_BURN_O,
     SUPERLIKE_TOTAL_RAW, SUPERLIKE_AUTHOR_RAW, SUPERLIKE_BURN_RAW,
     SUPERRECAW_TOTAL_RAW, SUPERRECAW_AUTHOR_RAW, SUPERRECAW_BURN_RAW,
-    LEGACY_MARKED_BURN_RAW, SUPERLIKE_MAGIC, SUPERRECAW_MAGIC,
+    LEGACY_MARKED_BURN_RAW, V063_SUPERLIKE_BURN_RAW, V063_SUPERRECAW_BURN_RAW,
+    SUPERLIKE_MAGIC, SUPERRECAW_MAGIC,
     MARKED_BURN_START_BLOCK, MB_KV_KEY, SRC_BURN_KV_KEY, AUTHOR_PAY_KV_KEY,
     buildMarkedBurnData, buildSuperlikeData, buildSuperRecawData,
     buildAuthorPayData, buildTransferData, parseMarkedBurnInput,
