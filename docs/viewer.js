@@ -104,7 +104,7 @@ const T = {
     followKeepBtn: 'Keep reading the record', followDone: 'The whole record has been read.',
     followListsBuilding: 'Still reading the record — here is the list so far:',
     toTop: 'Back to top',
-    getDesc: 'A name is how people find you on CAW, and once you get one it is yours for good. It costs qCAW — the price depends on the name and is shown before you pay anything — plus a tiny QOM fee for the record-keepers. You need a wallet app (such as MetaMask or FoxWallet) with qCAW in it.',
+    getDesc: 'A name is how people find you on CAW, and once you get one it is yours for good. It costs qCAW — the price depends on the name and is shown before you pay anything — plus a tiny QOM fee for the record-keepers. Getting a name uses the built-in posting wallet, the same wallet you post with.',
     getPh: 'the name you want', getCheckBtn: 'Check',
     getInvalid: 'That name cannot be used. Names use small letters and numbers only.',
     getTaken: 'That name is already taken.', getSeeProfile: 'See that name’s page',
@@ -118,10 +118,13 @@ const T = {
     wrongChain: 'Your wallet is set to a different network.', switchBtn: 'Switch to QL1',
     switchFail: 'The network could not be switched.',
     yourQcaw: 'Your qCAW', yourQom: 'QOM (for the small fees)',
-    needWalletForName: 'Connect your wallet above to get this name.',
+    needWalletForName: 'Unlock the posting wallet above to get this name.',
+    getBuyCaw: 'Buy CAW',
+    getConfirmApprove: 'Allow {amount} qCAW to be used for this name?',
+    getConfirmMint: 'Get the name @{name} for {amount} qCAW?',
     notEnoughQcaw: 'You do not have enough qCAW for this name.',
     noGasQom: 'This wallet holds no QOM. A little QOM is needed for the small fees, so sending stays paused until some is there.',
-    step1: 'Step 1 of 2 — let this site use your qCAW to pay for the name',
+    step1: 'Step 1 of 2 — let your posting wallet use your qCAW to pay for the name',
     approveBtn: 'OK, allow it',
     step2: 'Step 2 of 2 — one more tap and the name is yours',
     mintBtn: 'Get this name',
@@ -130,11 +133,11 @@ const T = {
     mintDone: 'Done — this name is yours!', viewProfileBtn: 'See your new name’s page',
     mintChanged: 'Just now, that name was taken or stopped being available. Please check it again.',
     priceChanged: 'The price changed to {p} qCAW. Look it over, and try again when you are ready.',
-    sentUnconfirmed: 'Your wallet sent it, but the record is slow to settle. Give it a moment, then look at your names below.',
+    sentUnconfirmed: 'Your wallet sent it, but the record is slow to settle. Give it a moment, then check “My names”.',
     myNamesTitle: 'Your names', noNames: 'This wallet has no CAW names yet.',
     myNamesConnect: 'Connect your wallet to see the names you own.',
     pwTitle: 'Posting wallet',
-    pwIntro: 'Posting, liking, Recaws and follows are signed inside this page by this built-in wallet — the same way the Android app works. (Getting a name, further down, uses your wallet app instead.)',
+    pwIntro: 'Posting, liking, Recaws, follows and getting a name are signed inside this page by this built-in wallet — the same way the Android app works.',
     pwSafetyCreate: 'Use a separate wallet here, made only for CAW. Never type the recovery phrase of your main wallet.',
     pwSafetyStore: 'The key is encrypted with your password and stored only in this browser. It is never sent anywhere.',
     pwSafetyLose: 'If you clear this browser’s data, the wallet here is gone — it only comes back if you saved the recovery phrase.',
@@ -158,6 +161,8 @@ const T = {
     pwNextProfile: 'You came here from Profile — once unlocked, you will be taken straight to your profile.',
     pwNextDex: 'You came here from HuntersDEX — once unlocked, you will be taken straight to the swap panel.',
     pwNextBurn: 'You came here from BurnHawk — once unlocked, you will be taken straight to the burn panel.',
+    pwNextNames: 'You came here from My names — once unlocked, you will be taken straight to your names.',
+    pwNextGetname: 'You came here from Get a name — once unlocked, you will be taken straight to the name desk.',
     pwRevealBtn: 'Show the recovery phrase / private key',
     pwRevealTitle: 'Recovery phrase / private key',
     pwRevealWarn: 'Anyone who sees this can take everything in this wallet. Never share it, never type it into another site, and only look at it when nobody can see your screen.',
@@ -175,7 +180,7 @@ const T = {
     pwAddressLbl: 'Posting wallet', pwCopyBtn: 'Copy address',
     pwQomLbl: 'QOM (for the small fees)', pwQcawLbl: 'qCAW in this wallet',
     pwActingLbl: 'Posting as', pwNameBalanceLbl: 'qCAW inside this name',
-    pwNoNamesYet: 'This wallet has no CAW name yet, so there is nothing to post as. Get a name in the section further down (it uses your wallet app), and it will appear here.',
+    pwNoNamesYet: 'This wallet has no CAW name yet, so there is nothing to post as. Get one in “Get a name” (in the menu), and it will appear here.',
     pwLockBtn: 'Lock', pwRemoveBtn: 'Remove this wallet from this browser',
     pwRemoveWarn: 'This deletes the encrypted wallet stored in this browser. If you did not save the recovery phrase (or private key), this wallet is gone for good. Names and coins are NOT deleted — they stay on the public record and come back if you import the same phrase or key again.',
     pwRemoveTypeLbl: 'To remove it, type this word:', pwRemoveWord: 'delete',
@@ -229,11 +234,27 @@ const T = {
     navReactions: 'Notifications',
     ntNeedWallet: 'These are reactions to YOUR name. Set up or unlock the posting wallet and choose a name, and reactions to it will appear here.',
     ntOpenWallet: 'Open the wallet',
-    ntEmpty: 'No reactions found in the range scanned so far.',
+    ntEmpty: 'No new reactions since last time.',
     ntLiked: '{name} liked your post', ntRecawed: '{name} Recawed your post',
     ntReplied: '{name} replied to your post', ntQuoted: '{name} quoted your post',
     ntFollowed: '{name} followed you',
+    ntFollowedName: '{name} followed {target}', ntUnfollowed: '{name} unfollowed {target}',
+    ntCapped: 'Showing the most recent part only.',
     ntSuperLiked: '{name} SuperLiked your post', ntSuperRecawed: '{name} SuperRecawed your post',
+    /* v33 (M5/M7): profile customs + the My names screen —
+       wording mirrors the app (its profileCustom / mine
+       strings), with this browser standing in for the phone. */
+    customEdit: 'Edit profile', customTitle: 'Make it yours',
+    customNote: 'This look is only shown in this browser. Nothing on the chain changes, and your name itself stays the same.',
+    customNameLbl: 'Display name', customNamePh: 'A name to show instead',
+    customBioLbl: 'Bio', customBioPh: 'A short line about this name',
+    customSave: 'Save', customReset: 'Back to the default look',
+    customMediaNote: 'Pictures and audio are shared with everyone. Display name and bio stay in this browser only.',
+    mineSummary: '{count} names · {total} qCAW held in names',
+    mineNone: 'This wallet has no CAW names yet. Get one in “Get a name”!',
+    mineActive: 'Posting as this name', mineUseBtn: 'Post as this name',
+    mineLoading: 'Reading your names…',
+    mineWalletBal: 'qCAW in this wallet',
     navMirror: 'Mirror',
     mirrorWatchOff: 'Automatic X watch: not configured yet — the inbox and manual intake below work now.',
     mirrorTokenLabel: 'Inbox token (paste once; stored only in this browser)',
@@ -391,7 +412,7 @@ const T = {
     followKeepBtn: '続きを読み込む', followDone: '記録を全部読みました。',
     followListsBuilding: '記録を読み途中です — ここまでの一覧：',
     toTop: '上へ戻る',
-    getDesc: '名前は、CAW であなたを見つけてもらうためのものです。一度取れば、ずっとあなたのものです。料金は qCAW で、名前によって変わります（払う前に金額を表示します）。ほかに、記録のための小さな手数料として QOM が少し必要です。qCAW の入ったウォレットアプリ（MetaMask や FoxWallet など）をご用意ください。',
+    getDesc: '名前は、CAW であなたを見つけてもらうためのものです。一度取れば、ずっとあなたのものです。料金は qCAW で、名前によって変わります（払う前に金額を表示します）。ほかに、記録のための小さな手数料として QOM が少し必要です。名前を取る手続きは、投稿に使う内蔵の投稿用ウォレットで行います。',
     getPh: 'ほしい名前', getCheckBtn: '調べる',
     getInvalid: 'その名前は使えません。名前は小文字と数字だけです。',
     getTaken: 'その名前はすでに使われています。', getSeeProfile: 'その名前のページを見る',
@@ -405,10 +426,13 @@ const T = {
     wrongChain: 'ウォレットが別のネットワークになっています。', switchBtn: 'QL1 に切り替える',
     switchFail: 'ネットワークを切り替えられませんでした。',
     yourQcaw: 'あなたの qCAW', yourQom: 'QOM（手数料用）',
-    needWalletForName: 'この名前を取るには、上のボタンでウォレットをつないでください。',
+    needWalletForName: 'この名前を取るには、上の投稿用ウォレットを開いてください。',
+    getBuyCaw: 'CAWを買う',
+    getConfirmApprove: 'この名前のために {amount} qCAW の使用を許可しますか？',
+    getConfirmMint: '{amount} qCAW で @{name} を取りますか？',
     notEnoughQcaw: 'この名前を取るには qCAW が足りません。',
     noGasQom: 'このウォレットに QOM がありません。手数料用に少しの QOM が必要なので、入るまで送信は止めています。',
-    step1: 'ステップ 1/2：名前の料金に、あなたの qCAW を使う許可を出します',
+    step1: 'ステップ 1/2：名前の料金に、投稿用ウォレットの qCAW を使う許可を出します',
     approveBtn: '許可する',
     step2: 'ステップ 2/2：あと1タップで名前が取れます',
     mintBtn: 'この名前を取る',
@@ -417,11 +441,11 @@ const T = {
     mintDone: 'できました — この名前はあなたのものです！', viewProfileBtn: '新しい名前のページを見る',
     mintChanged: 'たった今、その名前が取られてしまったか、取れなくなりました。もう一度調べてください。',
     priceChanged: '価格が {p} qCAW に変わりました。確認してから、もう一度どうぞ。',
-    sentUnconfirmed: 'ウォレットからは送られましたが、記録の確定が遅れています。少し待ってから、下の「あなたの名前」を見てください。',
+    sentUnconfirmed: 'ウォレットからは送られましたが、記録の確定が遅れています。少し待ってから、「自分の名前」を見てください。',
     myNamesTitle: 'あなたの名前', noNames: 'このウォレットには、まだ CAW の名前がありません。',
     myNamesConnect: 'ウォレットをつなぐと、あなたの名前が表示されます。',
     pwTitle: '投稿用ウォレット',
-    pwIntro: '投稿・いいね・Recaw・フォローは、このページ内蔵のウォレットで、このページの中で署名します。Android アプリと同じ方式です。（名前を取る手続きは、下の方でウォレットアプリを使います。）',
+    pwIntro: '投稿・いいね・Recaw・フォロー・名前を取る手続きは、このページ内蔵のウォレットで、このページの中で署名します。Android アプリと同じ方式です。',
     pwSafetyCreate: 'ここでは CAW 専用の別のウォレットを使ってください。本命ウォレットの復元フレーズは絶対に入力しないでください。',
     pwSafetyStore: '鍵はあなたのパスワードで暗号化され、このブラウザの中にだけ保存されます。どこにも送信されません。',
     pwSafetyLose: 'このブラウザのデータを消すと、ここにあるウォレットは消えます。復元フレーズを控えておかないと、元に戻せません。',
@@ -445,6 +469,8 @@ const T = {
     pwNextProfile: 'プロフィールから来ています。解除すると、そのままあなたのプロフィールへ進みます。',
     pwNextDex: 'HuntersDEXから来ています。解除すると、そのまま交換の画面へ進みます。',
     pwNextBurn: 'BurnHawkから来ています。解除すると、そのままバーンの画面へ進みます。',
+    pwNextNames: '「自分の名前」から来ています。解除すると、そのまま名前の一覧へ進みます。',
+    pwNextGetname: '「名前を取る」から来ています。解除すると、そのまま名前を取る画面へ進みます。',
     pwRevealBtn: '復元フレーズ・秘密鍵を表示する',
     pwRevealTitle: '復元フレーズ／秘密鍵',
     pwRevealWarn: 'これを見た人は、このウォレットの中身をすべて使えてしまいます。誰にも見せず、他のサイトには絶対に入力せず、周りに人がいないときだけ表示してください。',
@@ -462,7 +488,7 @@ const T = {
     pwAddressLbl: '投稿用ウォレット', pwCopyBtn: 'アドレスをコピー',
     pwQomLbl: 'QOM（手数料用）', pwQcawLbl: 'このウォレットの qCAW',
     pwActingLbl: '投稿する名前', pwNameBalanceLbl: 'この名前の中の qCAW',
-    pwNoNamesYet: 'このウォレットには、まだ CAW の名前がありません。投稿できる名前がありません。下の方の欄で名前を取ると（ウォレットアプリを使います）、ここに出てきます。',
+    pwNoNamesYet: 'このウォレットには、まだ CAW の名前がありません。投稿できる名前がありません。メニューの「名前を取る」で取ると、ここに出てきます。',
     pwLockBtn: 'ロックする', pwRemoveBtn: 'このブラウザからウォレットを消す',
     pwRemoveWarn: 'このブラウザに保存された暗号化ウォレットを消します。復元フレーズ（または秘密鍵）を控えていない場合、このウォレットは二度と戻せません。名前やコインが消えるわけではありません — 公開の記録に残っていて、同じフレーズや鍵を取り込み直せば戻ってきます。',
     pwRemoveTypeLbl: '消すには、この言葉を入力してください：', pwRemoveWord: '削除',
@@ -516,11 +542,27 @@ const T = {
     navReactions: '通知',
     ntNeedWallet: 'ここに出るのは、あなたの名前への反応です。投稿用ウォレットを用意（または解錠）して名前を選ぶと、その名前への反応が表示されます。',
     ntOpenWallet: 'ウォレットを開く',
-    ntEmpty: 'いま走査した範囲では、反応はまだ見つかりません。',
+    ntEmpty: '前回から新しい反応はありません。',
     ntLiked: '{name} さんがいいねしました', ntRecawed: '{name} さんがRecawしました',
     ntReplied: '{name} さんが返信しました', ntQuoted: '{name} さんが引用しました',
     ntFollowed: '{name} さんがフォローしました',
+    ntFollowedName: '{name} さんが {target} をフォローしました', ntUnfollowed: '{name} さんが {target} のフォローをやめました',
+    ntCapped: '最近の分だけを表示しています。',
     ntSuperLiked: '{name} さんがSuperLikeしました', ntSuperRecawed: '{name} さんがSuperRecawしました',
+    /* v33 (M5/M7): プロフィールの見た目 + 自分の名前の画面 —
+       アプリの profileCustom / mine の文言に合わせる（端末の
+       言い回しはブラウザに置き換えた）。 */
+    customEdit: 'プロフィールを編集', customTitle: '見た目を変える',
+    customNote: 'この見た目は、このブラウザの中だけの表示です。チェーンの情報は変わらず、名前そのものも変わりません。',
+    customNameLbl: '表示名', customNamePh: '代わりに表示する名前',
+    customBioLbl: '自己紹介', customBioPh: 'この名前のひとこと紹介',
+    customSave: '保存する', customReset: 'もとの見た目に戻す',
+    customMediaNote: '画像と音声は、みんなに見える形で公開されます。表示名と自己紹介は、このブラウザの中だけのままです。',
+    mineSummary: '名前 {count} 件 · 名前の中の qCAW 合計 {total}',
+    mineNone: 'このウォレットには、まだ CAW の名前がありません。「名前を取る」で取ってみましょう！',
+    mineActive: 'この名前で投稿中', mineUseBtn: 'この名前で投稿する',
+    mineLoading: '名前を読み込んでいます…',
+    mineWalletBal: 'このウォレットの qCAW',
     navMirror: 'X転写',
     mirrorWatchOff: 'Xの自動監視：未設定です（下の受信箱と手動取り込みは今すぐ使えます）。',
     mirrorTokenLabel: '受信箱トークン（1回貼ればこのブラウザに保存されます）',
@@ -1052,16 +1094,15 @@ function avatarFor(idIn) {
 }
 
 /* ---------- getting a name: the check + the calldata (v11) ----------
-   The ONE write feature of this site. Minting a name is ordinary
-   contract calls sent through the visitor's own wallet — it needs
-   no signature scheme at all (that is what separates it from
-   posting, which stays in the Android app). checkName mirrors the
-   app's exactly: the contract's own validity gate, taken-ness
-   through the same card-verified resolver the lookup uses, and
-   the contract's own price. Names are normalised the way the app
-   normalises its input field: trimmed and lowercased. The two
-   calldata builders are the whole write vocabulary of the site —
-   the wallet UI further down can only ever send these. */
+   checkName mirrors the app's exactly: the contract's own
+   validity gate, taken-ness through the same card-verified
+   resolver the lookup uses, and the contract's own price.
+   Names are normalised the way the app normalises its input
+   field: trimmed and lowercased. The two calldata builders
+   below are sent by the mint flow further down — since v33
+   (D8) through the built-in posting wallet (sendLocalTx),
+   like every other send on this site; before v33 they went
+   through the visitor's injected wallet app. */
 function normalizeNameInput(s) {
   return String(s || '').trim().toLowerCase().replace(/^@/, '');
 }
@@ -1081,6 +1122,12 @@ async function checkName(rawName) {
    0x-prefixed calldata, exactly what the wallet is handed. */
 const buildApproveCalldata = cost => SEL.approve + encAddr(MINTER) + word(cost);
 const buildMintCalldata = name => SEL.mint + encStr(name);
+/* v33 (D19): the app's mintable-username rule (cawCore.ts
+   isMintableUsername) — lowercase letters and digits ONLY.
+   The mint form checks this live while typing, so an unusable
+   name is flagged at once instead of only after the Check
+   button's chain round-trip. */
+const isMintableUsername = n => typeof n === 'string' && /^[a-z0-9]+$/.test(n);
 
 /* ---------- name NFT preview (v11) ----------
    The REAL name-card design, reproduced locally for any name
@@ -1141,12 +1188,21 @@ function refChildren(cawId, kind) {
    nothing is inferred: no match, no notification. Pure over
    (item, myId, myPostIds) so the harness can drive it. */
 function ntClassify(it, myId, myPosts) {
+  return ntClassifyAny(it, new Set([myId.toString()]), myPosts);
+}
+/* v33 (M11): the same classification against ANY of my names
+   (the app's inbox scopes reactions to every name the wallet
+   owns, not just the acting one), plus the unfollow kind the
+   app has and the web was missing: a type 4 whose receiver is
+   one of my names. Actions by any of my own names never
+   count. Pure over (item, myIds, myPostIds). */
+function ntClassifyAny(it, myIds, myPosts) {
   if (!it || it.senderId === undefined || it.senderId === null) return null;
-  const me = myId.toString();
-  if (it.senderId.toString() === me) return null;
-  if (it.type === 3) {
-    return (it.receiverId !== undefined && it.receiverId !== null &&
-      it.receiverId.toString() === me) ? 'follow' : null;
+  if (myIds.has(it.senderId.toString())) return null;
+  if (it.type === 3 || it.type === 4) {
+    const hit = it.receiverId !== undefined && it.receiverId !== null &&
+      myIds.has(it.receiverId.toString());
+    return hit ? (it.type === 3 ? 'follow' : 'unfollow') : null;
   }
   if (it.type === 1) return myPosts.has((it.cawId || '').toLowerCase()) ? 'like' : null;
   if (it.type === 2) return myPosts.has((it.cawId || '').toLowerCase()) ? 'recaw' : null;
@@ -1156,6 +1212,12 @@ function ntClassify(it, myId, myPosts) {
   }
   return null;
 }
+/* The unread-badge label: the count itself, capped at 99+
+   (the app's badge does the same). Pure, harness-checked. */
+const ntBadgeText = n => (n > 99 ? '99+' : String(Math.max(0, n | 0)));
+/* The inbox scan's page bound (the app's maxPages): when the
+   walk is cut by it, the view says so — see ntScanInbox. */
+const NT_SCAN_MAX_PAGES = 40;
 
 const pageCache = new Map();
 const HEAD_KEY = '__first__';
@@ -2133,6 +2195,66 @@ function myObserveItems(address, myNameIds, items) {
   }
   if (changed) myPersistSet(address, set);
 }
+
+/* ---------- profile customs (v33, M5) ----------
+   The app's on-device profile look (profileCustom.ts): a
+   display name and a bio kept ONLY on this device, keyed by
+   name id — the chain and other devices never see them.
+   Same storage key and merge rules as the app: saving an
+   empty string removes that field, and an entry with nothing
+   left in it disappears. Only display text is ever stored
+   here — never anything secret. (The app also keeps local
+   picture paths in its store; on the web, pictures and audio
+   live on the media server instead, so they are not part of
+   this store.) */
+const PROFILE_CUSTOMS_KEY = 'caw-profile-customs';
+const CUSTOM_NAME_MAX = 40, CUSTOM_BIO_MAX = 160;
+let profileCustomsCache = null;
+function profileCustomsLoad() {
+  if (profileCustomsCache) return profileCustomsCache;
+  let m = {};
+  try {
+    const raw = localStorage.getItem(PROFILE_CUSTOMS_KEY);
+    const o = raw ? JSON.parse(raw) : null;
+    if (o && typeof o === 'object') {
+      for (const k of Object.keys(o)) {
+        const c = o[k];
+        if (!c || typeof c !== 'object') continue;
+        const e = {};
+        if (typeof c.displayName === 'string' && c.displayName) e.displayName = c.displayName;
+        if (typeof c.bio === 'string' && c.bio) e.bio = c.bio;
+        if (Object.keys(e).length) m[k] = e;
+      }
+    }
+  } catch (e) { m = {}; }
+  profileCustomsCache = m;
+  return m;
+}
+function profileCustomFor(idIn) {
+  if (idIn == null) return null;
+  return profileCustomsLoad()[String(idIn)] || null;
+}
+function profileCustomSave(idIn, patch) {
+  const m = profileCustomsLoad();
+  const k = String(idIn);
+  const cur = Object.assign({}, m[k]);
+  for (const f of ['displayName', 'bio']) {
+    if (!(f in patch)) continue;
+    const v = patch[f];
+    if (v) cur[f] = v; else delete cur[f];
+  }
+  if (Object.keys(cur).length) m[k] = cur; else delete m[k];
+  try { localStorage.setItem(PROFILE_CUSTOMS_KEY, JSON.stringify(m)); } catch (e) {}
+  return m[k] || null;
+}
+/* The app's displayLabel: the custom display name when one is
+   set, else the plain @name. */
+const customDisplayLabel = (custom, username) =>
+  custom && custom.displayName ? custom.displayName : (username ? '@' + username : '');
+/* Trim, then cap at the app's field limits (an input's
+   maxlength counts UTF-16 units, and so does this slice). */
+const cleanCustomText = (s, max) => String(s == null ? '' : s).trim().slice(0, max);
+
 /* --- BurnHawk money rules (the app's burnHawk.ts) --- */
 const burnUnit = dec => 10n ** BigInt(dec);
 const burnStepRaw = dec => BURN_RATIO * burnUnit(dec);
@@ -3305,7 +3427,12 @@ async function postCard(a, opts) {
      display name as-is — no "@" on it; the "@" lives only on
      line 2, with the handle and the time. (v13/v15 put the
      "@handle" on BOTH lines.) */
-  const display = name ? name : who;
+  /* v33 (M5): a custom display name set on THIS device wins
+     the header line (the app's PostCard rule) — in practice
+     that is the reader's own names, the only ones customs
+     exist for. The @handle stays on line 2 either way. */
+  const custom = profileCustomFor(a.senderId);
+  const display = custom && custom.displayName ? custom.displayName : (name ? name : who);
   const nameHtml = profHref ? '<a class="plink" href="' + profHref + '">' + esc(display) + '</a>' : esc(display);
   html += '<div class="meta"><span class="name">' + nameHtml + '</span></div>';
   html += '<div class="subline">' + (name ? '<span class="handle">' + esc('@' + name) + '</span>' : '') +
@@ -3901,11 +4028,17 @@ async function loadProfile() {
      v9 behaviour kept; the Followers number is the chain's own
      followerCount) and the name's own qCAW balance as a plain
      display cell. */
+  /* v33 (M5): this device's custom look for the name, if one
+     is set — the display name stands where @name stood, and
+     the bio shows under the handle line. Other devices see
+     neither; that is the app's on-device semantics. */
+  const custom = profileCustomFor(id);
   head.innerHTML = '<div class="pband"></div>' +
     '<div class="prow"><div class="pava">' + avatarHtml(img, username) + '</div>' +
     '<div class="pactions" id="profFollowArea"></div></div>' +
-    '<div class="pname">@' + esc(username) + '</div>' +
+    '<div class="pname">' + esc(custom && custom.displayName ? custom.displayName : '@' + username) + '</div>' +
     '<div class="phandle">@' + esc(username) + ' · #' + id.toString() + '</div>' +
+    (custom && custom.bio ? '<div class="pbio">' + esc(custom.bio).replace(/\n/g, '<br>') + '</div>' : '') +
     '<div class="counts-row">' +
     '<button type="button" class="count-cell" id="followingBtn"><span class="cc-num" id="followingCount">—</span><span class="cc-lbl">' + esc(T.followingLbl) + '</span></button>' +
     '<button type="button" class="count-cell" id="followersBtn"><span class="cc-num">' + (followers !== null ? esc(followers.toString()) : '—') + '</span><span class="cc-lbl">' + esc(T.followersLbl) + '</span></button>' +
@@ -3998,13 +4131,17 @@ async function loadProfilePosts() {
   } finally { profLoading = false; }
 }
 
-/* ---------- profile follow lists (reconstructed, v9; chunked v10) ----------
-   The build runs in chunks of FOLLOW_CHUNK_PAGES feed pages per
-   activation. After each chunk the lists render from whatever
-   pairs are known so far (labelled as still being built); while
-   pages remain, a "Keep reading the record" button runs the next
-   chunk. When the walk completes, the area says so plainly. */
+/* ---------- profile follow lists (reconstructed, v9; automatic v33) ----------
+   v33 (D9): opening a list builds it progressively and
+   AUTOMATICALLY, the way the app's modal does — the walk runs
+   chunk after chunk (FOLLOW_CHUNK_PAGES feed pages each) with
+   no "keep reading" button to tap, the rows render from
+   whatever pairs are known so far after every chunk, and the
+   status line counts the pages walked in THIS opening. The
+   loop stops the moment the panel closes (another kind opens,
+   or the profile goes away) or the record is fully read. */
 let followOpenKind = null;
+let followListPages = 0; // pages walked since this list opened
 async function renderFollowLists(kind) {
   const box = $('followLists');
   if (!box || !profileState) return;
@@ -4019,12 +4156,20 @@ async function renderFollowLists(kind) {
   box.innerHTML = '';
   const status = document.createElement('p');
   status.className = 'small';
-  status.textContent = st.complete ? T.followDone : T.followListsBuilding;
+  status.id = 'followListStatus';
+  status.textContent = st.complete ? T.followDone :
+    T.followBuilding.replace('{n}', String(followListPages));
   box.appendChild(status);
   if (!ids.length && st.complete) {
     const e = document.createElement('p');
     e.className = 'small';
     e.textContent = T.followEmpty;
+    box.appendChild(e);
+  }
+  if (!ids.length && !st.complete) {
+    const e = document.createElement('p');
+    e.className = 'small';
+    e.textContent = T.followListsBuilding;
     box.appendChild(e);
   }
   if (ids.length) {
@@ -4041,32 +4186,30 @@ async function renderFollowLists(kind) {
     if (followOpenKind !== kind) return;
     for (const r of rows) box.appendChild(r);
   }
-  if (!st.complete) {
-    const kb = document.createElement('button');
-    kb.type = 'button';
-    kb.className = 'ghost';
-    kb.textContent = T.followKeepBtn;
-    kb.onclick = () => continueFollowBuild(kind);
-    box.appendChild(kb);
-  }
   const note = document.createElement('p');
   note.className = 'small';
   note.textContent = T.followNote;
   box.appendChild(note);
 }
-async function continueFollowBuild(kind) {
-  const box = $('followLists');
-  if (!box) return;
-  box.innerHTML = '<p class="small">' + esc(T.followBuilding.replace('{n}', '0')) + '</p>';
-  try {
-    await buildFollowIndex(pages => {
-      if (followOpenKind === kind) {
-        box.innerHTML = '<p class="small">' + esc(T.followBuilding.replace('{n}', String(pages))) + '</p>';
-      }
-    });
-  } catch (e) { /* render whatever was merged */ }
-  if (followOpenKind !== kind || !profileState) return;
-  renderFollowLists(kind);
+/* The automatic build loop for an open list: one chunk, update
+   the progress line as it walks, re-render the rows, repeat
+   until the build completes or the panel closes. */
+async function followAutoBuild(kind) {
+  let base = followListPages;
+  while (followOpenKind === kind && profileState && !followBuildState().complete) {
+    try {
+      await buildFollowIndex(pages => {
+        followListPages = base + pages;
+        const st = $('followListStatus');
+        if (st && followOpenKind === kind) {
+          st.textContent = T.followBuilding.replace('{n}', String(followListPages));
+        }
+      });
+    } catch (e) { break; /* render whatever was merged */ }
+    base = followListPages;
+    if (followOpenKind !== kind || !profileState) return;
+    await renderFollowLists(kind);
+  }
 }
 async function openFollowList(kind) {
   if (!profileState) return;
@@ -4074,8 +4217,9 @@ async function openFollowList(kind) {
   if (!box) return;
   if (followOpenKind === kind) { box.innerHTML = ''; followOpenKind = null; return; }
   followOpenKind = kind;
-  if (followBuildState().complete) renderFollowLists(kind);
-  else continueFollowBuild(kind);
+  followListPages = 0;
+  renderFollowLists(kind);
+  if (!followBuildState().complete) followAutoBuild(kind);
 }
 
 /* ---------- post text search (?q=keyword, v9) ---------- */
@@ -4145,142 +4289,42 @@ async function doLookup() {
   }
 }
 
-/* ---------- wallet + getting a name (v11) ----------
-   The ONLY write path on this site. Every send goes through the
-   sendTx helper below — the single place in this file that asks
-   the visitor's wallet to send a transaction — and the only two
-   payloads it can ever carry are the approve and mint calldata
-   built above. This page never asks the wallet for any kind of
-   signature and never sees a key or a phrase: the wallet app
-   holds those and shows its own confirmation for each step.
-   Amounts are never trusted from an earlier render: the price is
-   re-read at click time before either send, and sending stops
-   with the new price shown if it moved. */
-let injectedProvider = (typeof window !== 'undefined' && window.ethereum) || null;
-const boundProviders = new WeakSet();
-let walletAccount = null, walletChainId = null;
-const onQl1 = () => walletChainId === CHAIN_ID_HEX;
-function bindProvider(p) {
-  if (!p || boundProviders.has(p)) return;
-  boundProviders.add(p);
-  if (typeof p.on === 'function') {
-    p.on('accountsChanged', () => refreshWallet());
-    p.on('chainChanged', () => refreshWallet());
-  }
-}
-function noteProvider(p) {
-  if (!p) return;
-  if (!injectedProvider) { injectedProvider = p; bindProvider(p); refreshWallet(); }
-  else bindProvider(injectedProvider);
-}
-if (injectedProvider) bindProvider(injectedProvider);
-window.addEventListener('eip6963:announceProvider', e => {
-  try { noteProvider(e.detail && e.detail.provider); } catch (err) {}
-});
-try { window.dispatchEvent(new Event('eip6963:requestProvider')); } catch (err) {}
-{ /* Wallets can inject after the page loads: keep looking for
-     about 12 seconds, like the earlier site learned to. */
-  let tries = 0;
-  const iv = setInterval(() => {
-    if (window.ethereum) noteProvider(window.ethereum);
-    if (injectedProvider || ++tries >= 24) clearInterval(iv);
-  }, 500);
-}
-async function walletRequest(method, params) {
-  if (!injectedProvider) throw new Error('no wallet app');
-  return injectedProvider.request({ method, params });
-}
+/* ---------- getting a name: the wallet area (v11; posting wallet since v33) ----------
+   v33 (D8): minting moved from the visitor's injected wallet
+   app to the built-in posting wallet — the app's model, where
+   one wallet does everything. The whole injected-provider
+   machinery that used to live here (provider discovery,
+   connect / switch-chain, and the sendTx helper that asked
+   the wallet app to send) is GONE: the approve and the mint
+   now go out through sendLocalTx, the posting wallet's one
+   broadcast path, after the shared confirm panel — exactly
+   like every other send on this site. Nothing on this site
+   talks to an injected provider any more.
+   Amounts are never trusted from an earlier render: the price
+   is re-read at click time before either send (mintGuard),
+   and sending stops with the new price shown if it moved. */
 /* The wallet's own words, in small print under the plain words. */
 const errDetailHtml = e => {
   const m = (e && e.message) ? String(e.message) : (e ? String(e) : '');
   return m ? '<div class="errdetail">' + esc(m) + '</div>' : '';
 };
-function showWalletStatus(plain, e) {
-  const el = $('walletStatus');
-  if (el) el.innerHTML = '<span class="err">' + esc(plain) + '</span>' + errDetailHtml(e);
-}
-
-async function refreshWallet() {
-  const area = $('walletArea');
-  if (!area) return;
-  if (!injectedProvider) {
-    walletAccount = null; walletChainId = null;
-    area.innerHTML = '<p class="small">' + esc(T.noWallet) + '</p>' +
-      '<p><button id="walletRecheck" class="ghost" type="button">' + esc(T.recheckBtn) + '</button></p>';
-    const rb = $('walletRecheck');
-    if (rb) rb.onclick = () => { if (window.ethereum) noteProvider(window.ethereum); refreshWallet(); };
-    renderMintArea(); renderMyNames();
-    return;
-  }
-  try {
-    const accts = await walletRequest('eth_accounts');
-    walletAccount = accts && accts[0] ? accts[0] : null;
-    walletChainId = await walletRequest('eth_chainId');
-  } catch (e) { walletAccount = null; }
-  if (!walletAccount) {
-    area.innerHTML = '<button id="connectBtn" class="big-connect" type="button">' + esc(T.connectBtn) + '</button>' +
-      '<p id="walletStatus"></p>';
-    $('connectBtn').onclick = connectWallet;
-  } else if (!onQl1()) {
-    area.innerHTML = '<div class="addrline"><span class="dot dot-warn"></span><span>' + esc(shortAddr(walletAccount)) + '</span></div>' +
-      '<p class="warn">' + esc(T.wrongChain) + '</p>' +
-      '<p><button id="switchBtn" type="button">' + esc(T.switchBtn) + '</button></p>' +
-      '<p id="walletStatus"></p>';
-    $('switchBtn').onclick = switchChain;
-  } else {
-    area.innerHTML = '<div class="addrline"><span class="dot dot-ok"></span><span>' + esc(shortAddr(walletAccount)) + '</span>' +
-      '<span class="chainbadge">QL1</span></div>' +
-      '<p id="walletStatus"></p>';
-  }
-  renderMintArea();
-  renderMyNames();
-}
-async function connectWallet() {
-  let err = null;
-  try { await walletRequest('eth_requestAccounts'); } catch (e) { err = e; }
-  await refreshWallet();
-  if (err) showWalletStatus(T.connectFail, err);
-}
-async function switchChain() {
-  let err = null;
-  try {
-    await walletRequest('wallet_switchEthereumChain', [{ chainId: CHAIN_ID_HEX }]);
-  } catch (e) {
-    if (e && (e.code === 4902 || /unrecognized chain/i.test(e.message || ''))) {
-      try {
-        await walletRequest('wallet_addEthereumChain', [{
-          chainId: CHAIN_ID_HEX, chainName: 'QL1',
-          nativeCurrency: { name: 'QOM', symbol: 'QOM', decimals: 18 },
-          rpcUrls: [RPC], blockExplorerUrls: [EXPLORER],
-        }]);
-      } catch (e2) { err = e2; }
-    } else err = e;
-  }
-  await refreshWallet();
-  if (err) showWalletStatus(T.switchFail, err);
-}
-/* Send ONE ordinary contract call through the visitor's wallet
-   and wait until the public record confirms it. A mined failure
-   throws; a record that stays unconfirmed for minutes throws
-   with `unconfirmed` set and the hash attached, so the caller can
-   say honestly that it was sent but is slow to settle. */
-async function sendTx(to, data, onHash) {
-  const hash = await walletRequest('eth_sendTransaction', [{ from: walletAccount, to, data }]);
-  if (onHash) onHash(hash);
-  for (let i = 0; i < 60; i++) {
-    await new Promise(r => setTimeout(r, 2500));
-    const rc = await rpc('eth_getTransactionReceipt', [hash]).catch(() => null);
-    if (rc) {
-      if (rc.status !== '0x1') { const e = new Error('the record says this one failed'); e.txHash = hash; throw e; }
-      return hash;
-    }
-  }
-  const e = new Error('no confirmation yet');
-  e.txHash = hash; e.unconfirmed = true;
-  throw e;
-}
 const txLinkHtml = hash => hash
   ? ' <a href="' + EXPLORER + '/tx/' + hash + '" target="_blank" rel="noopener">' + esc(T.viewTx) + ' ↗</a>' : '';
+
+/* The Get-a-name view's wallet strip: the posting wallet's
+   address when it is unlocked; the in-place unlock wall when
+   it is locked (v29/v30 treatment — no dead-end wallet link);
+   the guide + a ?next=getname wallet link when this browser
+   holds no vault at all. */
+function renderGetnameWallet() {
+  const area = $('gnWalletArea');
+  if (!area) return;
+  if (!pwSession) { renderTradeWall(area, 'getname'); return; }
+  area.innerHTML = '<div class="addrline"><span class="dot dot-ok"></span><span>' +
+    esc(shortAddr(pwSession.address)) + '</span>' +
+    '<span class="chainbadge">QL1</span></div>' +
+    '<p class="small">' + esc(T.pwTitle) + '</p>';
+}
 
 /* ----- the name check (mint section) ----- */
 let mintCheckState = null; // {name, valid, taken, cost}
@@ -4293,7 +4337,16 @@ function paintMintCheck() {
   const out = $('mintCheckResult');
   if (!out) return;
   const r = mintCheckState;
-  if (!r) { out.innerHTML = ''; return; }
+  if (!r) {
+    /* v33 (D19): with no completed check, the live format
+       verdict still paints — the app's formatBad state, shown
+       while typing, before any chain read is spent. */
+    const input = $('mintNameInput');
+    const raw = input ? input.value.trim().toLowerCase() : '';
+    out.innerHTML = raw && !isMintableUsername(raw)
+      ? '<p class="err">' + esc(T.getInvalid) + '</p>' : '';
+    return;
+  }
   if (!r.valid) out.innerHTML = '<p class="err">' + esc(T.getInvalid) + '</p>';
   else if (r.taken) out.innerHTML = '<p class="warn">' + esc(T.getTaken) + '</p>' + mintPreviewHtml(r.name) +
     '<p><a class="chip name-chip" href="' + profUrl(r.name) + '">' + esc(T.getSeeProfile) + '</a></p>';
@@ -4315,6 +4368,24 @@ async function doMintCheck() {
   }
   renderMintArea();
 }
+/* v33 (D19): typing in the name field — the app's input
+   behaviour. The field lowercases as you type; ANY change
+   drops the completed check (the app clears its check state
+   on every edit, so a stale "available" can never sit under
+   a different name); and an unusable character set is flagged
+   live via paintMintCheck, with no chain read spent on it.
+   The Check button above stays as the fallback. */
+function onMintNameInput() {
+  const input = $('mintNameInput');
+  if (!input) return;
+  const low = input.value.toLowerCase();
+  if (input.value !== low) input.value = low;
+  if (mintCheckState && mintCheckState.name !== normalizeNameInput(input.value)) {
+    mintCheckState = null;
+    renderMintArea();
+  }
+  paintMintCheck();
+}
 
 /* ----- the two steps (approve, then mint) ----- */
 let mintBusy = false, mintRenderSeq = 0;
@@ -4325,16 +4396,20 @@ async function renderMintArea() {
   const seq = ++mintRenderSeq;
   const st = mintCheckState;
   if (!st || !st.valid || st.taken) { area.innerHTML = ''; return; }
-  if (!injectedProvider || !walletAccount || !onQl1()) {
+  /* v33 (D8): the balances, the allowance and the names this
+     view talks about are the POSTING wallet's now. Locked:
+     the unlock wall above (renderGetnameWallet) carries the
+     way in; this area just says so. */
+  if (!pwSession) {
     area.innerHTML = '<p class="small">' + esc(T.needWalletForName) + '</p>';
     return;
   }
   let bal, allow, qom;
   try {
     [bal, allow, qom] = await Promise.all([
-      readUint(QCAW, SEL.balanceOf + encAddr(walletAccount)),
-      readUint(QCAW, SEL.allowance + encAddr(walletAccount) + encAddr(MINTER)),
-      rpc('eth_getBalance', [walletAccount, 'latest']).then(h => BigInt(h)),
+      readUint(QCAW, SEL.balanceOf + encAddr(pwSession.address)),
+      readUint(QCAW, SEL.allowance + encAddr(pwSession.address) + encAddr(MINTER)),
+      rpc('eth_getBalance', [pwSession.address, 'latest']).then(h => BigInt(h)),
     ]);
   } catch (e) {
     if (seq !== mintRenderSeq) return;
@@ -4345,7 +4420,11 @@ async function renderMintArea() {
   let html = '<p class="small">' + esc(T.yourQcaw) + ': <b>' + esc(fmtQcaw(bal)) + '</b> qCAW · ' +
     esc(T.yourQom) + ': <b>' + esc(fmtQcaw(qom)) + '</b> QOM</p>';
   if (qom === 0n) html += '<p class="warn">' + esc(T.noGasQom) + '</p>';
-  else if (bal < st.cost) html += '<p class="err">' + esc(T.notEnoughQcaw) + '</p>';
+  /* v33 (M13): not enough qCAW — the app's answer is a Buy
+     CAW link into the DEX; here it lands on the HuntersDEX
+     view. */
+  else if (bal < st.cost) html += '<p class="err">' + esc(T.notEnoughQcaw) + '</p>' +
+    '<p><a class="chip" href="' + pageFile + '?dex=1">' + esc(T.getBuyCaw) + ' →</a></p>';
   else if (allow < st.cost) {
     html += '<p>' + esc(T.step1) + '</p>' +
       '<p><button id="approveBtn" type="button">' + esc(T.approveBtn) + ' (' + esc(fmtQcaw(st.cost)) + ' qCAW)</button></p>';
@@ -4360,138 +4439,148 @@ async function renderMintArea() {
 }
 /* Re-check a name at click time. Returns the fresh check when the
    send may proceed, or null after updating the page to show what
-   changed (taken meanwhile, or a moved price). */
+   changed (taken meanwhile, or a moved price). mintGuardWhy
+   records which stop it was, so the confirm panel can name it. */
+let mintGuardWhy = null; // {kind:'changed'} | {kind:'price', price}
 async function mintGuard(st) {
   const fresh = await checkName(st.name);
   if (!fresh.valid || fresh.taken) {
+    mintGuardWhy = { kind: 'changed' };
     mintCheckState = fresh; paintMintCheck(); await renderMintArea();
     setMintStatus('<span class="warn">' + esc(T.mintChanged) + '</span>');
     return null;
   }
   if (fresh.cost !== st.cost) {
+    mintGuardWhy = { kind: 'price', price: fresh.cost };
     mintCheckState = fresh; paintMintCheck(); await renderMintArea();
     setMintStatus('<span class="warn">' + esc(T.priceChanged.replace('{p}', fmtQcaw(fresh.cost))) + '</span>');
     return null;
   }
+  mintGuardWhy = null;
   return fresh;
 }
-async function doApprove() {
-  if (mintBusy || !mintCheckState) return;
-  mintBusy = true;
-  const btn = $('approveBtn'); if (btn) btn.disabled = true;
-  setMintStatus('<span class="small">' + esc(T.sendingWallet) + '</span>');
-  try {
-    const fresh = await mintGuard(mintCheckState);
-    if (!fresh) return;
-    setMintStatus('<span class="small">' + esc(T.sendingWallet) + '</span>');
-    await sendTx(QCAW, buildApproveCalldata(fresh.cost),
-      h => setMintStatus('<span class="small">' + esc(T.recording) + '</span>' + txLinkHtml(h)));
-    /* The record confirmed: re-read everything (the allowance
-       included) and let the area advance to step 2 on its own. */
-    await renderMintArea();
-  } catch (e) {
-    if (e && e.unconfirmed) {
-      setMintStatus('<span class="warn">' + esc(T.sentUnconfirmed) + '</span>' + txLinkHtml(e.txHash));
-      renderMintArea();
-    } else {
-      setMintStatus('<span class="err">' + esc(T.sendFail) + '</span>' + txLinkHtml(e && e.txHash) + errDetailHtml(e));
-      const b = $('approveBtn'); if (b) b.disabled = false;
-    }
-  } finally { mintBusy = false; }
+function mintGuardError() {
+  if (mintGuardWhy && mintGuardWhy.kind === 'price') {
+    const e = new Error('price-changed');
+    e.priceText = fmtQcaw(mintGuardWhy.price);
+    return e;
+  }
+  return new Error('mint-changed');
 }
-/* Did the name land under this account? The card-verified
+/* v33 (D8): the two steps run through the shared confirm panel
+   (the app's ConfirmSheet wording) and sign with the posting
+   wallet via sendLocalTx. Step 1 approves the EXACT fresh cost,
+   and only ever runs when the allowance is short — the mint
+   area only offers it then. */
+function doApprove() {
+  if (mintBusy || !mintCheckState || !pwSession) return;
+  const st = mintCheckState;
+  openConfirmPanel({
+    title: T.getConfirmApprove.replace('{amount}', fmtQcaw(st.cost)),
+    lines: [
+      [T.confirmNameLbl, '@' + st.name],
+      [T.confirmAmountLbl, fmtQcaw(st.cost) + ' qCAW'],
+    ],
+    signLabel: T.approveBtn,
+    onSign: async setStatus => {
+      mintBusy = true;
+      try {
+        const fresh = await mintGuard(st);
+        if (!fresh) throw mintGuardError();
+        const r = await sendLocalTx(pwSession.keyBytes, {
+          to: QCAW, data: buildApproveCalldata(fresh.cost), gasFallback: 60000,
+        });
+        setStatus('<span class="small">' + esc(T.recording) + '</span>' + txLinkHtml(r.hash));
+        /* The record confirmed: re-read everything (the
+           allowance included) and let the area advance to
+           step 2 on its own. */
+        await renderMintArea();
+      } finally { mintBusy = false; }
+    },
+  });
+}
+/* Did the name land under the posting wallet? The card-verified
    resolver first, then the desk's own id record as a fallback. */
 async function verifyMinted(name) {
+  const me = pwSession && pwSession.address;
+  if (!me) return false;
   try {
     const res = await resolveNameId(name);
     if (res.status === 'ok') {
       const owner = await readAddr(CAW_NAME, SEL.ownerOf + word(res.id));
-      if (owner.toLowerCase() === String(walletAccount).toLowerCase()) return true;
+      if (owner.toLowerCase() === String(me).toLowerCase()) return true;
     }
   } catch (e) { /* fall through to the direct read */ }
   try {
     const id0 = await readUint(MINTER, SEL.idByUsername + encStr(name));
     if (id0 === 0n) return false;
     const owner = await readAddr(CAW_NAME, SEL.ownerOf + word(id0));
-    return owner.toLowerCase() === String(walletAccount).toLowerCase();
+    return owner.toLowerCase() === String(me).toLowerCase();
   } catch (e) { return false; }
 }
-async function doMint() {
-  if (mintBusy || !mintCheckState) return;
-  mintBusy = true;
-  const btn = $('mintBtn'); if (btn) btn.disabled = true;
-  setMintStatus('<span class="small">' + esc(T.sendingWallet) + '</span>');
-  try {
-    const fresh = await mintGuard(mintCheckState);
-    if (!fresh) return;
-    /* Fresh money reads, one last time: enough qCAW, the OK from
-       step 1 still covering the price, and some QOM for fees. */
-    const [bal, allow, qom] = await Promise.all([
-      readUint(QCAW, SEL.balanceOf + encAddr(walletAccount)),
-      readUint(QCAW, SEL.allowance + encAddr(walletAccount) + encAddr(MINTER)),
-      rpc('eth_getBalance', [walletAccount, 'latest']).then(h => BigInt(h)),
-    ]);
-    if (qom === 0n || bal < fresh.cost || allow < fresh.cost) { await renderMintArea(); return; }
-    setMintStatus('<span class="small">' + esc(T.sendingWallet) + '</span>');
-    const hash = await sendTx(MINTER, buildMintCalldata(fresh.name),
-      h => setMintStatus('<span class="small">' + esc(T.recording) + '</span>' + txLinkHtml(h)));
-    ownerTokensCache.delete(walletAccount);
-    const landed = await verifyMinted(fresh.name);
-    mintCheckState = { ...fresh, taken: true };
-    if (landed) {
-      const out = $('mintCheckResult');
-      if (out) out.innerHTML = '<p class="ok">' + esc(T.mintDone) + '</p>' + mintPreviewHtml(fresh.name) +
-        '<p><a class="chip name-chip" href="' + profUrl(fresh.name) + '">' + esc(T.viewProfileBtn) + '</a></p>' +
-        '<p class="small">' + txLinkHtml(hash) + '</p>';
-      $('mintArea').innerHTML = '';
-    } else {
-      paintMintCheck();
-      await renderMintArea();
-      const out = $('mintCheckResult');
-      if (out) out.innerHTML = '<p class="warn">' + esc(T.sentUnconfirmed) + '</p>' +
-        '<p class="small">' + txLinkHtml(hash) + '</p>';
-    }
-    refreshWallet();
-  } catch (e) {
-    if (e && e.unconfirmed) {
-      setMintStatus('<span class="warn">' + esc(T.sentUnconfirmed) + '</span>' + txLinkHtml(e.txHash));
-    } else {
-      setMintStatus('<span class="err">' + esc(T.sendFail) + '</span>' + txLinkHtml(e && e.txHash) + errDetailHtml(e));
-      const b = $('mintBtn'); if (b) b.disabled = false;
-    }
-  } finally { mintBusy = false; }
+/* v33 (D8): step 2 — the mint itself, through the confirm panel
+   and the posting wallet. The guard re-checks availability and
+   price at click time; fresh money reads run one last time
+   inside the sign step; success verifies the name landed under
+   this wallet and loads it into the wallet's name list, so it
+   is immediately postable and visible under My names. */
+function doMint() {
+  if (mintBusy || !mintCheckState || !pwSession) return;
+  const st = mintCheckState;
+  openConfirmPanel({
+    title: T.getConfirmMint.replace('{name}', st.name).replace('{amount}', fmtQcaw(st.cost)),
+    lines: [
+      [T.confirmNameLbl, '@' + st.name],
+      [T.confirmAmountLbl, fmtQcaw(st.cost) + ' qCAW'],
+    ],
+    signLabel: T.mintBtn,
+    doneText: T.mintDone,
+    onSign: async setStatus => {
+      mintBusy = true;
+      try {
+        const fresh = await mintGuard(st);
+        if (!fresh) throw mintGuardError();
+        /* Fresh money reads, one last time: enough qCAW, the OK
+           from step 1 still covering the price, and some QOM
+           for fees. */
+        const [bal, allow, qom] = await Promise.all([
+          readUint(QCAW, SEL.balanceOf + encAddr(pwSession.address)),
+          readUint(QCAW, SEL.allowance + encAddr(pwSession.address) + encAddr(MINTER)),
+          rpc('eth_getBalance', [pwSession.address, 'latest']).then(h => BigInt(h)),
+        ]);
+        if (qom === 0n) { await renderMintArea(); throw new Error('mint-nogas'); }
+        if (bal < fresh.cost || allow < fresh.cost) { await renderMintArea(); throw new Error('mint-funds'); }
+        const r = await sendLocalTx(pwSession.keyBytes, {
+          to: MINTER, data: buildMintCalldata(fresh.name), gasFallback: 300000,
+        });
+        setStatus('<span class="small">' + esc(T.recording) + '</span>' + txLinkHtml(r.hash));
+        ownerTokensCache.delete(pwSession.address);
+        const landed = await verifyMinted(fresh.name);
+        mintCheckState = { ...fresh, taken: true };
+        if (!landed) {
+          paintMintCheck();
+          await renderMintArea();
+          const e = new Error('no confirmation yet');
+          e.txHash = r.hash; e.unconfirmed = true;
+          throw e;
+        }
+        await pwLoadNames();
+        const out = $('mintCheckResult');
+        if (out) out.innerHTML = '<p class="ok">' + esc(T.mintDone) + '</p>' + mintPreviewHtml(fresh.name) +
+          '<p><a class="chip name-chip" href="' + profUrl(fresh.name) + '">' + esc(T.viewProfileBtn) + '</a></p>' +
+          '<p class="small">' + txLinkHtml(r.hash) + '</p>';
+        const ma = $('mintArea');
+        if (ma) ma.innerHTML = '';
+      } finally { mintBusy = false; }
+    },
+  });
 }
 
-/* ----- my names (compact) ----- */
-async function renderMyNames() {
-  const box = $('myNames'), title = $('myNamesTitle');
-  if (!box) return;
-  if (!injectedProvider || !walletAccount || !onQl1()) {
-    if (title) title.style.display = 'none';
-    box.innerHTML = '<p class="small">' + esc(T.myNamesConnect) + '</p>';
-    return;
-  }
-  if (title) title.style.display = '';
-  box.innerHTML = '<p class="small">' + esc(T.loading) + '</p>';
-  try {
-    const toks = await tokensOf(walletAccount);
-    if (!toks.length) { box.innerHTML = '<p class="small">' + esc(T.noNames) + '</p>'; return; }
-    const rows = await Promise.all(toks.map(async t => {
-      const img = await avatarFor(t.id);
-      const div = document.createElement('div');
-      div.className = 'namecard';
-      div.innerHTML = '<a class="plink" href="' + profUrl(t.username) + '">' + avatarHtml(img, t.username) + '</a>' +
-        '<div class="grow"><div class="n"><a class="plink" href="' + profUrl(t.username) + '">@' + esc(t.username) + '</a></div>' +
-        '<div class="small">#' + t.id.toString() + '</div>' +
-        '<div class="small">' + esc(T.inName) + ': <b>' + esc(fmtQcaw(t.balance)) + '</b> qCAW</div></div>';
-      return div;
-    }));
-    box.innerHTML = '';
-    for (const r of rows) box.appendChild(r);
-  } catch (e) {
-    box.innerHTML = '<p class="err">' + esc(T.loadFail) + '</p>';
-  }
-}
+/* ----- my names (v33, M7) -----
+   The compact list that used to sit under the mint form and
+   describe the INJECTED wallet is gone; the names live on
+   their own screen now (renderNamesScreen, with the wallet
+   section below), built around the posting wallet. */
 
 /* ---------- v12: the built-in posting wallet (browser side) ----------
    The vault in localStorage holds only the AES-GCM ciphertext
@@ -4560,7 +4649,7 @@ function pwWipeSession() {
 }
 function pwLock() {
   pwWipeSession();
-  ntCheckDot(); /* v17: no acting name, no unread dot */
+  ntBadgeSet(0); /* v33: locked — no unread badge */
   pwView = 'auto'; pwDraft = null;
   renderPw(); renderComposer(); refreshViewsForWallet();
 }
@@ -4577,6 +4666,8 @@ function refreshViewsForWallet() {
   else if (typeof mirrorQuery !== 'undefined' && mirrorQuery) loadMirrorView();
   else if (typeof dexQuery !== 'undefined' && dexQuery) loadDexView();
   else if (typeof burnQuery !== 'undefined' && burnQuery) loadBurnView();
+  else if (typeof namesQuery !== 'undefined' && namesQuery) renderNamesScreen();
+  else if (typeof getnameQuery !== 'undefined' && getnameQuery) { renderGetnameWallet(); renderMintArea(); }
   else if (typeof searchQuery !== 'undefined' && searchQuery) { /* search rows keep their buttons state; a fresh search re-adds them */ }
   else refreshHomeFeed();
 }
@@ -4706,6 +4797,8 @@ function renderPwLocked(area) {
     (nextQuery === 'profile' ? '<p class="pw-next-hint">' + esc(T.pwNextProfile) + '</p>' : '') +
     (nextQuery === 'dex' ? '<p class="pw-next-hint">' + esc(T.pwNextDex) + '</p>' : '') +
     (nextQuery === 'burnhawk' ? '<p class="pw-next-hint">' + esc(T.pwNextBurn) + '</p>' : '') +
+    (nextQuery === 'names' ? '<p class="pw-next-hint">' + esc(T.pwNextNames) + '</p>' : '') +
+    (nextQuery === 'getname' ? '<p class="pw-next-hint">' + esc(T.pwNextGetname) + '</p>' : '') +
     '<input type="password" id="pwUnlockPass" autocomplete="current-password" placeholder="' + esc(T.pwPasswordPh) + '">' +
     '<p id="pwUnlockErr"></p>' +
     '<div class="row"><button id="pwUnlockBtn" type="button">' + esc(T.pwUnlockBtn) + '</button>' +
@@ -4743,6 +4836,10 @@ async function pwStartSession(secretObj, opts) {
   pwSession = { kind: secretObj.kind, secret: secretObj.secret, keyBytes, address };
   pwTouch();
   await pwLoadNames();
+  /* v33: the unread badge refreshes off the same inbox scan
+     whenever a session starts (unlock, create, import, or a
+     tab restore) — fire-and-forget; it never moves the mark. */
+  ntRefreshBadge(true);
   /* v30: a session RESTORED from this tab's storage (see
      pwRestoreSession) is not an unlock — it must not take the
      ?next= continuations below, which belong to the explicit
@@ -4765,6 +4862,10 @@ async function pwStartSession(secretObj, opts) {
      flow has no dead end. */
   else if (nextQuery === 'dex') location.replace(pageFile + '?dex=1');
   else if (nextQuery === 'burnhawk') location.replace(pageFile + '?burnhawk=1');
+  /* v33: the same continuation for the two views that joined
+     the wall family — My names (M7) and Get a name (D8). */
+  else if (nextQuery === 'names') location.replace(pageFile + '?names=1');
+  else if (nextQuery === 'getname') location.replace(pageFile + '?getname=1');
 }
 /* v30: revive the tab-scoped session pwPersistSession saved
    when this tab last unlocked (or last acted), so moving
@@ -4985,17 +5086,15 @@ function renderPwUnlocked(area) {
   })();
   syncChrome();
 }
-async function pwDoDepWd(kind) {
-  const acting = pwActing();
-  if (!pwSession || !acting) return;
-  const amt = parseAmount($('pwAmount').value);
-  const st = $('pwDepStatus');
-  if (amt === null || amt <= 0n) { if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>'; return; }
-  if (kind === 'withdraw' && amt > acting.balance) { if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>'; return; }
+/* The deposit / withdraw confirm flow for ONE name, shared by
+   the wallet card (the acting name) and the My names screen
+   (any owned name, v33 M7). A deposit approves the EXACT
+   amount, and only when the current allowance is short. */
+function openDepWdPanel(nameObj, kind, amt, afterSuccess) {
   openConfirmPanel({
     title: kind === 'deposit' ? T.confirmTitleDeposit : T.confirmTitleWithdraw,
     lines: [
-      [T.confirmNameLbl, '@' + acting.username],
+      [T.confirmNameLbl, '@' + nameObj.username],
       [T.confirmAmountLbl, fmtQcaw(amt) + ' qCAW'],
     ],
     onSign: async setStatus => {
@@ -5007,15 +5106,147 @@ async function pwDoDepWd(kind) {
           await sendLocalTx(pwSession.keyBytes, { to: QCAW, data: buildApproveToCalldata(CAW_NAME, amt), gasFallback: 60000 });
         }
         setStatus('<span class="small">' + esc(T.actWaiting) + '</span>');
-        await sendLocalTx(pwSession.keyBytes, { to: CAW_NAME, data: buildDepositCalldata(acting.id, amt), gasFallback: 100000 });
+        await sendLocalTx(pwSession.keyBytes, { to: CAW_NAME, data: buildDepositCalldata(nameObj.id, amt), gasFallback: 100000 });
       } else {
-        await sendLocalTx(pwSession.keyBytes, { to: CAW_NAME, data: buildWithdrawCalldata(acting.id, amt), gasFallback: 100000 });
+        await sendLocalTx(pwSession.keyBytes, { to: CAW_NAME, data: buildWithdrawCalldata(nameObj.id, amt), gasFallback: 100000 });
       }
     },
-    afterSuccess: async () => {
-      await pwLoadNames();
-      renderPw(); renderComposer();
-    },
+    afterSuccess,
+  });
+}
+async function pwDoDepWd(kind) {
+  const acting = pwActing();
+  if (!pwSession || !acting) return;
+  const amt = parseAmount($('pwAmount').value);
+  const st = $('pwDepStatus');
+  if (amt === null || amt <= 0n) { if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>'; return; }
+  if (kind === 'withdraw' && amt > acting.balance) { if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>'; return; }
+  openDepWdPanel(acting, kind, amt, async () => {
+    await pwLoadNames();
+    renderPw(); renderComposer();
+  });
+}
+
+/* ---------- My names screen (v33, M7) ----------
+   The app's MyNames screen, rebuilt around the POSTING wallet
+   (the old compact list described the injected wallet): a
+   summary header — the wallet's qCAW and "N names · total
+   qCAW held in names" — then one card per owned name: avatar,
+   display name / @name, #id, follower count, the in-name CAW
+   balance; the acting name is badged, the others offer "Post
+   as this name". Each card carries the deposit / withdraw
+   accordion for THAT name (the wallet card's machinery,
+   openDepWdPanel). Locked: the in-place unlock wall. */
+let mnOpenId = null; // the name id whose dep/withdraw accordion is open
+async function renderNamesScreen() {
+  const area = $('namesArea');
+  if (!area) return;
+  if (!pwSession) { renderTradeWall(area, 'names'); return; }
+  if (!pwNames.length) {
+    area.innerHTML = '<p class="small">' + esc(T.mineLoading) + '</p>';
+    await pwLoadNames();
+    if (!pwSession) return;
+    if (!pwNames.length) {
+      area.innerHTML = '<p>' + esc(T.mineNone) + '</p>' +
+        '<p><a class="chip" href="' + pageFile + '?getname=1">' + esc(T.navGetName) + ' →</a></p>';
+      return;
+    }
+  }
+  const total = pwNames.reduce((s, t) => s + t.balance, 0n);
+  let html = '<div class="mn-summary"><p>' + esc(T.mineWalletBal) + ': <b id="mnWalletBal">…</b> qCAW</p>' +
+    '<p class="small">' + esc(T.mineSummary.replace('{count}', String(pwNames.length)).replace('{total}', fmtQcaw(total))) + '</p></div>';
+  for (const t of pwNames) {
+    const custom = profileCustomFor(t.id);
+    const isActing = pwActingId != null && t.id === pwActingId;
+    const open = mnOpenId != null && String(mnOpenId) === t.id.toString();
+    html += '<div class="mn-card" data-mn-id="' + t.id.toString() + '">' +
+      '<div class="mn-head">' +
+      '<a class="plink" href="' + profUrl(t.username) + '"><span data-mn-avatar="' + t.id.toString() + '"></span></a>' +
+      '<div class="grow"><div class="n">' +
+      (custom && custom.displayName
+        ? esc(custom.displayName) + ' <span class="small">@' + esc(t.username) + '</span>'
+        : '<a class="plink" href="' + profUrl(t.username) + '">@' + esc(t.username) + '</a>') +
+      '</div>' +
+      '<div class="small">#' + t.id.toString() + ' · <span data-mn-followers="' + t.id.toString() + '">—</span> ' + esc(T.followersLbl) + '</div></div>' +
+      '<div class="mn-bal"><b>' + esc(fmtQcaw(t.balance)) + '</b><div class="small">' + esc(T.inName) + '</div></div>' +
+      '</div>' +
+      '<div class="mn-actions">' +
+      (isActing
+        ? '<span class="mn-badge">' + esc(T.mineActive) + '</span>'
+        : '<button type="button" class="ghost" data-mn-use="' + t.id.toString() + '">' + esc(T.mineUseBtn) + '</button>') +
+      '<button type="button" class="ghost" data-mn-toggle="' + t.id.toString() + '">' + esc(T.depostLbl) + '</button>' +
+      '</div>' +
+      (open
+        ? '<div class="mn-acc"><div class="row">' +
+          '<input id="mnAmount" inputmode="decimal" placeholder="' + esc(T.pwAmountPh) + '">' +
+          '<button type="button" id="mnDepBtn">' + esc(T.pwDepositBtn) + '</button>' +
+          '<button type="button" class="ghost" id="mnWdBtn">' + esc(T.pwWithdrawBtn) + '</button></div>' +
+          '<p id="mnDepStatus"></p></div>'
+        : '') +
+      '</div>';
+  }
+  area.innerHTML = html;
+  readUint(QCAW, SEL.balanceOf + encAddr(pwSession.address)).then(b => {
+    const el = $('mnWalletBal');
+    if (el) el.textContent = fmtQcaw(b);
+  }).catch(() => {});
+  for (const t of pwNames) {
+    avatarFor(t.id).then(img => {
+      const slot = area.querySelector('[data-mn-avatar="' + t.id.toString() + '"]');
+      if (slot) slot.innerHTML = avatarHtml(img, t.username);
+    }).catch(() => {});
+  }
+  area.querySelectorAll('[data-mn-use]').forEach(b => {
+    b.onclick = () => {
+      const t = pwNames.find(x => x.id.toString() === b.getAttribute('data-mn-use'));
+      if (!t) return;
+      pwSetActing(t.id);
+      renderNamesScreen();
+    };
+  });
+  area.querySelectorAll('[data-mn-toggle]').forEach(b => {
+    b.onclick = () => {
+      const id = b.getAttribute('data-mn-toggle');
+      mnOpenId = mnOpenId != null && String(mnOpenId) === id ? null : id;
+      renderNamesScreen();
+    };
+  });
+  const depBtn = $('mnDepBtn'), wdBtn = $('mnWdBtn');
+  if (depBtn) depBtn.onclick = () => mnDoDepWd('deposit');
+  if (wdBtn) wdBtn.onclick = () => mnDoDepWd('withdraw');
+  mnFillFollowerCounts(area);
+}
+/* Follower counts come from the follow index (the same record
+   reconstruction the profile counts use): while it is still
+   building the counts show —, and they fill in when the build
+   completes. */
+async function mnFillFollowerCounts(area) {
+  if (!pwNames.length) return;
+  if (!followBuildState().complete) {
+    try { await buildFollowIndex(null); } catch (e) { return; }
+    if (!followBuildState().complete) { mnFillFollowerCounts(area); return; }
+  }
+  for (const t of pwNames) {
+    const el = area.querySelector('[data-mn-followers="' + t.id.toString() + '"]');
+    if (!el) continue;
+    try {
+      const lists = await refinedFollowListsOf(t.id);
+      el.textContent = String(lists.followers.length);
+    } catch (e) {
+      el.textContent = String(followListsOf(t.id).followers.length);
+    }
+  }
+}
+function mnDoDepWd(kind) {
+  const t = pwNames.find(x => mnOpenId != null && x.id.toString() === String(mnOpenId));
+  if (!pwSession || !t) return;
+  const amtEl = $('mnAmount'), st = $('mnDepStatus');
+  const amt = parseAmount(amtEl ? amtEl.value : '');
+  if (amt === null || amt <= 0n) { if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>'; return; }
+  if (kind === 'withdraw' && amt > t.balance) { if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>'; return; }
+  openDepWdPanel(t, kind, amt, async () => {
+    await pwLoadNames();
+    renderNamesScreen(); renderPw(); renderComposer();
   });
 }
 
@@ -5122,6 +5353,11 @@ async function pwDoSend() {
 function confirmErrHtml(e) {
   if (e && e.message === 'not-owner') return '<span class="err">' + esc(T.actNotOwner) + '</span>';
   if (e && e.message === 'self-follow') return '<span class="err">' + esc(T.actSelfFollow) + '</span>';
+  /* v33 (D8): the mint guard's named stops. */
+  if (e && e.message === 'mint-changed') return '<span class="err">' + esc(T.mintChanged) + '</span>';
+  if (e && e.message === 'price-changed') return '<span class="warn">' + esc(T.priceChanged.replace('{p}', e.priceText || '')) + '</span>';
+  if (e && e.message === 'mint-funds') return '<span class="err">' + esc(T.notEnoughQcaw) + '</span>';
+  if (e && e.message === 'mint-nogas') return '<span class="err">' + esc(T.noGasQom) + '</span>';
   /* v14: the Super flows' named outcomes (the app's wording). */
   if (e && e.message === 'self-superlike') return '<span class="err">' + esc(T.slSelf) + '</span>';
   if (e && e.message === 'sl-pay-pending') return '<span class="warn">' + esc(T.slPayPending) + '</span>';
@@ -5161,7 +5397,11 @@ function renderTradeWall(area, kind) {
       '<p><a class="nt-wallet-link" href="' + pageFile + '?wallet=1&next=' + kind + '">' + esc(T.mirrorOpenWallet) + '</a></p></div>';
     return;
   }
-  const p = kind === 'dex' ? 'dex' : 'burn';
+  /* v33: the wall serves four views now — the two trade views
+     (v29) plus My names (M7) and Get a name (D8), whose locked
+     states get the same in-place treatment. The prefix keeps
+     each wall's element ids unique. */
+  const p = kind === 'dex' ? 'dex' : kind === 'names' ? 'names' : kind === 'getname' ? 'gn' : 'burn';
   area.innerHTML =
     '<div class="nt-guide"><p>' + esc(T.tradeNeedUnlock) + '</p>' +
     '<p>' + esc(T.pwLockedText) + '</p>' +
@@ -5177,7 +5417,10 @@ function renderTradeWall(area, kind) {
       $(p + 'UnlockPass').value = '';
       await pwStartSession(secret);
       syncChrome(); renderComposer();
-      if (kind === 'dex') loadDexView(); else loadBurnView();
+      if (kind === 'dex') loadDexView();
+      else if (kind === 'names') renderNamesScreen();
+      else if (kind === 'getname') { renderGetnameWallet(); renderMintArea(); }
+      else loadBurnView();
     } catch (e) {
       err.innerHTML = '<span class="err">' + esc(T.pwUnlockWrong) + '</span>';
       btn.disabled = false;
@@ -6641,6 +6884,48 @@ async function paintRecawRow(div, a) {
   scanMarkedBurns().then(paint).catch(() => {});
 }
 let profileOwner = null;
+/* v33 (M5): the profile-look editor (the app's ProfileScreen
+   editor, texts only — pictures and audio are the media
+   server's rows further down the same profile). Everything
+   here writes to the on-device customs store; the note in the
+   sheet says plainly that the look lives in this browser
+   only. */
+function openProfEdit(id) {
+  const ov = $('profEditOverlay');
+  if (!ov) return;
+  const custom = profileCustomFor(id) || {};
+  $('profEditTitle').textContent = T.customTitle;
+  $('profEditNote').textContent = T.customNote;
+  $('profEditNameLbl').textContent = T.customNameLbl;
+  $('profEditBioLbl').textContent = T.customBioLbl;
+  $('profEditMediaNote').textContent = T.customMediaNote;
+  const nameIn = $('profEditNameInput'), bioIn = $('profEditBioInput');
+  nameIn.value = custom.displayName || '';
+  nameIn.placeholder = T.customNamePh;
+  nameIn.maxLength = CUSTOM_NAME_MAX;
+  bioIn.value = custom.bio || '';
+  bioIn.placeholder = T.customBioPh;
+  bioIn.maxLength = CUSTOM_BIO_MAX;
+  $('profEditSave').textContent = T.customSave;
+  $('profEditReset').textContent = T.customReset;
+  $('profEditCancel').textContent = T.confirmCancelBtn;
+  ov.style.display = '';
+  const close = () => { ov.style.display = 'none'; };
+  $('profEditCancel').onclick = close;
+  $('profEditReset').onclick = () => {
+    profileCustomSave(id, { displayName: '', bio: '' });
+    close();
+    loadProfile(); syncChrome(); renderComposer();
+  };
+  $('profEditSave').onclick = () => {
+    profileCustomSave(id, {
+      displayName: cleanCustomText(nameIn.value, CUSTOM_NAME_MAX),
+      bio: cleanCustomText(bioIn.value, CUSTOM_BIO_MAX),
+    });
+    close();
+    loadProfile(); syncChrome(); renderComposer();
+  };
+}
 async function renderProfFollow() {
   const box = $('profFollowArea');
   if (!box || !profileState) return;
@@ -6649,7 +6934,12 @@ async function renderProfFollow() {
   if (!acting) { box.innerHTML = ''; return; }
   if ((profileOwner && profileOwner.toLowerCase() === pwSession.address.toLowerCase()) ||
       pwNames.some(t => t.id === profileState.id)) {
-    box.innerHTML = '<p class="small">' + esc(T.actOwnProfile) + '</p>';
+    /* v33 (M5): my own profile gets the app's Edit profile
+       button, opening the on-device look editor. */
+    box.innerHTML = '<p class="small">' + esc(T.actOwnProfile) + '</p>' +
+      '<p><button type="button" id="profEditBtn">' + esc(T.customEdit) + '</button></p>';
+    const eb = $('profEditBtn');
+    if (eb) eb.onclick = () => openProfEdit(profileState.id);
     return;
   }
   box.innerHTML = '<p class="small">' + esc(T.loading) + '</p>';
@@ -6756,78 +7046,102 @@ async function loadBookmarksView() {
   }
 }
 
-/* ---------- notifications: reactions to your name (v17) ----------
+/* ---------- notifications: reactions to your names (v17; v33 M11/D12) ----------
    The app's "reactions to you", built ONLY from reads this
-   page already makes: the feed pages the timeline / search /
-   profiles walk (in chunks, resumable via the "scan further
-   back" button) and the v14 marked-burn event list. The
-   filter is ntClassify (shared section, harness-tested):
-   likes / Recaws / marker replies / marker quotes aimed at
-   my posts, and follows of my name; a Recaw the burn index
-   confirms is shown as a SuperRecaw, and SuperLikes come
-   from the burn events (that is the only trace a SuperLike
-   leaves — it has no CawActions action). Nothing is
-   inferred and nothing is counted that cannot be read: no
-   view counts, ever.
-   The tab-bar dot is lit ONLY when one of these real scans
-   (a timeline page load, this view's own walk, a burn scan)
-   finds a reaction newer than the last-seen block kept on
-   this device (caw-notif-seen-v1, per wallet address).
-   Opening this view and scanning moves the mark. */
+   page already makes: the shared feed pages and the v14
+   marked-burn event list. The filter is ntClassifyAny
+   (shared section, harness-tested): likes / Recaws / marker
+   replies / marker quotes aimed at ANY of my names' posts,
+   and follows AND unfollows of any of my names; a Recaw the
+   burn index confirms is shown as a SuperRecaw, and
+   SuperLikes come from the burn events (that is the only
+   trace a SuperLike leaves — it has no CawActions action).
+   Nothing is inferred and nothing is counted that cannot be
+   read: no view counts, ever.
+   v33 gives the inbox the app's model (its inbox.ts): one
+   automatic scan, newest first, that stops once it passes
+   the position this wallet last opened the inbox at — a
+   (block, index) mark kept on this device per wallet
+   address (caw-notif-seen-v1; values written before v33 are
+   plain block numbers and are read as "that block, all of
+   it"). The walk is bounded at NT_SCAN_MAX_PAGES pages; when
+   the bound cuts it, the view says so plainly (the app's
+   "capped" honesty). The tab-bar indicator is an unread
+   COUNT badge (99+ cap), refreshed by the same scan — run
+   when a session starts and never advancing the mark; only
+   opening this view moves the mark. */
 const NT_SEEN_KEY = 'caw-notif-seen-v1';
-const NT_CHUNK_PAGES = 25;
 const IC_FOLLOW = svgIc('<path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/>');
 let ntViewActive = false;
-let ntForId = null;
-const ntMyPosts = new Map(); // cawId (lowercase) -> my post item
-const ntTapBuf = [];         // candidate items from any real page load
-const ntSeenItems = [];      // every item from this view's own walk
-let ntCursor = undefined, ntDone = false, ntLoading = false, ntStarted = false;
+let ntForAddr = null;        // wallet address the inbox state belongs to
+const ntMyPosts = new Map(); // cawId (lowercase) -> my post item (any of my names)
+let ntScanPromise = null;    // the running inbox scan, if any
+let ntBadgePromise = null;   // the running badge scan, if any
+let ntBadgeAt = 0;           // when the last badge scan finished
 const ntBlockTs = new Map();
 
-function ntResetFor(id) {
-  ntForId = id;
+function ntResetFor(addr) {
+  ntForAddr = addr;
   ntMyPosts.clear();
-  ntTapBuf.length = 0;
-  ntSeenItems.length = 0;
-  ntCursor = undefined; ntDone = false; ntStarted = false;
 }
-function ntSeenBlock(address) {
+/* The seen mark: {b, i} — a feed position (block, index in
+   block). A v1 plain-number value upgrades in place: the
+   whole of that block counts as seen. */
+function ntSeenMark(address) {
   try {
     const o = JSON.parse(localStorage.getItem(NT_SEEN_KEY) || '{}');
-    return Number(o[(address || '').toLowerCase()] || 0);
-  } catch (e) { return 0; }
+    const v = o[(address || '').toLowerCase()];
+    if (typeof v === 'number' && v > 0) return { b: v, i: Number.MAX_SAFE_INTEGER };
+    if (v && typeof v === 'object' && typeof v.b === 'number') {
+      return { b: v.b, i: typeof v.i === 'number' ? v.i : 0 };
+    }
+  } catch (e) {}
+  return null;
 }
-function ntSetSeenBlock(address, block) {
+function ntSetSeenMark(address, mark) {
+  if (!mark) return;
   try {
     const o = JSON.parse(localStorage.getItem(NT_SEEN_KEY) || '{}');
-    o[(address || '').toLowerCase()] = block;
+    o[(address || '').toLowerCase()] = { b: mark.b, i: mark.i };
     localStorage.setItem(NT_SEEN_KEY, JSON.stringify(o));
   } catch (e) {}
 }
-function ntDotShow(show) {
-  const d = $('ntDot');
-  if (d) d.style.display = show ? '' : 'none';
+const ntPosOf = it => ({ b: it.block ?? 0, i: it.txIndex ?? 0 });
+const ntIsAfter = (pos, seen) => !seen || pos.b > seen.b || (pos.b === seen.b && pos.i > seen.i);
+
+/* The unread-count badge on the Notifications tab. */
+function ntBadgeSet(n) {
+  const d = $('ntBadge');
+  if (!d) return;
+  d.textContent = ntBadgeText(n);
+  d.style.display = n > 0 ? '' : 'none';
 }
-function ntCheckDot() {
-  const acting = pwSession ? pwActing() : null;
-  if (!acting || !pwSession) { ntDotShow(false); return; }
-  if (ntForId !== acting.id.toString()) return; // buffer belongs to another name
-  const seenB = ntSeenBlock(pwSession.address);
-  const mySet = new Set(ntMyPosts.keys());
-  if (!mySet.size) { ntDotShow(false); return; }
-  for (const it of ntTapBuf) {
-    if ((it.block ?? 0) <= seenB) continue;
-    if (ntClassify(it, acting.id, mySet)) { ntDotShow(true); return; }
-  }
-  for (const ev of mbEventsFor()) {
-    if (ev.k === 'sl' && ev.block > seenB && mySet.has(ev.id.toLowerCase()) &&
-        ev.from !== pwSession.address.toLowerCase()) { ntDotShow(true); return; }
-  }
-  ntDotShow(false);
+/* Refresh the badge with a real since-last-open scan. The
+   scan does NOT move the seen mark — only opening the inbox
+   view does. Concurrent calls share one scan; burn-scan
+   notifications are throttled so a busy timeline does not
+   re-walk the record every few seconds. */
+function ntRefreshBadge(force) {
+  if (!pwSession || !pwNames.length) { ntBadgeSet(0); return Promise.resolve(0); }
+  if (ntBadgePromise) return ntBadgePromise;
+  if (!force && Date.now() - ntBadgeAt < 60000) return Promise.resolve(-1);
+  ntBadgePromise = (async () => {
+    try {
+      await scanMarkedBurns().catch(() => {});
+      const r = await ntScanInbox();
+      ntBadgeSet(r.events.length);
+      return r.events.length;
+    } catch (e) { return -1; }
+    finally { ntBadgePromise = null; ntBadgeAt = Date.now(); }
+  })();
+  return ntBadgePromise;
 }
-/* Feed one real page load into the tap: register my posts,
-   buffer the candidates, re-evaluate the dot. */
+subscribeMarkedBurns(() => { ntRefreshBadge(false); });
+
+/* Feed one real page load into the tap: register my posts
+   (any of my names — the excerpt source for inbox rows) and
+   teach the my-actions record. The badge no longer feeds
+   from taps; it comes from the inbox scan itself. */
 function ntTapItems(items) {
   /* v32 (D5): every scanned page also teaches the my-actions
      record (likes / Recaws by any of my names) — the app's
@@ -6835,44 +7149,98 @@ function ntTapItems(items) {
   if (pwSession && items && items.length) {
     myObserveItems(pwSession.address, pwNames.map(t => t.id), items);
   }
-  const acting = pwSession ? pwActing() : null;
-  if (!acting || !items || !items.length) return;
-  if (ntForId !== acting.id.toString()) ntResetFor(acting.id.toString());
-  const me = acting.id.toString();
+  if (!pwSession || !items || !items.length) return;
+  if (ntForAddr !== pwSession.address.toLowerCase()) ntResetFor(pwSession.address.toLowerCase());
+  const mine = new Set(pwNames.map(t => t.id.toString()));
   for (const it of items) {
-    if (it.type === 0 && it.senderId.toString() === me) ntMyPosts.set(it.cawId.toLowerCase(), it);
-    if (it.type !== 4) ntTapBuf.push(it);
+    if (it.type === 0 && mine.has(it.senderId.toString())) ntMyPosts.set(it.cawId.toLowerCase(), it);
   }
-  if (ntTapBuf.length > 4000) ntTapBuf.splice(0, ntTapBuf.length - 4000);
-  ntCheckDot();
 }
-subscribeMarkedBurns(() => ntCheckDot());
 
-function ntCollectEvents() {
-  const acting = pwActing();
-  if (!acting) return [];
-  const mySet = new Set(ntMyPosts.keys());
-  const out = [];
-  const seenKey = new Set();
-  for (const it of ntSeenItems) {
-    const kind = ntClassify(it, acting.id, mySet);
-    if (!kind) continue;
-    const key = (it.hash || '') + ':' + kind + ':' + (it.cawId || '');
-    if (seenKey.has(key)) continue;
-    seenKey.add(key);
-    out.push({ kind, item: it });
-  }
-  for (const ev of mbEventsFor()) {
-    if (ev.k !== 'sl') continue;
-    if (!mySet.has(ev.id.toLowerCase())) continue;
-    if (pwSession && ev.from === pwSession.address.toLowerCase()) continue; // my own burn is not a reaction
-    out.push({ kind: 'superlike', burn: ev });
-  }
-  const blockOf = e => e.item ? (e.item.block ?? 0) : e.burn.block;
-  const idxOf = e => e.item ? (e.item.txIndex ?? 0) : 0;
-  out.sort((a, b) => blockOf(b) - blockOf(a) || idxOf(b) - idxOf(a));
-  return out;
+/* The one inbox scan (the app's scanReactions, mirrored):
+   walk the record newest-first until the page where the
+   seen position is passed (or the record ends, or the page
+   bound cuts the walk). My posts register as they pass;
+   likes / Recaws / replies / quotes from others buffer
+   until their target post registers — in this walk or from
+   the session's earlier page loads (ntMyPosts) — and are
+   dropped if it never does. Follows / unfollows collect
+   directly. SuperLike burns on my posts merge in after. */
+async function ntScanInbox() {
+  if (ntScanPromise) return ntScanPromise;
+  ntScanPromise = (async () => {
+    try {
+      const addr = pwSession.address;
+      const myIds = new Set(pwNames.map(t => t.id.toString()));
+      const seen = ntSeenMark(addr);
+      const myPosts = new Map(ntMyPosts);
+      const events = [];
+      const buffered = [];     // likes / Recaws awaiting their post
+      const bufferedRefs = []; // replies / quotes awaiting their parent
+      const flush = () => {
+        for (let i = buffered.length - 1; i >= 0; i--) {
+          const it = buffered[i];
+          if (!myPosts.has((it.cawId || '').toLowerCase())) continue;
+          events.push({ kind: it.type === 1 ? 'like' : 'recaw', item: it });
+          buffered.splice(i, 1);
+        }
+        for (let i = bufferedRefs.length - 1; i >= 0; i--) {
+          const it = bufferedRefs[i];
+          const { ref } = parsePostText(it.text || '');
+          if (!ref || !myPosts.has(ref.parentCawId.toLowerCase())) continue;
+          events.push({ kind: ref.kind, item: it });
+          bufferedRefs.splice(i, 1);
+        }
+      };
+      let cursor = null, pages = 0, newest = null, passedSeen = false;
+      while (pages < NT_SCAN_MAX_PAGES) {
+        const page = await fetchPage(cursor);
+        if (!page.items.length) break;
+        if (!newest) newest = ntPosOf(page.items[0]);
+        pages++;
+        for (const it of page.items) {
+          if (!ntIsAfter(ntPosOf(it), seen)) { passedSeen = true; break; }
+          if (it.type === 0 && myIds.has(it.senderId.toString())) {
+            myPosts.set(it.cawId.toLowerCase(), it);
+            ntMyPosts.set(it.cawId.toLowerCase(), it);
+            continue;
+          }
+          if (myIds.has(it.senderId.toString())) continue; // my own actions never count
+          if (it.type === 3 || it.type === 4) {
+            if (it.receiverId != null && myIds.has(it.receiverId.toString())) {
+              events.push({ kind: it.type === 3 ? 'follow' : 'unfollow', item: it, targetId: it.receiverId.toString() });
+            }
+          } else if (it.type === 1 || it.type === 2) {
+            buffered.push(it);
+          } else if (it.type === 0) {
+            const { ref } = parsePostText(it.text || '');
+            if (ref) bufferedRefs.push(it);
+          }
+        }
+        flush();
+        if (passedSeen || !page.next) { cursor = page.next; break; }
+        cursor = page.next;
+      }
+      const capped = !passedSeen && !!cursor && pages >= NT_SCAN_MAX_PAGES;
+      /* SuperLikes: the burn events are the only trace. */
+      for (const ev of mbEventsFor()) {
+        if (ev.k !== 'sl') continue;
+        if (ev.from === addr.toLowerCase()) continue;
+        if (!seen || ev.block > seen.b) {
+          if (myPosts.has(ev.id.toLowerCase())) events.push({ kind: 'superlike', burn: ev });
+        }
+      }
+      const posOfEv = e => e.item ? ntPosOf(e.item) : { b: e.burn.block, i: 0 };
+      events.sort((a, b2) => {
+        const pa = posOfEv(a), pb = posOfEv(b2);
+        return pb.b - pa.b || pb.i - pa.i;
+      });
+      return { events, newest, capped };
+    } finally { ntScanPromise = null; }
+  })();
+  return ntScanPromise;
 }
+
 async function ntBlockTime(block) {
   if (ntBlockTs.has(block)) return ntBlockTs.get(block);
   let ts = 0;
@@ -6891,14 +7259,35 @@ function ntKindMeta(kind) {
     case 'superlike': return { tpl: T.ntSuperLiked, icon: IC_STAR_FILL, cls: 'k-super' };
     case 'reply': return { tpl: T.ntReplied, icon: IC_REPLY, cls: 'k-reply' };
     case 'quote': return { tpl: T.ntQuoted, icon: IC_REPEAT, cls: 'k-quote' };
-    default: return { tpl: T.ntFollowed, icon: IC_FOLLOW, cls: 'k-follow' };
+    /* v33 (M11): follow / unfollow lines name the target name
+       too (the app's rows do) — {target} is filled by ntRow. */
+    case 'unfollow': return { tpl: T.ntUnfollowed, icon: IC_FOLLOW, cls: 'k-follow' };
+    default: return { tpl: T.ntFollowedName, icon: IC_FOLLOW, cls: 'k-follow' };
   }
+}
+/* v33 (D12 tail): a SuperLike burn event's actor is a wallet
+   address; when that wallet owns names, the row can name the
+   first of them (and use its avatar) instead of the bare
+   address. Cached per address; a wallet with no names — or an
+   unreadable one — keeps the shortened address, never a
+   guess. */
+const ntActorNames = new Map(); // address (lowercase) -> {id, username} | null
+async function ntActorNameFor(address) {
+  const key = (address || '').toLowerCase();
+  if (ntActorNames.has(key)) return ntActorNames.get(key);
+  let found = null;
+  try {
+    const toks = await tokensOf(address);
+    if (toks.length) found = { id: toks[0].id, username: toks[0].username };
+  } catch (e) { found = null; }
+  ntActorNames.set(key, found);
+  return found;
 }
 async function ntRow(ev) {
   const meta = ntKindMeta(ev.kind);
   const div = document.createElement('div');
   div.className = 'nt-row';
-  let actorHtml = '', nameHtml = '', excerpt = '', timeTs = 0, href = null;
+  let actorHtml = '', nameHtml = '', excerpt = '', timeTs = 0, href = null, targetHtml = '';
   if (ev.item) {
     const it = ev.item;
     const [nm, im] = await Promise.all([resolveName(it.senderId), avatarFor(it.senderId)]);
@@ -6906,8 +7295,19 @@ async function ntRow(ev) {
     actorHtml = nm ? '<a class="plink" href="' + profUrl(nm) + '">' + avatarHtml(im, nm) + '</a>' : avatarHtml(im, nm);
     nameHtml = nm ? '<a class="plink" href="' + profUrl(nm) + '"><b>' + esc(label) + '</b></a>' : '<b>' + esc(label) + '</b>';
     timeTs = it.ts;
-    if (ev.kind === 'follow') {
+    if (ev.kind === 'follow' || ev.kind === 'unfollow') {
       href = nm ? profUrl(nm) : null;
+      /* The followed / unfollowed name is one of mine: its
+         @name comes from the wallet's own list when possible,
+         else the card resolver. */
+      let tName = null;
+      if (ev.targetId != null) {
+        const mine = pwNames.find(t => t.id.toString() === String(ev.targetId));
+        tName = mine ? mine.username : await resolveName(BigInt(ev.targetId)).catch(() => null);
+      }
+      targetHtml = tName
+        ? '<a class="plink" href="' + profUrl(tName) + '"><b>@' + esc(tName) + '</b></a>'
+        : '<b>' + esc(T.unknownName + (ev.targetId || '')) + '</b>';
     } else if (ev.kind === 'reply' || ev.kind === 'quote') {
       excerpt = parsePostText(it.text).body;
       href = postUrl(it.cawId);
@@ -6918,21 +7318,33 @@ async function ntRow(ev) {
     }
   } else {
     /* A SuperLike burn event: the actor is a wallet address.
-       No read this page has can turn it into a name, so the
-       row names the address, shortened — never a guess. */
+       v33 (D12 tail): when that wallet owns a name, the row
+       names it (with its avatar); a wallet with no name keeps
+       the shortened address — never a guess. */
     const from = ev.burn.from;
-    const short = from.slice(0, 6) + '…' + from.slice(-4);
-    actorHtml = avatarHtml(null, short);
-    nameHtml = '<b>' + esc(short) + '</b>';
+    const named = await ntActorNameFor(from);
+    if (named) {
+      const im = await avatarFor(named.id);
+      actorHtml = '<a class="plink" href="' + profUrl(named.username) + '">' + avatarHtml(im, named.username) + '</a>';
+      nameHtml = '<a class="plink" href="' + profUrl(named.username) + '"><b>@' + esc(named.username) + '</b></a>';
+    } else {
+      const short = from.slice(0, 6) + '…' + from.slice(-4);
+      actorHtml = avatarHtml(null, short);
+      nameHtml = '<b>' + esc(short) + '</b>';
+    }
     const target = ntMyPosts.get(ev.burn.id.toLowerCase());
     excerpt = target ? parsePostText(target.text).body : '';
     timeTs = await ntBlockTime(ev.burn.block);
     href = postUrl(ev.burn.id);
   }
   const parts = meta.tpl.split('{name}');
+  /* {target} (follow / unfollow rows) is substituted with the
+     target name's HTML; the template text around it is escaped
+     piece by piece, as the {name} split above does. */
+  const tailHtml = (parts[1] || '').split('{target}').map(p => esc(p)).join(targetHtml);
   div.innerHTML = actorHtml +
     '<div class="nt-body"><div class="nt-line"><span class="nt-ic ' + meta.cls + '">' + meta.icon + '</span>' +
-    '<span class="nt-txt">' + esc(parts[0] || '') + nameHtml + esc(parts[1] || '') + '</span>' +
+    '<span class="nt-txt">' + esc(parts[0] || '') + nameHtml + tailHtml + '</span>' +
     (timeTs ? '<span class="nt-time" title="' + esc(fullTimeStr(timeTs)) + '">· ' + esc(whenStr(timeTs)) + '</span>' : '') +
     '</div>' +
     (excerpt ? '<div class="nt-excerpt">' + esc(excerpt.length > 120 ? excerpt.slice(0, 120) + '…' : excerpt) + '</div>' : '') +
@@ -6946,10 +7358,9 @@ async function ntRow(ev) {
   }
   return div;
 }
-async function ntRender() {
+async function ntRender(events, capped) {
   const box = $('ntList');
   if (!box) return;
-  const events = ntCollectEvents();
   /* A Recaw the marked-burn index confirms (the recawer's
      owner sent the SRC1 burn for this post) is a SuperRecaw. */
   const ownerCache = new Map();
@@ -6961,75 +7372,48 @@ async function ntRender() {
     if (owner && superRecawCached(ev.item.cawId, owner)) ev.kind = 'superrecaw';
   }));
   if (!events.length) {
-    box.innerHTML = '<p class="bm-note">' + esc(T.ntEmpty) + '</p>';
+    box.innerHTML = '<p class="bm-note">' + esc(T.ntEmpty) + '</p>' +
+      (capped ? '<p class="bm-note">' + esc(T.ntCapped) + '</p>' : '');
     return;
   }
   const rows = await Promise.all(events.slice(0, 200).map(ev => ntRow(ev).catch(() => null)));
   box.innerHTML = '';
   for (const r of rows) if (r) box.appendChild(r);
-}
-async function ntWalk() {
-  if (ntLoading || ntDone) return;
-  const acting = pwSession ? pwActing() : null;
-  if (!acting) return;
-  ntLoading = true;
-  try {
-    let pages = 0;
-    while (pages < NT_CHUNK_PAGES && !ntDone) {
-      const page = await fetchPage(ntCursor === undefined ? null : ntCursor);
-      ntCursor = page.next;
-      if (!ntCursor) ntDone = true;
-      pages++;
-      for (const it of page.items) {
-        ntSeenItems.push(it);
-        if (it.type === 0 && it.senderId === acting.id) ntMyPosts.set(it.cawId.toLowerCase(), it);
-      }
-      if (!page.items.length) ntDone = true;
-    }
-    await ntRender();
-    /* The reader has now seen everything this scan found:
-       move the seen mark to the newest block it covered and
-       clear the dot. */
-    if (pwSession) {
-      let maxB = ntSeenBlock(pwSession.address);
-      for (const it of ntSeenItems) if ((it.block ?? 0) > maxB) maxB = it.block ?? 0;
-      for (const ev of mbEventsFor()) {
-        if (ev.k === 'sl' && ev.block > maxB && ntMyPosts.has(ev.id.toLowerCase())) maxB = ev.block;
-      }
-      ntSetSeenBlock(pwSession.address, maxB);
-    }
-    ntDotShow(false);
-  } catch (e) {
-    const box = $('ntList');
-    if (box && !box.children.length) box.innerHTML = '<p class="err" style="padding:0 16px">' + esc(T.loadFail) + '</p>';
-  } finally {
-    ntLoading = false;
-    const b = $('ntMoreBtn');
-    if (b) b.style.display = ntDone ? 'none' : '';
+  /* The app's capped honesty: the page bound cut the walk, so
+     older reactions may exist beyond what is shown. */
+  if (capped) {
+    const note = document.createElement('p');
+    note.className = 'bm-note';
+    note.textContent = T.ntCapped;
+    box.appendChild(note);
   }
 }
+/* Opening the inbox runs the one automatic scan (v33): no
+   manual chunk button any more. What it finds renders; then
+   the seen mark moves to the newest position the scan saw,
+   and the badge clears — the app's open-the-inbox moment. */
 async function loadReactionsView() {
   ntViewActive = true;
   const box = $('ntList');
   if (!box) return;
-  const acting = pwSession ? pwActing() : null;
-  if (!acting) {
+  if (!pwSession || !pwNames.length) {
     box.innerHTML = '<div class="nt-guide"><p>' + esc(T.ntNeedWallet) + '</p>' +
       '<p><a class="nt-wallet-link" href="' + pageFile + '?wallet=1">' + esc(T.ntOpenWallet) + '</a></p></div>';
-    const b = $('ntMoreBtn');
-    if (b) b.style.display = 'none';
     return;
   }
-  if (ntForId !== acting.id.toString()) ntResetFor(acting.id.toString());
-  if (!ntStarted) {
-    ntStarted = true;
-    box.innerHTML = '<p class="bm-note">' + esc(T.loading) + '</p>';
-    scanMarkedBurns().catch(() => {});
-    await ntWalk();
-  } else {
-    await ntRender();
-    const b = $('ntMoreBtn');
-    if (b) b.style.display = ntDone ? 'none' : '';
+  if (ntForAddr !== pwSession.address.toLowerCase()) ntResetFor(pwSession.address.toLowerCase());
+  box.innerHTML = '<p class="bm-note">' + esc(T.loading) + '</p>';
+  try {
+    await scanMarkedBurns().catch(() => {});
+    const r = await ntScanInbox();
+    await ntRender(r.events, r.capped);
+    if (pwSession && r.newest) {
+      ntSetSeenMark(pwSession.address, r.newest);
+      ntBadgeSet(0);
+      ntBadgeAt = Date.now();
+    }
+  } catch (e) {
+    box.innerHTML = '<p class="err" style="padding:0 16px">' + esc(T.loadFail) + '</p>';
   }
 }
 
@@ -7339,7 +7723,10 @@ async function syncChrome() {
        acting name. */
     if (sumEl) sumEl.setAttribute('href', profTarget);
     if (acting) {
-      if (nm) nm.textContent = acting.username || '';
+      /* v33 (M5): the summary name prefers this device's custom
+         display name for the acting name (the app's drawer
+         does the same); the @handle line below is unchanged. */
+      if (nm) nm.textContent = customDisplayLabel(profileCustomFor(acting.id), null) || acting.username || '';
       if (sub) sub.textContent = '@' + acting.username + ' · #' + acting.id.toString();
       if (ava) {
         const im = await avatarFor(acting.id).catch(() => null);
@@ -7376,12 +7763,12 @@ async function syncChrome() {
       if (fol) fol.style.display = 'none';
     }
   };
-  /* The "My names" rows follow the same always-shown rule
-     (v16): acting → the names side of the name desk;
-     locked / nameless → the wallet view, like the Profile
-     rows — never a hidden or dead row. */
+  /* The "My names" rows land on the My names screen in every
+     state (v33, M7): the screen itself carries the unlock
+     wall when locked and the guide when there is no vault,
+     so the row never needs the wallet detour. */
   document.querySelectorAll('[data-nav="mynames"]').forEach(el => {
-    el.setAttribute('href', acting ? pageFile + '?getname=1#myNames' : pageFile + '?wallet=1');
+    el.setAttribute('href', pageFile + '?names=1');
   });
   await Promise.all([
     setSummary('sideAvatar', 'sideName', 'sideSub', 'sideFollow', 'sideProfileRow', 'sideSummary'),
@@ -7397,7 +7784,8 @@ async function syncChrome() {
     : (typeof dexQuery !== 'undefined' && dexQuery) ? 'dex'
     : (typeof burnQuery !== 'undefined' && burnQuery) ? 'burnhawk'
     : (typeof walletQuery !== 'undefined' && walletQuery) ? 'wallet'
-    : (typeof getnameQuery !== 'undefined' && getnameQuery) ? (location.hash === '#myNames' ? 'mynames' : 'getname')
+    : (typeof namesQuery !== 'undefined' && namesQuery) ? 'mynames'
+    : (typeof getnameQuery !== 'undefined' && getnameQuery) ? 'getname'
     : (typeof lookupQuery !== 'undefined' && lookupQuery) ? 'search' : 'home';
   document.querySelectorAll('[data-nav]').forEach(el => {
     el.classList.toggle('on', el.dataset.nav === mode);
@@ -7432,6 +7820,12 @@ const hashView = (!postQuery && !profileQuery && !bmQuery && !searchQuery && !mi
 const nextQuery = new URLSearchParams(location.search).get('next');
 const walletQuery = new URLSearchParams(location.search).get('wallet') || (hashView === 'wallet' ? '1' : null);
 const getnameQuery = new URLSearchParams(location.search).get('getname') || (hashView === 'getname' ? '1' : null);
+/* v33 (M7): My names is a view of its own. Links saved before
+   v33 point at the old in-desk list (?getname=1#myNames or a
+   bare #myNames); treat those as this view so they still land
+   on the names. */
+const namesQuery = new URLSearchParams(location.search).get('names') ||
+  (location.hash === '#myNames' && !postQuery && !profileQuery ? '1' : null);
 const lookupQuery = new URLSearchParams(location.search).get('lookup') || (hashView === 'lookup' ? '1' : null);
 document.querySelectorAll('.langs a').forEach(a => {
   const base = a.getAttribute('href').split('?')[0];
@@ -7474,7 +7868,6 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
   document.body.classList.add('reactions-mode');
   $('viewReactions').style.display = '';
   loadReactionsView();
-  $('ntMoreBtn').onclick = () => ntWalk();
 } else if (mirrorQuery) {
   document.body.classList.add('mirror-mode');
   $('viewMirror').style.display = '';
@@ -7506,12 +7899,15 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
 } else if (walletQuery) {
   document.body.classList.add('wallet-mode');
   $('viewWallet').style.display = '';
+} else if (namesQuery) {
+  document.body.classList.add('names-mode');
+  $('viewNames').style.display = '';
+  renderNamesScreen();
 } else if (getnameQuery) {
   document.body.classList.add('getname-mode');
   $('viewGetname').style.display = '';
-  /* "My names" lands on the names list, "Get a name" on the
-     mint form at the top — the saved fragment picks the spot
-     inside the view. */
+  /* A saved fragment (other than #myNames, which is the names
+     view now) still picks its spot inside the view. */
   if (location.hash) {
     try {
       const t = document.querySelector(location.hash);
@@ -7565,8 +7961,16 @@ if (si) si.addEventListener('keydown', e => { if (e.key === 'Enter') doPostSearc
 const mcb = $('mintCheckBtn');
 if (mcb) mcb.onclick = doMintCheck;
 const mni = $('mintNameInput');
-if (mni) mni.addEventListener('keydown', e => { if (e.key === 'Enter') doMintCheck(); });
-refreshWallet();
+if (mni) {
+  mni.addEventListener('keydown', e => { if (e.key === 'Enter') doMintCheck(); });
+  /* v33 (D19): the live character-rule feedback while typing. */
+  mni.addEventListener('input', onMintNameInput);
+}
+/* v33 (D8): the name desk's wallet strip + mint area describe
+   the posting wallet now (renderGetnameWallet replaces the
+   old injected-wallet refreshWallet). */
+renderGetnameWallet();
+renderMintArea();
 renderPw();
 mirrorAdoptDraft(); /* v19: a pending mirror draft becomes the composer draft */
 renderComposer();
@@ -7645,6 +8049,10 @@ if (typeof module !== 'undefined' && module.exports) {
     postIndex, refIndex, refChildren, indexItem, likesOf, isVisibleRow,
     rpc, readUint, readStr, readAddr, encStr, encAddr,
     checkName, normalizeNameInput, buildApproveCalldata, buildMintCalldata,
+    isMintableUsername,
+    PROFILE_CUSTOMS_KEY, CUSTOM_NAME_MAX, CUSTOM_BIO_MAX,
+    profileCustomFor, profileCustomSave, customDisplayLabel, cleanCustomText,
+    ntClassifyAny, ntBadgeText, NT_SCAN_MAX_PAGES,
     nameNftSvg, nameNftFontSize,
     signDigestRaw, ecrecoverAddress, addressOfPriv, privateKeyToAddress,
     validateMnemonic, generateMnemonic, deriveFromPhrase, WALLET_PATH,

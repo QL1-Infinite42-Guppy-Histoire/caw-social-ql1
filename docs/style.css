@@ -716,14 +716,34 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
   padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
   color: var(--sub); text-decoration: none; position: relative;
 }
-/* the unread dot on the notifications tab: lit ONLY when a
-   real scan found a reaction newer than the stored seen
-   block — never on a guess (v17) */
-.nav-dot {
-  position: absolute; top: 8px; left: calc(50% + 3px);
-  width: 9px; height: 9px; border-radius: 50%;
-  background: var(--accent); border: 2px solid var(--bg);
+/* the unread COUNT badge on the notifications tab (v33 —
+   the app's badge): shown only when the since-last-open
+   inbox scan counted unread reactions; 99+ is the cap. */
+.nav-badge {
+  position: absolute; top: 4px; left: calc(50% + 2px);
+  min-width: 18px; height: 18px; padding: 0 5px;
+  border-radius: 999px; box-sizing: border-box;
+  background: var(--accent); color: #fff;
+  font-size: 11px; font-weight: 800; line-height: 18px; text-align: center;
+  border: 2px solid var(--bg);
 }
+/* v33: the profile bio line (on-device custom, M5) and the
+   My names screen (M7). */
+.pbio { padding: 2px 16px 0; font-size: 14.5px; line-height: 1.5; white-space: normal; }
+.mn-summary { padding: 12px 16px 4px; }
+.mn-summary p { margin: 4px 0; }
+.mn-card { padding: 10px 16px; border-bottom: 1px solid var(--line); }
+.mn-head { display: flex; gap: 10px; align-items: center; }
+.mn-head .avatar { width: 44px; height: 44px; flex-basis: 44px; }
+.mn-head .n { font-weight: 700; font-size: 15px; }
+.mn-head .grow { flex: 1 1 auto; min-width: 0; }
+.mn-bal { text-align: right; }
+.mn-actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+.mn-badge { font-size: 13px; font-weight: 700; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 5px 12px; }
+.mn-acc { margin-top: 10px; }
+.mn-acc input { flex: 1 1 auto; min-width: 0; }
+#profEditOverlay input, #profEditOverlay textarea { width: 100%; box-sizing: border-box; margin: 4px 0 10px; }
+#profEditOverlay label { display: block; margin-top: 8px; }
 .bottomnav a.on { color: var(--accent); }
 @media (max-width: 899.98px) {
   .bottomnav { display: flex; }

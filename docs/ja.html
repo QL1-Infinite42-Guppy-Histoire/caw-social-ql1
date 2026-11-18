@@ -4,29 +4,29 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>CAW Social — QL1（ウェブ版）</title>
-<meta name="description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。名前はウォレットアプリで取り、投稿はこのページの内蔵ウォレットでも Android アプリでもできます。">
+<meta name="description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。名前を取るのも投稿も、このページの内蔵ウォレットでも Android アプリでもできます。">
 <meta property="og:type" content="website">
 <meta property="og:title" content="CAW Social — QL1（ウェブ版）">
-<meta property="og:description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。名前はウォレットアプリで取り、投稿はこのページの内蔵ウォレットでも Android アプリでもできます。">
+<meta property="og:description" content="QL1 の CAW のタイムラインをブラウザで読めます（PC・スマホ対応）。名前を取るのも投稿も、このページの内蔵ウォレットでも Android アプリでもできます。">
 <meta property="og:image" content="https://ql1-infinite42-guppy-histoire.github.io/caw-social-ql1/icon-512.png">
 <link rel="preconnect" href="https://evm-rpc-ql1.mschihuahua.org">
 <link rel="preconnect" href="https://scan.qom.network">
 <meta name="theme-color" id="themeColorMeta" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png?v=32">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=32">
+<link rel="icon" type="image/png" href="icon-192.png?v=33">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=33">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
 <script>(function(){try{var t=localStorage.getItem('guppy-theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){document.documentElement.dataset.theme='light';}})();</script>
-<link rel="stylesheet" href="style.css?v=32">
+<link rel="stylesheet" href="style.css?v=33">
 </head>
 <body>
 <header class="topbar">
   <div class="topbar-inner">
     <div class="mt-side">
-      <button id="drawerBtn" class="mt-avatar-btn" type="button" aria-label="メニュー"><span id="mtAvatar"><img class="avatar" src="icon-192.png?v=32" alt=""></span></button>
+      <button id="drawerBtn" class="mt-avatar-btn" type="button" aria-label="メニュー"><span id="mtAvatar"><img class="avatar" src="icon-192.png?v=33" alt=""></span></button>
     </div>
     <div class="mt-mark"><span class="word">CAW</span></div>
     <div class="mt-side end"></div>
@@ -35,15 +35,15 @@
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <a class="side-logo" href="ja.html" aria-label="CAW Social ホーム"><img src="icon-192.png?v=32" alt=""></a>
+    <a class="side-logo" href="ja.html" aria-label="CAW Social ホーム"><img src="icon-192.png?v=33" alt=""></a>
     <a class="side-summary" id="sideSummary" href="ja.html?wallet=1&next=profile">
-      <span id="sideAvatar"><img class="avatar" src="icon-192.png?v=32" alt=""></span>
+      <span id="sideAvatar"><img class="avatar" src="icon-192.png?v=33" alt=""></span>
       <span><span class="side-name" id="sideName">CAW Social</span><br><span class="side-sub" id="sideSub">QL1 版・ウェブ</span><br><span class="side-follow" id="sideFollow" style="display:none"></span></span>
     </a>
     <nav>
       <a class="nav-it" data-nav="profile" id="sideProfileRow" href="ja.html?wallet=1&next=profile"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">プロフィール</span></a>
       <a class="nav-it" data-nav="wallet" href="ja.html?wallet=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="nav-label">ウォレット</span></a>
-      <a class="nav-it" data-nav="mynames" href="ja.html?wallet=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">自分の名前</span></a>
+      <a class="nav-it" data-nav="mynames" href="ja.html?names=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">自分の名前</span></a>
       <a class="nav-it" data-nav="getname" href="ja.html?getname=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></span><span class="nav-label">名前を取る</span></a>
       <a class="nav-it" data-nav="dex" href="ja.html?dex=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span><span class="nav-label">HuntersDEX</span></a>
       <a class="nav-it" data-nav="burnhawk" href="ja.html?burnhawk=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22c4.4 0 7-2.8 7-6.5 0-3.2-2.3-5.4-3.5-7C14.3 6.8 13 4.9 13 2c-3 2.2-4.5 4.6-4.6 7-.3-1-1-2-2-3 .1 2.8-.4 4.3-1.1 5.6C4.6 13 5 14.4 5 15.5 5 19.2 7.6 22 12 22z"/></svg></span><span class="nav-label">BurnHawk</span></a>
@@ -150,9 +150,8 @@
         <a class="back-link" href="ja.html" aria-label="戻る">←</a>
         <h2>あなたへの反応</h2>
       </div>
-      <p class="nt-note">最近の公開記録から作っています。古い反応は下のボタンで遡ると出てきます（全期間の完全な履歴ではありません）。</p>
+      <p class="nt-note">前回このページを開いてからの公開記録から作っています（全期間の完全な履歴ではありません）。</p>
       <div id="ntList"></div>
-      <div class="loadmore"><button id="ntMoreBtn" class="ghost" style="display:none">もっと昔までさがす</button></div>
     </section>
 
     <section id="viewMirror" style="display:none">
@@ -186,7 +185,7 @@
       </div>
     <section class="block" id="pwallet">
       <h2>投稿用ウォレット</h2>
-      <p>投稿・いいね・Recaw・フォローは、このページ内蔵の小さなウォレットで、このページの中で署名します。Android アプリと同じ方式です。名前を取る手続きは、メニューの「名前を取る」でウォレットアプリを使います。</p>
+      <p>投稿・いいね・Recaw・フォロー・名前を取る手続きは、このページ内蔵の小さなウォレットで、このページの中で署名します。Android アプリと同じ方式です。</p>
       <div class="pw-safety">
         <p>ここでは CAW 専用の別のウォレットを使ってください。本命ウォレットの復元フレーズは絶対に入力しないでください。</p>
         <p>鍵はあなたのパスワードで暗号化され、このブラウザの中にだけ保存されます。どこにも送信されません。</p>
@@ -222,16 +221,21 @@
       <p class="small" style="padding:12px 16px 0">先に名前を調べたいときは<a href="ja.html?lookup=1">名前をさがす</a></p>
     <section class="block" id="getname">
       <h2>名前を取る</h2>
-      <p>名前は、CAW であなたを見つけてもらうためのものです。一度取れば、ずっとあなたのものです。料金は qCAW で、名前によって変わります（払う前に金額を表示します）。ほかに、記録のための小さな手数料として QOM が少し必要です。qCAW の入ったウォレットアプリ（MetaMask や FoxWallet など）をご用意ください。</p>
-      <p class="small">名前を取る手続きはウォレットアプリを使います。メニューの投稿用ウォレット（投稿専用）とは別です。</p>
+      <p>名前は、CAW であなたを見つけてもらうためのものです。一度取れば、ずっとあなたのものです。料金は qCAW で、名前によって変わります（払う前に金額を表示します）。ほかに、記録のための小さな手数料として QOM が少し必要です。名前を取る手続きは、投稿に使う内蔵の投稿用ウォレットで行います。</p>
       <input type="text" id="mintNameInput" placeholder="ほしい名前" autocomplete="off" spellcheck="false" autocapitalize="none">
       <div class="row"><button id="mintCheckBtn">調べる</button></div>
       <div id="mintCheckResult"></div>
-      <div id="walletArea"></div>
+      <div id="gnWalletArea"></div>
       <div id="mintArea"></div>
-      <h3 id="myNamesTitle" style="display:none">あなたの名前</h3>
-      <div id="myNames"></div>
     </section>
+    </section>
+
+    <section id="viewNames" style="display:none">
+      <div class="view-head">
+        <a class="back-link" href="ja.html" aria-label="戻る">←</a>
+        <h2>自分の名前</h2>
+      </div>
+      <div id="namesArea"></div>
     </section>
 
     <footer>
@@ -257,7 +261,7 @@
     </section>
     <section class="railcard app-cta">
       <h3>投稿 — ここでも、アプリでも</h3>
-      <p>このウェブ版では、読むことと、ウォレットアプリで名前を取ることと、内蔵の投稿用ウォレットで投稿することができます。署名はこのページの中で安全に行われます。Android アプリも同じ方式です。</p>
+      <p>このウェブ版では、読むことと、内蔵の投稿用ウォレットで名前を取ることと投稿することができます。署名はこのページの中で安全に行われます。Android アプリも同じ方式です。</p>
       <p class="small">なお、Web版からの送信（投稿・超いいねなど）は、まだ実際に送れるかの確認が済んでいません。最初の送信が、その確認になります。</p>
       <p><a class="cta-btn" href="https://ql1-infinite42-guppy-histoire.github.io/caw-social-app/">Android アプリを入れる</a></p>
     </section>
@@ -277,7 +281,7 @@
   <div class="drawer-panel" role="dialog" aria-label="メニュー">
     <button id="drawerClose" class="drawer-close" type="button" aria-label="閉じる">✕</button>
     <a class="drawer-summary" id="drawerSummary" href="ja.html?wallet=1&next=profile">
-      <span id="drawerAvatar"><img class="avatar" src="icon-192.png?v=32" alt=""></span>
+      <span id="drawerAvatar"><img class="avatar" src="icon-192.png?v=33" alt=""></span>
       <div class="drawer-name" id="drawerName">CAW Social</div>
       <div class="drawer-sub" id="drawerSub">QL1 版・ウェブ</div>
       <div class="drawer-follow" id="drawerFollow" style="display:none"></div>
@@ -286,7 +290,7 @@
     <nav>
       <a class="nav-it" data-nav="profile" id="drawerProfileRow" href="ja.html?wallet=1&next=profile"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">プロフィール</span></a>
       <a class="nav-it" data-nav="wallet" href="ja.html?wallet=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></span><span class="nav-label">ウォレット</span></a>
-      <a class="nav-it" data-nav="mynames" href="ja.html?wallet=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">自分の名前</span></a>
+      <a class="nav-it" data-nav="mynames" href="ja.html?names=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span><span class="nav-label">自分の名前</span></a>
       <a class="nav-it" data-nav="getname" href="ja.html?getname=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="8.5" cy="7" r="4"/><line x1="20" y1="8" x2="20" y2="14"/><line x1="23" y1="11" x2="17" y2="11"/></svg></span><span class="nav-label">名前を取る</span></a>
       <a class="nav-it" data-nav="dex" href="ja.html?dex=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span><span class="nav-label">HuntersDEX</span></a>
       <a class="nav-it" data-nav="burnhawk" href="ja.html?burnhawk=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22c4.4 0 7-2.8 7-6.5 0-3.2-2.3-5.4-3.5-7C14.3 6.8 13 4.9 13 2c-3 2.2-4.5 4.6-4.6 7-.3-1-1-2-2-3 .1 2.8-.4 4.3-1.1 5.6C4.6 13 5 14.4 5 15.5 5 19.2 7.6 22 12 22z"/></svg></span><span class="nav-label">BurnHawk</span></a>
@@ -340,6 +344,22 @@
     </div>
   </div>
 </div>
+<div id="profEditOverlay" class="overlay" style="display:none">
+  <div class="sheet">
+    <h3 id="profEditTitle"></h3>
+    <p id="profEditNote" class="small"></p>
+    <label class="small" id="profEditNameLbl" for="profEditNameInput"></label>
+    <input id="profEditNameInput" type="text" autocomplete="off" spellcheck="false">
+    <label class="small" id="profEditBioLbl" for="profEditBioInput"></label>
+    <textarea id="profEditBioInput" rows="3"></textarea>
+    <p id="profEditMediaNote" class="small"></p>
+    <div class="row">
+      <button id="profEditSave" type="button"></button>
+      <button id="profEditReset" class="ghost" type="button"></button>
+      <button id="profEditCancel" class="ghost" type="button"></button>
+    </div>
+  </div>
+</div>
 <div id="namePickerOverlay" class="overlay" style="display:none">
   <div class="sheet">
     <h3 id="namePickerTitle">この名前で投稿</h3>
@@ -360,11 +380,11 @@
 <nav class="bottomnav">
   <a href="ja.html" data-nav="home" aria-label="ホーム"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
   <a href="ja.html?lookup=1" data-nav="search" aria-label="さがす"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></a>
-    <a href="ja.html?reactions=1" data-nav="reactions" aria-label="通知"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nav-dot" id="ntDot" style="display:none"></span></a>
+    <a href="ja.html?reactions=1" data-nav="reactions" aria-label="通知"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nav-badge" id="ntBadge" style="display:none"></span></a>
   <a href="ja.html?wallet=1" data-nav="wallet" aria-label="ウォレット"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"/><path d="M3 5v14a2 2 0 0 0 2 2h16v-5"/><path d="M18 12a2 2 0 0 0 0 4h4v-4Z"/></svg></a>
 </nav>
-<script src="bip39-words.js?v=32"></script>
-<script src="viewer.js?v=32"></script>
+<script src="bip39-words.js?v=33"></script>
+<script src="viewer.js?v=33"></script>
 <script>
 /* If the viewer script was blocked or replaced by an older saved
    copy of this site, say so instead of loading forever. */

@@ -90,6 +90,22 @@
    opening the composer in place as a sheet. The pure helpers
    are unit-checked; the composer cluster runs against a stub
    DOM below.
+   v33 adds (app-parity batch 3): profile display name + bio as
+   on-device customs (the app's store key and merge rules; the
+   pure helpers unit-checked, the store round-tripped against
+   a stub localStorage); the My names screen on the posting
+   wallet (summary + per-name cards + the shared dep/withdraw
+   panel); minting moved to the posting wallet (D8 — the v12
+   injected-send pin consciously updated to ZERO, the approve /
+   mint sends pinned to sendLocalTx through the confirm panel);
+   the mint area's Buy CAW link into the DEX view (M13); live
+   mint-name character feedback (D19 — the app's
+   isMintableUsername rule unit-checked); follow lists building
+   automatically with page progress (D9 — no keep-reading
+   button); and the Reactions inbox widened to all of my names
+   with the unfollow kind, the since-last-open scan with its
+   capped note, and the unread COUNT badge (M11/D12 —
+   ntClassifyAny + ntBadgeText unit-checked).
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -332,8 +348,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=32') && jaHtml.includes('?v=32'), 'shells reference ?v=32 assets');
-ok(swSrc.includes("caw-view-v32"), 'sw.js cache name is caw-view-v32');
+ok(enHtml.includes('?v=33') && jaHtml.includes('?v=33'), 'shells reference ?v=33 assets');
+ok(swSrc.includes("caw-view-v33"), 'sw.js cache name is caw-view-v33');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -349,10 +365,12 @@ console.log('— v24: menu destinations audit (profile must not land on the wall
       const href = (tag.match(/href="([^"]*)"/) || [])[1] || '';
       if (nav === 'lang') continue;
       if (nav === 'profile' || nav === 'mynames') {
-        // state-dependent rows: static placeholders are the wallet view
-        // (profile carries ?next=profile since v25), syncChrome rewrites
-        // them per session state
-        const want = nav === 'profile' ? file + '?wallet=1&next=profile' : file + '?wallet=1';
+        // state-dependent rows: profile's static placeholder is the
+        // wallet view (carrying ?next=profile since v25) and
+        // syncChrome rewrites it per session state. My names points
+        // at its own view in every state since v33 — the names
+        // screen itself carries the unlock wall / guide.
+        const want = nav === 'profile' ? file + '?wallet=1&next=profile' : file + '?names=1';
         if (href !== want) bad.push(nav + ' placeholder ' + href);
         continue;
       }
@@ -602,22 +620,29 @@ const HK_ADDR = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266';
 
 console.log('— v12: write-path guards (rewritten for the two-write design) —');
 {
-  /* v12 has exactly two writes, kept apart: minting sends through
+  /* v12 had exactly two writes, kept apart: minting sent through
      the visitor's injected wallet (one helper), and everything
-     else is signed in-page by the built-in wallet and broadcast
-     raw (one sender). Raw-sign REQUESTS to an external wallet are
+     else was signed in-page by the built-in wallet and broadcast
+     raw (one sender). v33 (D8) REMOVED the injected path
+     entirely: minting now goes through the posting wallet like
+     everything else, so the injected-provider send count is
+     ZERO — eth_sendTransaction must not appear as a call at
+     all — and the one raw broadcast site remains the only send
+     on the site. Raw-sign REQUESTS to an external wallet are
      never made — the refused method names must not even appear. */
   const sendSites = (viewerSrc.match(/eth_sendTransaction/g) || []).length;
-  ok(sendSites === 1, 'viewer.js has exactly ONE injected-provider send site (the mint helper)', 'sites=' + sendSites);
+  ok(sendSites === 0, 'viewer.js has ZERO injected-provider send sites (v33 D8: minting moved to the posting wallet)', 'sites=' + sendSites);
   const rawSites = (viewerSrc.match(/eth_sendRawTransaction/g) || []).length;
   ok(rawSites === 1, 'viewer.js has exactly ONE raw broadcast site (the local wallet sender)', 'sites=' + rawSites);
   ok(!/eth_sign/.test(viewerSrc) && !/personal_sign/.test(viewerSrc),
     'viewer.js never names a raw-sign method anywhere (nothing is ever requested)');
   for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
     ok(html.includes('id="getname"') && html.includes('id="mintNameInput"') &&
-       html.includes('id="mintCheckBtn"') && html.includes('id="walletArea"') &&
-       html.includes('id="mintArea"') && html.includes('id="myNames"'),
-       label + ' carries the get-a-name section and its controls');
+       html.includes('id="mintCheckBtn"') && html.includes('id="gnWalletArea"') &&
+       html.includes('id="mintArea"') && html.includes('id="viewNames"') &&
+       html.includes('id="namesArea"') && !html.includes('id="walletArea"') &&
+       !html.includes('id="myNames"'),
+       label + ' carries the get-a-name section and its controls (v33: posting-wallet strip + the separate My names view)');
     ok(html.includes('id="pwallet"') && html.includes('id="pwArea"') &&
        html.includes('id="composerArea"') && html.includes('id="confirmOverlay"'),
        label + ' carries the posting wallet, the composer and the confirm panel');
@@ -744,9 +769,9 @@ console.log('— v14: SuperLike / SuperRecaw (app v0.6.3 spec, ported) —');
      V.AUTHOR_PAY_KV_KEY === 'caw-author-pay-v1',
      'pending/scan storage keys match the app');
   ok((viewerSrc.match(/eth_sendRawTransaction/g) || []).length === 1 &&
-     (viewerSrc.match(/eth_sendTransaction/g) || []).length === 1 &&
+     (viewerSrc.match(/eth_sendTransaction/g) || []).length === 0 &&
      !/eth_sign/.test(viewerSrc) && !/personal_sign/.test(viewerSrc),
-     'v14 keeps the single broadcast site and the single mint send site; no raw-sign methods named');
+     'v14 keeps the single broadcast site; v33 (D8) removed the mint send site — zero injected sends; no raw-sign methods named');
   ok(viewerSrc.includes("new Error('self-superlike')") && viewerSrc.includes('performSuperRecawBurn') &&
      viewerSrc.includes('performAuthorPay'),
      'the flows carry the self-block and the leg-only retries');
@@ -814,15 +839,17 @@ console.log('— v15: home is the timeline only; wallet / lookup / name desk are
     ok(seg('id="viewLookup"', 'id="viewGetname"').includes('id="lookup"'),
        label + ': the lookup block lives inside the lookup view');
     ok(seg('id="viewGetname"', '</main>').includes('id="getname"') &&
-       seg('id="viewGetname"', '</main>').includes('id="myNames"'),
-       label + ': mint + my names live inside the get-a-name view');
+       seg('id="viewGetname"', '</main>').includes('id="gnWalletArea"') &&
+       !seg('id="viewGetname"', '</main>').includes('id="myNames"') &&
+       seg('id="viewNames"', '</main>').includes('id="namesArea"'),
+       label + ': the mint lives inside the get-a-name view; my names is its own view since v33');
     ok(!html.includes('#pwallet') && !html.includes('#lookup') && !html.includes('#getname'),
        label + ': no link points at a stacked home block any more');
     ok((html.match(/\?wallet=1/g) || []).length >= 5 && html.includes('?lookup=1'),
        label + ': the wallet view opens from the summaries, both wallet rows and the tab bar; the lookup view has an entry too',
        'wallet links=' + (html.match(/\?wallet=1/g) || []).length);
-    ok(/data-nav="mynames" href="[^"]*\?wallet=1"/.test(html),
-       label + ': "My names" defaults to the wallet view (v16: syncChrome re-points it to the names side of the name desk once a name acts — see the v16 section)');
+    ok(/data-nav="mynames" href="[^"]*\?names=1"/.test(html),
+       label + ': "My names" points at the names view in every state (v33: the screen itself carries the unlock wall / guide; v16–v32 defaulted to the wallet view)');
     const chrome = html.slice(0, html.indexOf('<nav class="bottomnav"'));
     const order = ['profile', 'wallet', 'mynames', 'getname', 'bookmarks']
       .map(k => chrome.indexOf('data-nav="' + k + '"'));
@@ -885,8 +912,9 @@ console.log('— v16: post-row anatomy fixes (action pills, record link, recaw s
   ok(rule('.post-nested {').includes('background: transparent'),
      'the nested original is transparent, so the SuperRecaw wash covers the whole row');
   /* 4 — the "@" lives on line 2 only */
-  ok(viewerSrc.includes('const display = name ? name : who;') && viewerSrc.includes("esc('@' + name)"),
-     'post header: line 1 is the display name as-is, the "@" appears only on line 2');
+  ok(viewerSrc.includes('const display = custom && custom.displayName ? custom.displayName : (name ? name : who);') &&
+     viewerSrc.includes("esc('@' + name)"),
+     'post header: line 1 is the display name as-is (v33: this device\'s custom display name wins when set), the "@" appears only on line 2');
   /* drawer / sidebar rows: always shown, routed by state */
   for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
     ok(!/data-nav="(profile|mynames)"[^>]*display:none/.test(html),
@@ -900,8 +928,8 @@ console.log('— v16: post-row anatomy fixes (action pills, record link, recaw s
   }
   ok(viewerSrc.includes('const profTarget = acting ? profUrl(acting.username)'),
      'profile rows route by state (v25): acting → own profile, nameless → name desk, locked → wallet + ?next=profile');
-  ok(viewerSrc.includes("acting ? pageFile + '?getname=1#myNames' : pageFile + '?wallet=1'"),
-     'my-names rows route by state: acting → the names list, locked → the wallet view');
+  ok(viewerSrc.includes("el.setAttribute('href', pageFile + '?names=1')"),
+     'my-names rows land on the My names view in every state (v33; the screen carries the wall/guide itself)');
   ok(!viewerSrc.includes('prow.style.display') && !viewerSrc.includes("el.style.display = acting"),
      'syncChrome no longer hides the profile / my-names rows in any state');
 }
@@ -916,9 +944,9 @@ console.log('— v17: tab bar order + the notifications view (reactions to your 
        label + ': the tab bar is home / search / notifications / wallet (notifications second from the right, wallet last)');
     ok(!nav.includes('data-nav="bookmarks"'),
        label + ': bookmarks is NOT on the tab bar (its drawer / sidebar rows remain the entry)');
-    ok(nav.includes('id="ntDot"'), label + ': the notifications tab carries the unread-dot element');
-    ok(html.includes('id="viewReactions"') && html.includes('id="ntList"') && html.includes('id="ntMoreBtn"'),
-       label + ': carries the reactions view (list + scan-further-back button)');
+    ok(nav.includes('id="ntBadge"') && !nav.includes('id="ntDot"'), label + ': the notifications tab carries the unread-count badge element (v33, the dot is gone)');
+    ok(html.includes('id="viewReactions"') && html.includes('id="ntList"') && !html.includes('id="ntMoreBtn"'),
+       label + ': carries the reactions view (v33: the automatic since-last-open scan — no scan-further-back button)');
     ok(html.includes('class="nt-note"'),
        label + ': the reactions view carries the honest scope note (recent record, not a complete history)');
   }
@@ -946,8 +974,8 @@ console.log('— v17: tab bar order + the notifications view (reactions to your 
      'ntClassify: my own action is never a reaction to me');
   ok(V.ntClassify(item({ type: 0, text: 'just a post' }), me, myPosts) === null,
      'ntClassify: an unrelated post falls away');
-  ok(V.ntClassify(item({ type: 4, receiverId: me }), me, myPosts) === null,
-     'ntClassify: an unfollow is not listed as a reaction');
+  ok(V.ntClassify(item({ type: 4, receiverId: me }), me, myPosts) === 'unfollow',
+     'ntClassify: an unfollow of my name IS a reaction since v33 (M11 — the app lists it; v17–v32 excluded it)');
   /* the marked-burn event list: dedupe by tx, newest last */
   const store = new Map();
   globalThis.localStorage = {
@@ -972,9 +1000,9 @@ console.log('— v17: tab bar order + the notifications view (reactions to your 
   ok(viewerSrc.includes('loadReactionsView') && viewerSrc.includes('T.ntNeedWallet') &&
      viewerSrc.includes("pageFile + '?wallet=1'"),
      'with no acting name the reactions view shows wallet guidance (never an empty or dead tab)');
-  ok(viewerSrc.includes("const NT_SEEN_KEY = 'caw-notif-seen-v1'") && viewerSrc.includes('ntSeenBlock') &&
-     viewerSrc.includes('ntTapItems(page.items)'),
-     'the unread dot is driven only by real scans against the stored last-seen block');
+  ok(viewerSrc.includes("const NT_SEEN_KEY = 'caw-notif-seen-v1'") && viewerSrc.includes('ntSeenMark') &&
+     viewerSrc.includes('ntScanInbox') && viewerSrc.includes('ntTapItems(page.items)'),
+     'the unread badge is driven only by the real inbox scan against the stored last-seen position (v33: {block, index} mark, count badge)');
 }
 
 console.log('— v19: X -> CAW mirror inbox (receive side, the ETH web inbox pattern) —');
@@ -1242,7 +1270,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v32'), 'sw cache is caw-view-v32');
+  ok(swJs.includes('caw-view-v33'), 'sw cache is caw-view-v33');
 }
 
 /* ---- v28: plain send out of the posting wallet ---- */
@@ -1279,8 +1307,11 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   const wallBody = VS.slice(VS.indexOf('function renderTradeWall(area, kind)'), VS.indexOf('const assetRowHtml'));
   ok(wallBody.includes('vaultDecrypt(pw, vaultLoad())') && wallBody.includes('await pwStartSession(secret)'),
     'v29: the in-place unlock decrypts the vault and starts the session, like the wallet form');
-  ok(wallBody.includes("if (kind === 'dex') loadDexView(); else loadBurnView();"),
-    'v29: after the in-place unlock, the view\u2019s own loader replaces the wall');
+  ok(wallBody.includes("if (kind === 'dex') loadDexView();") &&
+     wallBody.includes("else if (kind === 'names') renderNamesScreen();") &&
+     wallBody.includes("else if (kind === 'getname') { renderGetnameWallet(); renderMintArea(); }") &&
+     wallBody.includes('else loadBurnView();'),
+    'v29: after the in-place unlock, the view\u2019s own loader replaces the wall (v33: names + getname joined the wall family)');
   ok(wallBody.includes('esc(T.pwUnlockWrong)') && wallBody.includes("e.key === 'Enter'"),
     'v29: a wrong password is reported in place and Enter submits');
   ok(VS.includes("else if (nextQuery === 'dex') location.replace(pageFile + '?dex=1');"),
@@ -1432,7 +1463,8 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       'pageFile', 'profUrl', 'esc', 'T', 'nextQuery', 'postQuery', 'profileQuery', 'bmQuery',
       'reactionsQuery', 'mirrorQuery', 'searchQuery', 'dexQuery', 'burnQuery',
       'vaultLoad', 'vaultDecrypt', 'vaultEncrypt', 'vaultSave', 'hexToBytesU', 'deriveFromPhrase',
-      'addressOfPriv', 'tokensOf', 'ownerTokensCache', 'syncChrome', 'renderPwUnlocked', 'ntCheckDot',
+      'addressOfPriv', 'tokensOf', 'ownerTokensCache', 'syncChrome', 'renderPwUnlocked', 'ntBadgeSet',
+      'ntRefreshBadge', 'renderNamesScreen', 'renderGetnameWallet', 'renderMintArea', 'namesQuery', 'getnameQuery',
       'loadPostPage', 'loadProfile', 'loadBookmarksView', 'loadReactionsView', 'loadMirrorView',
       'loadDexView', 'loadBurnView', 'loadTimeline', 'refreshHomeFeed', 'avatarFor', 'avatarHtml', 'fmtQcaw', 'textBytes',
       'pendingComposeRef', 'composerRef', 'compDraft', 'compFiles', 'mirrorNotice',
@@ -1448,6 +1480,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       V.deriveFromPhrase, V.addressOfPriv,
       async () => [{ id: 7n, balance: 100n, username: 'neptune' }], new Map(),
       () => calls.push('chrome'), () => calls.push('pwUnlocked'), () => {},
+      () => {}, () => {}, () => {}, () => {}, undefined, undefined,
       () => calls.push('post'), () => calls.push('profile'), () => calls.push('bm'),
       () => calls.push('reactions'), () => calls.push('mirror'),
       () => { calls.push('dex'); probe.unlockedAtDex = holder.api ? holder.api.pwUnlocked() : null; },
@@ -2313,6 +2346,169 @@ console.log('— v32: mentions, shortening write-back, drafts, picker, thumbs, o
     tl._qs = {};
     await api.insertOwnPostIntoFeed(item);
     ok(tl.children.length === 1, 'v32 behaviour: an already-present post is never inserted twice');
+  }
+}
+
+console.log('— v33: app-parity batch 3 (customs, My names, posting-wallet mint, live name check, auto follow lists, inbox) —');
+{
+  const VS = viewerSrc;
+  /* ---- D19: the app's mintable-username rule ---- */
+  ok(V.isMintableUsername('neptune') && V.isMintableUsername('a1') && V.isMintableUsername('42'),
+     'v33 D19: lowercase letters + digits are mintable');
+  ok(!V.isMintableUsername('NepTune') && !V.isMintableUsername('a_b') && !V.isMintableUsername('a-b') &&
+     !V.isMintableUsername('') && !V.isMintableUsername('あ') && !V.isMintableUsername(null),
+     'v33 D19: capitals, symbols, empty and non-strings are not mintable');
+  ok(VS.includes("mni.addEventListener('input', onMintNameInput)") &&
+     VS.includes('function onMintNameInput()') &&
+     VS.includes('input.value.toLowerCase()'),
+     'v33 D19: typing lowercases the field, drops the stale check and paints the live verdict');
+  /* ---- M5: the on-device profile customs ---- */
+  ok(V.PROFILE_CUSTOMS_KEY === 'caw-profile-customs' && V.CUSTOM_NAME_MAX === 40 && V.CUSTOM_BIO_MAX === 160,
+     'v33 M5: the customs store uses the app key and the app field limits (40 / 160)');
+  {
+    const store = new Map();
+    globalThis.localStorage = {
+      getItem: k => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, String(v)),
+      removeItem: k => store.delete(k),
+    };
+    try {
+      ok(V.profileCustomFor(7n) === null, 'v33 M5: no custom reads back as none');
+      V.profileCustomSave(7n, { displayName: 'Nep', bio: 'hello' });
+      const c1 = V.profileCustomFor(7n);
+      ok(c1 && c1.displayName === 'Nep' && c1.bio === 'hello', 'v33 M5: a saved custom round-trips');
+      ok(JSON.parse(store.get('caw-profile-customs'))['7'].displayName === 'Nep',
+         'v33 M5: customs persist as one JSON object keyed by name id');
+      V.profileCustomSave(7n, { bio: 'bio2' });
+      const c2 = V.profileCustomFor(7n);
+      ok(c2.displayName === 'Nep' && c2.bio === 'bio2', 'v33 M5: saving merges — untouched fields stay (the app rule)');
+      V.profileCustomSave(7n, { displayName: '' });
+      const c3 = V.profileCustomFor(7n);
+      ok(c3 && !('displayName' in c3) && c3.bio === 'bio2', 'v33 M5: an empty string removes just that field');
+      V.profileCustomSave(7n, { bio: '' });
+      ok(V.profileCustomFor(7n) === null && !('7' in JSON.parse(store.get('caw-profile-customs'))),
+         'v33 M5: an entry with nothing left disappears');
+      ok(!/secret|phrase|key/i.test(store.get('caw-profile-customs') || ''),
+         'v33 M5: nothing secret-shaped is ever in the customs store');
+    } finally { delete globalThis.localStorage; }
+  }
+  ok(V.customDisplayLabel({ displayName: 'Nep' }, 'neptune') === 'Nep' &&
+     V.customDisplayLabel(null, 'neptune') === '@neptune' &&
+     V.customDisplayLabel({ bio: 'x' }, 'neptune') === '@neptune',
+     'v33 M5: displayLabel prefers the custom display name, else the plain @name');
+  ok(V.cleanCustomText('  hi  ', 40) === 'hi' && V.cleanCustomText('x'.repeat(50), 40).length === 40 &&
+     V.cleanCustomText(null, 40) === '',
+     'v33 M5: cleanCustomText trims and caps at the field limit');
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    ok(html.includes('id="profEditOverlay"') && html.includes('id="profEditNameInput"') &&
+       html.includes('id="profEditBioInput"') && html.includes('id="profEditSave"'),
+       'v33 M5: ' + label + ' carries the profile-look editor sheet');
+  }
+  ok(VS.includes("profileCustomFor(a.senderId)") && VS.includes('class="pbio"'),
+     'v33 M5: post cards and the profile head read the customs (display name + bio)');
+  /* ---- M7: the My names screen ---- */
+  ok(VS.includes('function renderNamesScreen()') && VS.includes("renderTradeWall(area, 'names')"),
+     'v33 M7: the names screen exists and walls itself when locked');
+  ok(VS.includes('function openDepWdPanel(nameObj, kind, amt, afterSuccess)') &&
+     VS.includes('openDepWdPanel(acting, kind, amt,') && VS.includes('openDepWdPanel(t, kind, amt,'),
+     'v33 M7: the wallet card and the name cards share the one dep/withdraw panel');
+  ok(VS.includes('T.mineSummary') && VS.includes('T.mineActive') && VS.includes('T.mineUseBtn') &&
+     VS.includes('mnFillFollowerCounts'),
+     'v33 M7: summary line, acting badge, post-as button and follow-index follower counts are wired');
+  ok(VS.includes("else if (nextQuery === 'names') location.replace(pageFile + '?names=1');") &&
+     VS.includes("nextQuery === 'names' ? '<p class=\"pw-next-hint\">' + esc(T.pwNextNames)"),
+     'v33 M7: the ?next=names continuation + locked-wallet hint exist');
+  ok((VS.match(/pwNextNames:/g) || []).length === 2 && (VS.match(/pwNextGetname:/g) || []).length === 2 &&
+     (VS.match(/mineSummary:/g) || []).length === 2 && (VS.match(/customTitle:/g) || []).length === 2,
+     'v33: the new strings exist in both languages');
+  /* ---- D8: minting with the posting wallet ---- */
+  ok(!VS.includes('injectedProvider') && !VS.includes('function sendTx(') && !VS.includes('walletRequest'),
+     'v33 D8: the injected-provider machinery is gone entirely (no dead mint helper left behind)');
+  const mintSrc = VS.slice(VS.indexOf('function doApprove()'), VS.indexOf('/* ---------- v12: the built-in posting wallet'));
+  ok(mintSrc.includes('sendLocalTx(pwSession.keyBytes') &&
+     mintSrc.includes('buildApproveCalldata(fresh.cost)') && mintSrc.includes('buildMintCalldata(fresh.name)'),
+     'v33 D8: approve + mint send through sendLocalTx with the posting wallet key');
+  ok(mintSrc.includes('openConfirmPanel({') && mintSrc.includes('T.getConfirmApprove') && mintSrc.includes('T.getConfirmMint'),
+     'v33 D8: both steps go through the confirm panel with the app wording');
+  ok(mintSrc.includes('await mintGuard(st)') && mintSrc.includes('verifyMinted(fresh.name)') &&
+     mintSrc.includes('ownerTokensCache.delete(pwSession.address)') && mintSrc.includes('await pwLoadNames();'),
+     'v33 D8: the click-time guard, the landed check and the name-list reload all survive the move');
+  ok(VS.includes('function renderGetnameWallet()') && VS.includes("renderTradeWall(area, 'getname')"),
+     'v33 D8: the name desk wallet strip is the posting wallet, walled in place when locked');
+  /* ---- M13: the Buy CAW link ---- */
+  ok(VS.includes("pageFile + '?dex=1'") && VS.includes('T.getBuyCaw') &&
+     (VS.match(/getBuyCaw:/g) || []).length === 2,
+     'v33 M13: a short qCAW balance in the mint area links into the HuntersDEX view (both languages)');
+  /* ---- D9: follow lists build automatically ---- */
+  ok(VS.includes('async function followAutoBuild(kind)') && !VS.includes('continueFollowBuild') &&
+     !VS.includes('kb.onclick'),
+     'v33 D9: the follow lists auto-build in a loop — the manual keep-reading chunking is gone');
+  ok(VS.includes("status.id = 'followListStatus'") && VS.includes('followListPages'),
+     'v33 D9: the status line counts the pages walked in this opening');
+  /* ---- M11 + D12: the widened inbox ---- */
+  {
+    const MINE = '0x' + 'aa'.repeat(32), OTHER = '0x' + 'bb'.repeat(32);
+    const myPosts = new Set([MINE]);
+    const myIds = new Set(['7', '8']);
+    const it = over => ({ type: 0, senderId: 9n, receiverId: 0n, cawId: OTHER, text: '', ...over });
+    ok(V.ntClassifyAny(it({ type: 3, receiverId: 8n }), myIds, myPosts) === 'follow',
+       'v33 M11: a follow of my SECOND name counts (not just the acting one)');
+    ok(V.ntClassifyAny(it({ type: 4, receiverId: 7n }), myIds, myPosts) === 'unfollow',
+       'v33 M11: an unfollow of any of my names counts');
+    ok(V.ntClassifyAny(it({ type: 1, cawId: MINE }), myIds, myPosts) === 'like',
+       'v33 M11: a like on a post by any of my names counts');
+    ok(V.ntClassifyAny(it({ type: 3, senderId: 8n, receiverId: 7n }), myIds, myPosts) === null,
+       'v33 M11: an action BY one of my names never counts, even aimed at another of my names');
+    ok(V.ntClassifyAny(it({ type: 4, receiverId: 9n }), myIds, myPosts) === null,
+       'v33 M11: an unfollow of someone else falls away');
+    ok(V.NT_SCAN_MAX_PAGES === 40, 'v33 M11: the inbox scan bound is the app 40 pages');
+  }
+  ok(V.ntBadgeText(0) === '0' && V.ntBadgeText(7) === '7' && V.ntBadgeText(99) === '99' &&
+     V.ntBadgeText(100) === '99+' && V.ntBadgeText(12345) === '99+',
+     'v33 M11: the badge label is the count, capped at 99+');
+  ok(VS.includes('async function ntScanInbox()') && VS.includes('ntSetSeenMark') &&
+     VS.includes('T.ntCapped') && VS.includes('function ntRefreshBadge(force)'),
+     'v33 M11: the automatic since-last-open scan, the position mark, the capped note and the badge refresh are wired');
+  ok(VS.includes('async function ntActorNameFor(address)') && VS.includes('ntActorNames'),
+     'v33 D12: SuperLike actor rows resolve the wallet’s names (cached) before falling back to the address');
+  ok((VS.match(/ntUnfollowed:/g) || []).length === 2 && (VS.match(/ntCapped:/g) || []).length === 2 &&
+     (VS.match(/getConfirmApprove:/g) || []).length === 2 && (VS.match(/getConfirmMint:/g) || []).length === 2,
+     'v33: the inbox + mint confirm strings exist in both languages');
+  /* behavioural: the generalized wall serves the two new kinds */
+  {
+    const wallBody = VS.slice(VS.indexOf('function renderTradeWall(area, kind)'), VS.indexOf('const assetRowHtml'));
+    const mkEl = () => ({ innerHTML: '', value: '', disabled: false, listeners: {},
+      addEventListener(k, f) { this.listeners[k] = f; } });
+    const els = {}, calls = [];
+    const $id = id => (els[id] = els[id] || mkEl());
+    const renderTradeWall = new Function('$', 'esc', 'T', 'pageFile', 'vaultLoad', 'vaultDecrypt',
+      'pwStartSession', 'syncChrome', 'renderComposer', 'loadDexView', 'loadBurnView',
+      'renderNamesScreen', 'renderGetnameWallet', 'renderMintArea',
+      wallBody + '\nreturn renderTradeWall;')(
+      $id, s => String(s),
+      { tradeNeedUnlock: 'GUIDE', mirrorOpenWallet: 'WALLET', pwLockedText: 'LOCKED',
+        pwPasswordPh: 'PW', pwUnlockBtn: 'UNLOCK', pwUnlockWrong: 'WRONG' },
+      'en.html', () => ({ v: 1 }),
+      async () => ({ kind: 'key', secret: 'S' }),
+      async () => { calls.push('session'); },
+      () => {}, () => { calls.push('composer'); },
+      () => { calls.push('dex'); }, () => { calls.push('burn'); },
+      () => { calls.push('names'); }, () => { calls.push('gn'); }, () => { calls.push('mint'); });
+    const area = mkEl();
+    renderTradeWall(area, 'names');
+    ok(area.innerHTML.includes('id="namesUnlockPass"') && area.innerHTML.includes('id="namesUnlockBtn"'),
+      'v33 behaviour: the My names wall renders its own (names-prefixed) unlock form');
+    await els.namesUnlockBtn.onclick();
+    ok(calls.join(',') === 'session,composer,names',
+      'v33 behaviour: unlocking on the names wall starts the session and the names screen replaces the wall');
+    calls.length = 0;
+    const area2 = mkEl();
+    renderTradeWall(area2, 'getname');
+    ok(area2.innerHTML.includes('id="gnUnlockPass"'),
+      'v33 behaviour: the Get-a-name wall renders its own (gn-prefixed) unlock form');
+    await els.gnUnlockBtn.onclick();
+    ok(calls.join(',') === 'session,composer,gn,mint',
+      'v33 behaviour: unlocking on the getname wall re-renders the wallet strip and the mint area');
   }
 }
 
