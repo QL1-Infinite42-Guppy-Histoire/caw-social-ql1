@@ -285,6 +285,23 @@ const T = {
     payConfirm: 'Send {amount} O', payDone: 'Payment sent — all done ⭐',
     payShortfall: 'Not enough O to finish the payment. Get O on QL1, then try again from the post.',
     recawChoiceTitle: 'Recaw this post?',
+    /* v31: Following segment + Tip (the app's tl.* / tip.* wording) */
+    tabLatest: 'Latest', tabFollowing: 'Following',
+    followingEmpty: 'Nothing here yet. When names you follow post or recaw, it shows up here.',
+    followingNeedWallet: 'This is the feed of the names YOUR name follows. Set up or unlock the posting wallet and choose a name, and its feed will appear here.',
+    followingNeedName: 'Get a name first — then follow names, and their posts will show up here.',
+    tipBtn: 'Tip',
+    tipTitle: 'Send a tip',
+    tipBody: 'Send PHOENIX to {name}, the author of this post. PHOENIX is the tip coin.',
+    tipBalance: 'Your PHOENIX balance: {balance}',
+    tipCustom: 'Custom',
+    tipOver: 'That is more than your balance.',
+    tipSend: 'Send tip',
+    tipTo: 'Send to',
+    tipMismatch: 'The recipient check disagreed, so the tip was not sent. Please try again.',
+    tipDone: 'Tip sent 🎁',
+    tipSelf: "You can't tip your own post.",
+    tipShortfall: 'Not enough PHOENIX. Get PHOENIX on QL1 (for example by swapping, or by burning HAWK with BurnHawk), then try again.',
     /* v22: HuntersDEX + BurnHawk (the app's v0.7.0 screens) */
     navDex: 'HuntersDEX', navBurn: 'BurnHawk',
     tradeNeedUnlock: 'This signs inside this page with the built-in posting wallet — set it up or unlock it first (in the menu). It spends from that wallet, not from a wallet app.',
@@ -543,6 +560,23 @@ const T = {
     payConfirm: '{amount} O を送る', payDone: '支払いを送りました — 完了です ⭐',
     payShortfall: '支払いに必要な O が足りません。QL1 で O を用意して、もう一度お試しください。',
     recawChoiceTitle: 'Recaw しますか？',
+    /* v31: フォロー中セグメント + チップ（アプリの tl.* / tip.* の文言） */
+    tabLatest: '最新', tabFollowing: 'フォロー中',
+    followingEmpty: 'まだ何もありません。フォローしている名前が投稿や Recaw をすると、ここに表示されます。',
+    followingNeedWallet: 'ここに出るのは、あなたの名前がフォローしている名前の投稿です。投稿用ウォレットを用意（または解錠）して名前を選ぶと、その名前のフィードが表示されます。',
+    followingNeedName: '先に名前を取ってください。名前をフォローすると、その投稿がここに表示されます。',
+    tipBtn: 'チップ',
+    tipTitle: 'チップを送る',
+    tipBody: 'この投稿の作者 {name} さんに PHOENIX を送ります。PHOENIX はチップ専用のコインです。',
+    tipBalance: 'あなたの PHOENIX 残高: {balance}',
+    tipCustom: '自分で入力',
+    tipOver: '残高を超えています。',
+    tipSend: 'チップを送る',
+    tipTo: '送り先',
+    tipMismatch: '送り先の確認が一致しなかったため、チップは送りませんでした。もう一度お試しください。',
+    tipDone: 'チップを送りました 🎁',
+    tipSelf: '自分の投稿にはチップできません。',
+    tipShortfall: 'PHOENIX が足りません。QL1 で PHOENIX を用意して（交換や、BurnHawk で HAWK をバーンするなど）もう一度お試しください。',
     /* v22: HuntersDEX + BurnHawk (the app's v0.7.0 screens) */
     navDex: 'HuntersDEX', navBurn: 'BurnHawk',
     tradeNeedUnlock: 'これはこのページ内蔵の投稿用ウォレットで署名します — 先に（メニューから）用意するか開いてください。ウォレットアプリではなく、このウォレットから支払います。',
@@ -1460,6 +1494,12 @@ async function refinedFollowListsOf(idIn) {
   const [following, followers] = await Promise.all([refine(base.following, true), refine(base.followers, false)]);
   return { following, followers };
 }
+/* The Following feed's row rule (v31; the app's Following
+   walk): posts and Recaws only, and only from senders in the
+   acting name's follow set. Likes never enter (they are not
+   collected), and follow/unfollow rows are not feed rows here
+   even though Latest shows them as context rows. */
+const folFeedItem = (a, set) => !!a && (a.type === 0 || a.type === 2) && !!set && set.has(a.senderId.toString());
 
 /* ---------- bookmarks (v13; the app's lib/bookmarks.ts rule) ----------
    CAW has no on-chain bookmark action, so — exactly like the
@@ -1742,6 +1782,39 @@ function parseAmountDec(str, decimals) {
   if (!m) return null;
   return BigInt(m[1]) * 10n ** BigInt(dec) + BigInt((m[2] || '').padEnd(dec, '0'));
 }
+/* --- Tip money rules (v31; the app's lib/tip.ts) ---
+   A tip is a plain PHOENIX transfer from the reader to a
+   post's author: no marker, no counting, no split, no burn.
+   The amount is the tipper's choice: the presets below, or a
+   custom amount with the usual 25 / 50 / 75 / MAX balance
+   chips. PHOENIX has 18 decimals. */
+const TIP_PRESETS = [10, 50, 100];
+/** The raw units for one preset (whole PHOENIX). */
+const tipPresetRaw = phoenix => BigInt(phoenix) * 10n ** 18n;
+/** Parse a custom tip amount into raw units. Null for
+ *  anything malformed or not positive. */
+const parseTipAmount = text => {
+  const raw = parseAmountDec(text, 18);
+  return (raw === null || raw <= 0n) ? null : raw;
+};
+/** The amount a balance chip selects: pct% of the balance
+ *  (100 = MAX, the whole balance — a tip pays no separate fee
+ *  in PHOENIX, so MAX needs no reserve). */
+const tipChipAmount = (balance, pct) => pct >= 100 ? BigInt(balance) : (BigInt(balance) * BigInt(pct)) / 100n;
+/** True when the balance cannot cover the chosen tip. */
+const tipShortfall = (balance, amountRaw) => BigInt(balance) < BigInt(amountRaw);
+/** Why a tip must not be sent, or null when it may (the app's
+ *  tipBlockReason): your own names' posts (the local list) and
+ *  any post whose author owner IS your address are blocked —
+ *  tipping yourself is meaningless. */
+function tipBlockReason(args) {
+  if ((args.myTokenIds || []).some(id => BigInt(id) === BigInt(args.senderId))) return 'self';
+  if (args.authorOwner && args.myAddress &&
+      String(args.authorOwner).toLowerCase() === String(args.myAddress).toLowerCase()) return 'self';
+  return null;
+}
+/** A PHOENIX balance read on QL1 (throws on RPC failure). */
+const phoenixBalanceOf = async addr => readUint(PHOENIX_TOKEN, SEL.balanceOf + encAddr(addr));
 /* --- BurnHawk money rules (the app's burnHawk.ts) --- */
 const burnUnit = dec => 10n ** BigInt(dec);
 const burnStepRaw = dec => BURN_RATIO * burnUnit(dec);
@@ -2887,7 +2960,8 @@ const recordLineHtml = hash => '<div class="recordline"><a href="' + EXPLORER + 
    left; a bold name line; a "@handle · time" line under it; the
    body; then ONE action row (never wraps): reply count, Recaw
    count, like (heart + count), the gold SuperLike star + count,
-   bookmark, share — with the record link alone under the row.
+   the labelled Tip coin (v31, the app's order), bookmark, share
+   — with the record link alone under the row.
    The row is a VIEW for everyone; the write actions (like /
    Recaw / SuperLike) check the posting wallet when tapped, and
    bookmarking is a local-only toggle. No view counter exists —
@@ -2933,6 +3007,11 @@ async function postCard(a, opts) {
     (recawCount > 0 ? '<span class="xcount">' + fmtCount(recawCount) + '</span>' : '') + '</button>' +
     '<button type="button" class="xact x-like" data-act="like" aria-label="' + esc(T.actLike) + '"><span class="icring">' + IC_HEART + '</span><span class="like-count xcount"></span></button>' +
     '<button type="button" class="xact x-super" data-act="super" aria-label="SuperLike"><span class="icring sl-ic">' + IC_STAR + '</span><span class="sl-count xcount"></span></button>' +
+    /* v31: the Tip button, in the app's row order (after the
+       SuperLike star, before bookmark/share) and labelled like
+       the app's. The bookmarks view passes noTip — the app
+       deliberately leaves tip unwired there. */
+    (opts.noTip ? '' : '<button type="button" class="xact x-tip" data-act="tip" aria-label="' + esc(T.tipBtn) + '"><span class="icring">' + IC_COIN + '</span><span class="xcount">' + esc(T.tipBtn) + '</span></button>') +
     '<span class="xspacer"></span>' +
     '<button type="button" class="xact x-bm' + (saved ? ' on' : '') + '" data-act="bookmark" aria-label="' + esc(T.bmAdd) + '"><span class="icring">' + (saved ? IC_BOOKMARK_FILL : IC_BOOKMARK) + '</span></button>' +
     '<button type="button" class="xact x-share" data-act="share" aria-label="' + esc(T.shareLabel) + '"><span class="icring">' + IC_SHARE + '</span></button>' +
@@ -3126,6 +3205,136 @@ async function shareCurrentPage(btn) {
     btn.textContent = T.copied;
     setTimeout(() => { btn.textContent = old; }, 1600);
   }
+}
+
+/* ---------- Following timeline (v31; the app's Home segment) ----------
+   The app's second Home feed: posts + Recaws by the names the
+   acting name follows, filtered from the same public feed the
+   Latest walk reads (fetchPage over the CawActions record).
+   The follow set comes from the viewer's follow index — the
+   same refined lists the profile shows. While the index is
+   still being built, its progress is shown with the real
+   walked-page count, never an invented one. The walk mirrors
+   the app's chunking: up to 25 pages per load until at least
+   8 matches turn up or the feed ends; "See more" continues.
+   Locked and nameless states are guides, never a fake feed. */
+let tlMode = 'latest';
+let folSet = null, folSetFor = null, folCursor = null, folDone = false, folLoading = false, folStarted = false;
+function paintFeedTabs() {
+  const a = $('feedTabLatest'), b = $('feedTabFollowing');
+  if (a) a.classList.toggle('on', tlMode === 'latest');
+  if (b) b.classList.toggle('on', tlMode === 'following');
+}
+function switchFeedMode(mode) {
+  if (mode !== 'latest' && mode !== 'following') return;
+  tlMode = mode;
+  paintFeedTabs();
+  const fol = mode === 'following';
+  const tl = $('timeline');
+  if (tl) tl.style.display = fol ? 'none' : '';
+  const mb = $('moreBtn');
+  if (mb && mb.parentElement) mb.parentElement.style.display = fol ? 'none' : '';
+  const pill = $('newPostsPill');
+  if (pill) {
+    if (fol) { pill.dataset.was = pill.style.display || ''; pill.style.display = 'none'; }
+    else if (pill.dataset.was !== undefined) { pill.style.display = pill.dataset.was; delete pill.dataset.was; }
+  }
+  const fa = $('followingArea');
+  if (fa) fa.style.display = fol ? '' : 'none';
+  if (fol) setupFollowing();
+}
+async function setupFollowing() {
+  const box = $('followingFeed');
+  if (!box) return;
+  const mb = $('followingMoreBtn');
+  const acting = pwSession ? pwActing() : null;
+  if (!pwSession) {
+    box.innerHTML = '<div class="nt-guide"><p>' + esc(T.followingNeedWallet) + '</p>' +
+      '<p><a class="nt-wallet-link" href="' + pageFile + '?wallet=1">' + esc(T.ntOpenWallet) + '</a></p></div>';
+    if (mb) mb.style.display = 'none';
+    folSet = null; folSetFor = null; folStarted = false;
+    return;
+  }
+  if (!acting) {
+    box.innerHTML = '<div class="nt-guide"><p>' + esc(T.followingNeedName) + '</p>' +
+      '<p><a class="nt-wallet-link" href="' + pageFile + '?getname=1">' + esc(T.navGetName) + '</a></p></div>';
+    if (mb) mb.style.display = 'none';
+    folSet = null; folSetFor = null; folStarted = false;
+    return;
+  }
+  if (folStarted && folSet && folSetFor === acting.id.toString()) return; /* already built for this name */
+  folSet = null; folSetFor = acting.id.toString(); folCursor = null; folDone = false; folStarted = false;
+  box.innerHTML = skeletonHtml(5);
+  const prog = document.createElement('p');
+  prog.className = 'small fol-prog';
+  box.appendChild(prog);
+  const stale = () => tlMode !== 'following' || !pwSession || !pwActing() ||
+    pwActing().id.toString() !== folSetFor;
+  try {
+    let st = followBuildState();
+    while (!st.complete) {
+      st = await buildFollowIndex(pages => { prog.textContent = T.followBuilding.replace('{n}', String(pages)); });
+      if (stale()) return;
+    }
+    const lists = await refinedFollowListsOf(acting.id).catch(() => followListsOf(acting.id));
+    if (stale()) return;
+    folSet = new Set(lists.following.map(x => x.toString()));
+  } catch (e) {
+    if (stale()) return;
+    folSet = new Set(followListsOf(acting.id).following.map(x => x.toString()));
+  }
+  folStarted = true;
+  if (!folSet.size) {
+    box.innerHTML = '<p>' + esc(T.followingEmpty) + '</p>';
+    if (mb) mb.style.display = 'none';
+    return;
+  }
+  loadFollowing(false);
+}
+async function loadFollowing(append) {
+  if (folLoading || !folSet || (append && folDone)) return;
+  folLoading = true;
+  const box = $('followingFeed');
+  try {
+    if (!append) { box.innerHTML = skeletonHtml(5); folCursor = null; folDone = false; }
+    let rendered = 0, pages = 0, cleared = append;
+    while (pages < 25 && !folDone) {
+      const page = await fetchPage(folCursor);
+      folCursor = page.next;
+      if (!folCursor) folDone = true;
+      pages++;
+      ntTapItems(page.items); /* a real scan feeds the notifications dot, like Latest's */
+      const mine = page.items.filter(a => folFeedItem(a, folSet));
+      const rows = await Promise.all(mine.map(a => rowFor(a).catch(() => null)));
+      if (!cleared) { box.innerHTML = ''; cleared = true; }
+      for (const row of rows) if (row) { box.appendChild(row); rendered++; }
+      hydrateAttachmentsIn(box).catch(() => {});
+      if (!page.items.length) folDone = true;
+      if (rendered >= 8) break;
+    }
+    if (!box.querySelector('.post:not(.skel)') && folDone) {
+      box.innerHTML = '<p>' + esc(T.followingEmpty) + '</p>';
+    }
+    const mb = $('followingMoreBtn');
+    if (mb) mb.style.display = folDone ? 'none' : '';
+  } catch (e) {
+    if (!box.querySelector('.post:not(.skel)')) {
+      box.innerHTML = '<p class="err">' + T.loadFail + '</p>' +
+        '<p><button id="folRetry" type="button">' + T.retryBtn + '</button></p>';
+      const fb = $('folRetry');
+      if (fb) fb.onclick = () => loadFollowing(false);
+    } else {
+      const mb = $('followingMoreBtn');
+      if (mb) mb.style.display = '';
+    }
+  } finally { folLoading = false; }
+}
+/* Wallet-state changes refresh whichever home segment is on
+   screen (refreshViewsForWallet's home branch): Latest
+   reloads; Following re-resolves its guide / follow set. */
+function refreshHomeFeed() {
+  if (tlMode === 'following') { folStarted = false; folSet = null; setupFollowing(); }
+  else loadTimeline(false);
 }
 
 /* ---------- "CAW right now" stats card (v10) ----------
@@ -3992,7 +4201,7 @@ function refreshViewsForWallet() {
   else if (typeof dexQuery !== 'undefined' && dexQuery) loadDexView();
   else if (typeof burnQuery !== 'undefined' && burnQuery) loadBurnView();
   else if (typeof searchQuery !== 'undefined' && searchQuery) { /* search rows keep their buttons state; a fresh search re-adds them */ }
-  else loadTimeline(false);
+  else refreshHomeFeed();
 }
 async function pwLoadNames() {
   if (!pwSession) return;
@@ -4545,6 +4754,10 @@ function confirmErrHtml(e) {
   if (e && e.message === 'shortfall-src') return '<span class="err">' + esc(T.srcShortfall) + '</span>';
   if (e && e.message === 'shortfall-burn') return '<span class="err">' + esc(T.srcBurnShortfall) + '</span>';
   if (e && e.message === 'shortfall-pay') return '<span class="err">' + esc(T.payShortfall) + '</span>';
+  /* v31: the Tip flow's named outcomes (the app's wording). */
+  if (e && e.message === 'self-tip') return '<span class="err">' + esc(T.tipSelf) + '</span>';
+  if (e && e.message === 'tip-mismatch') return '<span class="err">' + esc(T.tipMismatch) + '</span>';
+  if (e && e.message === 'shortfall-tip') return '<span class="err">' + esc(T.tipShortfall) + '</span>';
   /* v22: the HuntersDEX send-time guards. */
   if (e && e.message === 'dex-moved') return '<span class="err">' + esc(T.dexMoved) + '</span>';
   if (e && e.message === 'dex-noroute') return '<span class="err">' + esc(T.dexRouteGone) + '</span>';
@@ -5201,6 +5414,8 @@ function wireRowActions(div, a) {
   if (rec) rec.onclick = () => onRecawTap(a);
   const sup = btn('super');
   if (sup) sup.onclick = () => { if (typeof onSuperTap === 'function') onSuperTap(a, div); };
+  const tip = btn('tip');
+  if (tip) tip.onclick = () => { if (typeof onTipTap === 'function') onTipTap(a); };
   const bm = btn('bookmark');
   if (bm) bm.onclick = () => {
     if (!pwSession) { scrollToWallet(); return; }
@@ -5512,6 +5727,150 @@ function onSuperTap(a, div) {
   openSuperlikeFlow(a);
 }
 
+/* ================= Tip (v31; the app's TipSheet + performTip) =================
+   The sheet is the app's chooser: PHOENIX presets 10 / 50 /
+   100 + a Custom chip whose input carries the 25 / 50 / 75 /
+   MAX balance chips; the recipient is shown shortened with
+   the last four characters emphasised (a spot-check line —
+   the send never trusts it); the sender's PHOENIX balance
+   line and the over-balance error gate the Send button. The
+   send itself goes through the shared confirm panel, and
+   inside it the recipient is RE-RESOLVED (ownerOf of the
+   author's name id) and cross-checked against the resolution
+   the panel displayed: two disagreeing answers refuse the
+   tip, the app's recipient cross-check rule with the reads
+   this page can make. Self-tips are blocked twice — fast, at
+   tap time, when the post is by one of my names (the app's
+   instant feedback), and again inside the send from the
+   fresh resolution. The transfer is a plain PHOENIX transfer
+   through sendLocalTx, the one broadcast site. */
+let tipState = null;   // {a, preset (number | null = custom), balance, to}
+function tipAmountRaw() {
+  if (!tipState) return null;
+  if (tipState.preset !== null) return tipPresetRaw(tipState.preset);
+  const inp = $('tipAmount');
+  return parseTipAmount(inp ? inp.value : '');
+}
+function paintTipSheet() {
+  if (!tipState) return;
+  const amt = tipAmountRaw();
+  const over = amt !== null && tipState.balance !== null && tipShortfall(tipState.balance, amt);
+  const err = $('tipErr');
+  if (err) err.innerHTML = over ? '<span class="err">' + esc(T.tipOver) + '</span>' : '';
+  const send = $('tipSendBtn');
+  if (send) send.disabled = !(amt !== null && amt > 0n && !over);
+  document.querySelectorAll('#tipPresets [data-tippreset]').forEach(b => {
+    const v = b.getAttribute('data-tippreset');
+    const on = v === 'custom' ? tipState.preset === null
+      : (tipState.preset !== null && Number(v) === tipState.preset);
+    b.classList.toggle('on', on);
+  });
+  const ca = $('tipCustomArea');
+  if (ca) ca.style.display = tipState.preset === null ? '' : 'none';
+}
+function openTipSheet(a) {
+  const ov = $('tipOverlay');
+  if (!ov || !pwSession) return;
+  tipState = { a, preset: TIP_PRESETS[0], balance: null, to: null };
+  $('tipTitle').textContent = T.tipTitle;
+  $('tipBody').textContent = T.tipBody.replace('{name}', T.unknownName + a.senderId);
+  $('tipToLine').innerHTML = '';
+  $('tipBalLine').textContent = T.tipBalance.replace('{balance}', '—');
+  $('tipErr').innerHTML = '';
+  $('tipPresets').innerHTML = TIP_PRESETS.map(p =>
+    '<button type="button" class="tokchip" data-tippreset="' + p + '">' + p + ' PHOENIX</button>').join('') +
+    '<button type="button" class="tokchip" data-tippreset="custom">' + esc(T.tipCustom) + '</button>';
+  $('tipPctChips').innerHTML = pctChipsHtml('tipchip');
+  const inp = $('tipAmount');
+  if (inp) { inp.value = ''; inp.oninput = () => paintTipSheet(); }
+  $('tipSendBtn').textContent = T.tipSend;
+  $('tipCancelBtn').textContent = T.confirmCancelBtn;
+  ov.style.display = '';
+  const close = () => { ov.style.display = 'none'; tipState = null; };
+  $('tipCancelBtn').onclick = close;
+  $('tipSendBtn').onclick = () => {
+    const amt = tipAmountRaw();
+    if (amt === null || amt <= 0n) return;
+    close();
+    openTipConfirm(a, amt);
+  };
+  document.querySelectorAll('#tipPresets [data-tippreset]').forEach(b => {
+    b.onclick = () => {
+      if (!tipState) return;
+      const v = b.getAttribute('data-tippreset');
+      tipState.preset = v === 'custom' ? null : Number(v);
+      paintTipSheet();
+    };
+  });
+  document.querySelectorAll('#tipPctChips [data-tipchip]').forEach(b => {
+    b.onclick = () => {
+      if (!tipState || tipState.balance === null) return;
+      const raw = tipChipAmount(tipState.balance, Number(b.getAttribute('data-tipchip')));
+      if (inp) inp.value = rawToInputStr(raw, 18);
+      paintTipSheet();
+    };
+  });
+  paintTipSheet();
+  /* Display reads (the send re-resolves and re-checks all of
+     this — nothing here is trusted): the author's name, the
+     recipient spot-check line, and my PHOENIX balance. */
+  resolveName(a.senderId).then(nm => {
+    if (!tipState || tipState.a !== a) return;
+    $('tipBody').textContent = T.tipBody.replace('{name}', nm ? '@' + nm : T.unknownName + a.senderId);
+  }).catch(() => {});
+  nameOwnerOf(a.senderId).then(to => {
+    if (!tipState || tipState.a !== a) return;
+    tipState.to = to;
+    $('tipToLine').innerHTML = esc(T.tipTo) + ': ' + esc(to.slice(0, 6)) + '…' +
+      '<b>' + esc(to.slice(-4)) + '</b>';
+  }).catch(() => {});
+  phoenixBalanceOf(pwSession.address).then(bal => {
+    if (!tipState || tipState.a !== a) return;
+    tipState.balance = bal;
+    $('tipBalLine').textContent = T.tipBalance.replace('{balance}', fmtAmt(bal, 18));
+    paintTipSheet();
+  }).catch(() => {});
+}
+async function openTipConfirm(a, amountRaw) {
+  if (!pwSession) return;
+  /* Re-resolve the recipient NOW — the panel shows this
+     resolution, and the send re-resolves once more and
+     refuses if the two disagree. */
+  let to = null;
+  try { to = await nameOwnerOf(a.senderId); } catch (e) {}
+  if (!to) { openMessagePanel(T.tipTitle, [], T.actFail); return; }
+  const targetLabel = await postTargetLabel(a);
+  openConfirmPanel({
+    title: T.tipTitle,
+    lines: [
+      [T.slTarget, targetLabel],
+      [T.tipTo, shortAddr(to)],
+      [T.confirmAmountLbl, fmtAmt(amountRaw, 18) + ' PHOENIX'],
+    ],
+    signLabel: T.tipSend, doneText: T.tipDone,
+    onSign: async () => {
+      pwTouch();
+      const fresh = await nameOwnerOf(a.senderId);
+      if (!fresh || fresh.toLowerCase() !== to.toLowerCase()) throw new Error('tip-mismatch');
+      if (tipBlockReason({ senderId: a.senderId, myTokenIds: pwNames.map(t => t.id), authorOwner: fresh, myAddress: pwSession.address })) throw new Error('self-tip');
+      const bal = await phoenixBalanceOf(pwSession.address);
+      if (tipShortfall(bal, amountRaw)) throw new Error('shortfall-tip');
+      await sendLocalTx(pwSession.keyBytes, { to: PHOENIX_TOKEN, data: buildTransferData(fresh, amountRaw), gasFallback: 60000 });
+    },
+  });
+}
+function onTipTap(a) {
+  if (!pwSession) { scrollToWallet(); return; }
+  /* Fast local self-check first (the app's instant feedback):
+     a post by one of my own names never opens the sheet; the
+     send re-checks against the fresh owner resolution too. */
+  if (pwNames.some(t => t.id === a.senderId)) {
+    postTargetLabel(a).then(label => openMessagePanel(T.tipTitle, [[T.slTarget, label]], T.tipSelf));
+    return;
+  }
+  openTipSheet(a);
+}
+
 /* ----- painting the marks on rows ----- */
 function paintSuperInto(div, cawId) {
   const c = superlikeCountCached(cawId);
@@ -5656,7 +6015,7 @@ async function loadBookmarksView() {
       try { post = await findPostByCawId(id, 12); } catch (e) {}
       if (!post) { try { post = await findPostDeep(id); } catch (e) {} }
       if (post) {
-        const card = await postCard(post);
+        const card = await postCard(post, { noTip: true }); /* v31: the app leaves tip unwired on bookmarks */
         wrap.innerHTML = '';
         wrap.appendChild(card);
       } else {
@@ -6435,8 +6794,15 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
   $('viewHome').style.display = '';
   loadTimeline(false);
   $('moreBtn').onclick = () => loadTimeline(true);
+  /* v31: the Latest / Following segment (in-page, like the
+     profile tabs) and the Following feed's own "See more". */
+  const ftl = $('feedTabLatest'), ftf = $('feedTabFollowing');
+  if (ftl) ftl.onclick = () => switchFeedMode('latest');
+  if (ftf) ftf.onclick = () => switchFeedMode('following');
+  const fmb = $('followingMoreBtn');
+  if (fmb) fmb.onclick = () => loadFollowing(true);
   const rb = $('refreshBtn');
-  if (rb) rb.onclick = () => loadTimeline(false);
+  if (rb) rb.onclick = () => refreshHomeFeed();
   const npb = $('newPostsBtn');
   if (npb) npb.onclick = () => {
     const pill = $('newPostsPill');
@@ -6453,6 +6819,10 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
       if (entries.some(e => e.isIntersecting)) loadTimeline(true);
     }, { rootMargin: '600px' });
     io.observe($('moreBtn'));
+    const ioF = new IntersectionObserver(entries => {
+      if (entries.some(e => e.isIntersecting)) loadFollowing(true);
+    }, { rootMargin: '600px' });
+    if (fmb) ioF.observe(fmb);
   }
 }
 $('lookupBtn').onclick = doLookup;
@@ -6532,7 +6902,9 @@ if (typeof module !== 'undefined' && module.exports) {
     highlightKeyword, isNewerItem,
     actionDigest, encodeBatch, keccakHex,
     buildFollowIndex, followListsOf, refinedFollowListsOf,
-    FOLLOW_CHUNK_PAGES, followBuildState,
+    FOLLOW_CHUNK_PAGES, followBuildState, folFeedItem,
+    TIP_PRESETS, tipPresetRaw, parseTipAmount, tipChipAmount,
+    tipShortfall, tipBlockReason, phoenixBalanceOf,
     fetchPage, findPostByCawId, findPostDeep, collectPostContext,
     postIndex, refIndex, refChildren, indexItem, likesOf, isVisibleRow,
     rpc, readUint, readStr, readAddr, encStr, encAddr,

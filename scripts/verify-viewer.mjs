@@ -64,6 +64,19 @@
    The wallet cluster + composer are run against a stub DOM
    below: a restored session on the home view must render the
    real composer card with can-compose set.
+   v31 adds (app-parity batch 1): the home Latest / Following
+   segment — the Following feed walks the same record filtered
+   to the acting name's follow-index set (posts + Recaws only,
+   25 pages per chunk until >= 8 matches), with honest guide /
+   empty / building-progress states — and the Tip flow: the
+   app's TipSheet (PHOENIX presets 10 / 50 / 100 + custom with
+   25/50/75/MAX chips, recipient spot-check line with the last
+   four emphasised, balance line, over-balance error, self-tip
+   blocked) sending a plain PHOENIX transfer through the
+   shared confirm panel, the recipient re-resolved at send
+   and cross-checked against the panel's resolution. The tip
+   money rules are exported and unit-checked; the sheet, the
+   confirm flow and the Following walk run against stub DOMs.
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -306,8 +319,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=30') && jaHtml.includes('?v=30'), 'shells reference ?v=30 assets');
-ok(swSrc.includes("caw-view-v30"), 'sw.js cache name is caw-view-v30');
+ok(enHtml.includes('?v=31') && jaHtml.includes('?v=31'), 'shells reference ?v=31 assets');
+ok(swSrc.includes("caw-view-v31"), 'sw.js cache name is caw-view-v31');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1216,7 +1229,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v30'), 'sw cache is caw-view-v30');
+  ok(swJs.includes('caw-view-v31'), 'sw cache is caw-view-v31');
 }
 
 /* ---- v28: plain send out of the posting wallet ---- */
@@ -1408,7 +1421,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       'vaultLoad', 'vaultDecrypt', 'vaultEncrypt', 'vaultSave', 'hexToBytesU', 'deriveFromPhrase',
       'addressOfPriv', 'tokensOf', 'ownerTokensCache', 'syncChrome', 'renderPwUnlocked', 'ntCheckDot',
       'loadPostPage', 'loadProfile', 'loadBookmarksView', 'loadReactionsView', 'loadMirrorView',
-      'loadDexView', 'loadBurnView', 'loadTimeline', 'avatarFor', 'avatarHtml', 'fmtQcaw', 'textBytes',
+      'loadDexView', 'loadBurnView', 'loadTimeline', 'refreshHomeFeed', 'avatarFor', 'avatarHtml', 'fmtQcaw', 'textBytes',
       'pendingComposeRef', 'composerRef', 'compDraft', 'compFiles', 'mirrorNotice',
       clusterSrc + '\nreturn { pwStartSession, pwRestoreSession, pwLock, pwUnlocked };')(
       $id, doc, mkStorage(), sessionStore,
@@ -1423,7 +1436,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       () => calls.push('post'), () => calls.push('profile'), () => calls.push('bm'),
       () => calls.push('reactions'), () => calls.push('mirror'),
       () => { calls.push('dex'); probe.unlockedAtDex = holder.api ? holder.api.pwUnlocked() : null; },
-      () => calls.push('burn'), () => calls.push('timeline'),
+      () => calls.push('burn'), () => calls.push('timeline'), () => calls.push('timeline'),
       async () => null, () => '', x => String(x), V.textBytes,
       null, null, '', [], '');
     holder.api = api;
@@ -1525,6 +1538,331 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     ok(r.box.innerHTML.includes('pw-key') && r.box.innerHTML.includes('KEYLBL') &&
        r.box.innerHTML.includes('0x' + 'ab'.repeat(32)),
       'v30 behaviour: a key wallet reveals the private key, labelled');
+  }
+}
+
+/* ---- v31: Following segment + Tip (app-parity batch 1) ---- */
+{
+  const VS = read('../docs/viewer.js');
+  const E18 = 10n ** 18n;
+
+  /* static pins: shells */
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    for (const id of ['feedTabLatest', 'feedTabFollowing', 'followingArea', 'followingFeed', 'followingMoreBtn']) {
+      ok(html.includes('id="' + id + '"'), 'v31: ' + label + ' carries the Following segment control #' + id);
+    }
+    for (const id of ['tipOverlay', 'tipTitle', 'tipBody', 'tipToLine', 'tipBalLine', 'tipPresets',
+                      'tipCustomArea', 'tipAmount', 'tipPctChips', 'tipErr', 'tipSendBtn', 'tipCancelBtn']) {
+      ok(html.includes('id="' + id + '"'), 'v31: ' + label + ' carries the tip sheet control #' + id);
+    }
+  }
+
+  /* static pins: strings in both dicts */
+  for (const k of ['tabLatest', 'tabFollowing', 'followingEmpty', 'followingNeedWallet', 'followingNeedName',
+                   'tipBtn', 'tipTitle', 'tipBody', 'tipBalance', 'tipCustom', 'tipOver', 'tipSend',
+                   'tipTo', 'tipMismatch', 'tipDone', 'tipSelf', 'tipShortfall']) {
+    ok((VS.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v31: ' + k + ' exists in both languages');
+  }
+
+  /* static pins: the tip button's place in the action row */
+  const cardBody = VS.slice(VS.indexOf('async function postCard('), VS.indexOf('async function recawCard('));
+  const iSuper = cardBody.indexOf('data-act="super"'), iTip = cardBody.indexOf('data-act="tip"'),
+        iBm = cardBody.indexOf('data-act="bookmark"');
+  ok(iSuper >= 0 && iTip > iSuper && iBm > iTip,
+    'v31: the tip button sits in the app order — after SuperLike, before bookmark');
+  ok(cardBody.includes('IC_COIN') && cardBody.includes('opts.noTip'),
+    'v31: the tip button uses the coin glyph and honours the noTip opt-out');
+  const bmBody = VS.slice(VS.indexOf('async function loadBookmarksView()'), VS.indexOf('/* ---------- notifications'));
+  ok(bmBody.includes('postCard(post, { noTip: true })'),
+    'v31: the bookmarks view leaves tip unwired, like the app');
+  const wireBody = VS.slice(VS.indexOf('function wireRowActions('), VS.indexOf('/* The Recaw choice sheet'));
+  ok(wireBody.includes("btn('tip')") && wireBody.includes('onTipTap(a)'),
+    'v31: the action row wires the tip tap');
+
+  /* static pins: the Following feed */
+  ok(VS.includes('function switchFeedMode(') && VS.includes('function setupFollowing()') &&
+     VS.includes('async function loadFollowing(append)') && VS.includes('function refreshHomeFeed()'),
+    'v31: the Following segment + walk + home refresh exist');
+  const refreshBody = VS.slice(VS.indexOf('function refreshViewsForWallet()'), VS.indexOf('async function pwLoadNames()'));
+  ok(refreshBody.includes('else refreshHomeFeed();'),
+    'v31: wallet-state changes refresh the active home segment');
+  const setupBody = VS.slice(VS.indexOf('async function setupFollowing()'), VS.indexOf('async function loadFollowing(append)'));
+  ok(setupBody.includes('T.followingNeedWallet') && setupBody.includes('T.followingNeedName'),
+    'v31: locked / nameless Following states are guides, not a fake feed');
+  ok(setupBody.includes('buildFollowIndex(') && setupBody.includes('T.followBuilding'),
+    'v31: the follow-index build shows its real page-count progress');
+  ok(setupBody.includes('refinedFollowListsOf(acting.id)'),
+    'v31: the follow set comes from the refined follow-index lists');
+  const walkBody = VS.slice(VS.indexOf('async function loadFollowing(append)'), VS.indexOf('/* Wallet-state changes refresh'));
+  ok(walkBody.includes('folFeedItem(a, folSet)') && walkBody.includes('pages < 25') && walkBody.includes('rendered >= 8'),
+    'v31: the Following walk filters by the follow set, 25 pages per chunk until >= 8 matches (the app rule)');
+  ok(walkBody.includes('T.followingEmpty'), 'v31: an exhausted walk with no matches shows the empty state');
+
+  /* static pins: the Tip flow */
+  ok(VS.includes('function openTipSheet(a)') && VS.includes('async function openTipConfirm(a, amountRaw)') &&
+     VS.includes('function onTipTap(a)'), 'v31: the tip sheet + confirm flow exist');
+  const tapBody = VS.slice(VS.indexOf('function onTipTap(a)'), VS.indexOf('/* ----- painting the marks'));
+  ok(tapBody.includes('pwNames.some(') && tapBody.includes('T.tipSelf'),
+    'v31: a post by one of my names is blocked at tap time (the app treatment)');
+  const confirmBody = VS.slice(VS.indexOf('async function openTipConfirm(a, amountRaw)'), VS.indexOf('function onTipTap(a)'));
+  ok((confirmBody.match(/nameOwnerOf\(a\.senderId\)/g) || []).length >= 2,
+    'v31: the recipient is re-resolved for the panel AND again inside the send');
+  ok(confirmBody.includes("throw new Error('tip-mismatch')") && confirmBody.includes("throw new Error('self-tip')") &&
+     confirmBody.includes("throw new Error('shortfall-tip')"),
+    'v31: the send refuses on recipient disagreement, self-tip and shortfall');
+  ok(confirmBody.includes('sendLocalTx(pwSession.keyBytes, { to: PHOENIX_TOKEN, data: buildTransferData(fresh, amountRaw), gasFallback: 60000 })'),
+    'v31: the tip is a plain PHOENIX transfer through sendLocalTx + buildTransferData');
+  const errBody = VS.slice(VS.indexOf('function confirmErrHtml(e)'), VS.indexOf('/* ================= v22'));
+  ok(errBody.includes("e.message === 'self-tip'") && errBody.includes("e.message === 'tip-mismatch'") &&
+     errBody.includes("e.message === 'shortfall-tip'"),
+    'v31: the confirm panel words the tip outcomes with the app strings');
+  const sheetBody = VS.slice(VS.indexOf('function openTipSheet(a)'), VS.indexOf('async function openTipConfirm(a, amountRaw)'));
+  ok(sheetBody.includes('TIP_PRESETS.map(') && sheetBody.includes("data-tippreset=\"custom\"") &&
+     sheetBody.includes("pctChipsHtml('tipchip')") && sheetBody.includes('tipChipAmount('),
+    'v31: the sheet renders the presets + custom chip and the % chips from the shared helpers');
+  ok(sheetBody.includes("'<b>' + esc(to.slice(-4)) + '</b>'"),
+    'v31: the sheet spot-check line emphasises the recipient last four');
+
+  /* unit checks: the exported money / filter rules (the app's lib/tip.ts) */
+  ok(JSON.stringify(V.TIP_PRESETS) === '[10,50,100]', 'v31: TIP_PRESETS are 10 / 50 / 100 PHOENIX');
+  ok(V.tipPresetRaw(10) === 10n * E18 && V.tipPresetRaw(50) === 50n * E18 && V.tipPresetRaw(100) === 100n * E18,
+    'v31: preset raw amounts are whole PHOENIX at 18 decimals');
+  ok(V.parseTipAmount('10') === 10n * E18 && V.parseTipAmount('0.5') === 5n * 10n ** 17n &&
+     V.parseTipAmount('1.123456789012345678') === 1123456789012345678n,
+    'v31: custom tip amounts parse at 18 decimals');
+  ok(V.parseTipAmount('0') === null && V.parseTipAmount('-1') === null && V.parseTipAmount('abc') === null &&
+     V.parseTipAmount('') === null && V.parseTipAmount('1.1234567890123456789') === null,
+    'v31: non-positive / malformed tip amounts are refused');
+  ok(V.tipChipAmount(1000n * E18, 25) === 250n * E18 && V.tipChipAmount(1000n * E18, 50) === 500n * E18 &&
+     V.tipChipAmount(1000n * E18, 75) === 750n * E18 && V.tipChipAmount(1000n * E18, 100) === 1000n * E18 &&
+     V.tipChipAmount(101n, 50) === 50n,
+    'v31: balance chips take 25 / 50 / 75 / MAX of the balance (MAX = the whole balance, floored otherwise)');
+  ok(V.tipShortfall(100n, 101n) === true && V.tipShortfall(100n, 100n) === false && V.tipShortfall(101n, 100n) === false,
+    'v31: the shortfall rule is balance < amount');
+  const ME = '0xAaAa00000000000000000000000000000000bBbB', OTHER = '0x1111111111111111111111111111111111111111';
+  ok(V.tipBlockReason({ senderId: 5n, myTokenIds: [3n, 5n], authorOwner: OTHER, myAddress: ME }) === 'self',
+    'v31: a post by one of my names blocks the tip');
+  ok(V.tipBlockReason({ senderId: 5n, myTokenIds: [], authorOwner: ME.toLowerCase(), myAddress: ME }) === 'self',
+    'v31: a post whose author owner is my address blocks the tip (case-insensitive)');
+  ok(V.tipBlockReason({ senderId: 5n, myTokenIds: [3n], authorOwner: OTHER, myAddress: ME }) === null,
+    'v31: someone else\'s post may be tipped');
+  const fset = new Set(['11', '22']);
+  ok(V.folFeedItem({ type: 0, senderId: 11n }, fset) === true && V.folFeedItem({ type: 2, senderId: 22n }, fset) === true,
+    'v31: the Following filter keeps followed posts + Recaws');
+  ok(V.folFeedItem({ type: 1, senderId: 11n }, fset) === false && V.folFeedItem({ type: 3, senderId: 11n }, fset) === false &&
+     V.folFeedItem({ type: 0, senderId: 99n }, fset) === false && V.folFeedItem({ type: 0, senderId: 11n }, null) === false,
+    'v31: the Following filter drops likes, follow rows, unfollowed authors and a missing set');
+  const deadBal = await V.phoenixBalanceOf('0x000000000000000000000000000000000000dEaD');
+  ok(typeof deadBal === 'bigint' && deadBal >= 0n, 'v31: phoenixBalanceOf reads the live PHOENIX balanceOf');
+
+  /* behavioural: the Following segment + walk against a stub DOM */
+  const folSrc = VS.slice(VS.indexOf("let tlMode = 'latest';"), VS.indexOf('/* ---------- "CAW right now" stats card'));
+  const mkFolEl = () => {
+    const el = { textContent: '', value: '', disabled: false, dataset: {}, children: [],
+      className: '', parentElement: null, style: {}, _html: '',
+      classList: { _s: new Set(),
+        toggle(c, on) { if (on) this._s.add(c); else this._s.delete(c); },
+        contains(c) { return this._s.has(c); } },
+      appendChild(ch) { this.children.push(ch); ch.parentElement = this; return ch; },
+      querySelector() { return this.children.find(c => c.className === 'post') || null; } };
+    Object.defineProperty(el, 'innerHTML', {
+      get() { return this._html; },
+      set(v) { this._html = String(v); this.children = []; },
+    });
+    return el;
+  };
+  const bootFol = ({ session, acting, lists, pages }) => {
+    const els = {};
+    const $id = id => (els[id] = els[id] || mkFolEl());
+    $id('moreBtn').parentElement = mkFolEl();
+    let pageIdx = 0;
+    const api = new Function('$', 'document', 'esc', 'T', 'pageFile', 'pwSession', 'pwActing',
+      'skeletonHtml', 'fetchPage', 'ntTapItems', 'rowFor', 'hydrateAttachmentsIn',
+      'followBuildState', 'buildFollowIndex', 'refinedFollowListsOf', 'followListsOf', 'folFeedItem',
+      'loadTimeline',
+      folSrc + '\nreturn { switchFeedMode, setupFollowing, loadFollowing, mode: () => tlMode };')(
+      $id, { createElement: () => mkFolEl() }, s => String(s),
+      { followingNeedWallet: 'NEEDWALLET', followingNeedName: 'NEEDNAME', followingEmpty: 'FOLLOWINGEMPTY',
+        followBuilding: 'Reading… {n} pages', ntOpenWallet: 'OPENWALLET', navGetName: 'GETNAME',
+        loadFail: 'LOADFAIL', retryBtn: 'RETRY' },
+      'en.html', session, acting,
+      () => 'SKEL', async () => pages[Math.min(pageIdx++, pages.length - 1)], () => {},
+      async a => { const d = mkFolEl(); d.className = 'post'; d.dataset.cawid = a.cawId; return d; },
+      async () => {}, () => ({ complete: true, pages: 0, walking: false, pairs: 0 }),
+      async () => ({ complete: true }), async () => lists, () => lists, V.folFeedItem, () => {});
+    return { api, els };
+  };
+  const tick = () => new Promise(r => setTimeout(r, 25));
+  {
+    const f = bootFol({ session: null, acting: () => null, lists: { following: [], followers: [] }, pages: [{ items: [], next: null }] });
+    f.api.switchFeedMode('following');
+    ok(f.api.mode() === 'following' && f.els.timeline.style.display === 'none' &&
+       f.els.followingArea.style.display === '' && f.els.feedTabFollowing.classList.contains('on'),
+      'v31 behaviour: switching to Following hides Latest and lights the segment');
+    ok(f.els.followingFeed.innerHTML.includes('NEEDWALLET') && f.els.followingFeed.innerHTML.includes('?wallet=1'),
+      'v31 behaviour: locked Following is the wallet guide, never a fake feed');
+    f.api.switchFeedMode('latest');
+    ok(f.els.timeline.style.display === '' && f.els.followingArea.style.display === 'none',
+      'v31 behaviour: switching back restores Latest in place');
+  }
+  {
+    const f = bootFol({ session: { address: ME }, acting: () => null, lists: { following: [], followers: [] }, pages: [{ items: [], next: null }] });
+    f.api.switchFeedMode('following');
+    ok(f.els.followingFeed.innerHTML.includes('NEEDNAME') && f.els.followingFeed.innerHTML.includes('?getname=1'),
+      'v31 behaviour: an unlocked wallet with no name gets the get-a-name guide');
+  }
+  {
+    const f = bootFol({ session: { address: ME }, acting: () => ({ id: 7n, username: 'me' }),
+      lists: { following: [], followers: [] }, pages: [{ items: [], next: null }] });
+    f.api.switchFeedMode('following');
+    await tick();
+    ok(f.els.followingFeed.innerHTML.includes('FOLLOWINGEMPTY') && f.els.followingMoreBtn.style.display === 'none',
+      'v31 behaviour: an acting name that follows nobody gets the explicit empty state');
+  }
+  {
+    const post = (sid, id) => ({ type: 0, senderId: sid, cawId: '0x' + id });
+    const pages = [
+      { items: [post(11n, 'a1'), { type: 1, senderId: 11n, cawId: '0xl1' }, post(99n, 'b1'),
+                { type: 3, senderId: 11n, cawId: '0xf1' }, { type: 2, senderId: 22n, cawId: '0xr1' }],
+        next: { p: 2 } },
+      { items: [post(22n, 'c1'), post(22n, 'c2'), post(22n, 'c3'), post(22n, 'c4'),
+                post(22n, 'c5'), post(22n, 'c6'), post(22n, 'c7')], next: { p: 3 } },
+      { items: [post(11n, 'd1')], next: null },
+    ];
+    const f = bootFol({ session: { address: ME }, acting: () => ({ id: 7n, username: 'me' }),
+      lists: { following: [11n, 22n], followers: [] }, pages });
+    f.api.switchFeedMode('following');
+    await tick();
+    const ids1 = f.els.followingFeed.children.filter(c => c.className === 'post').map(c => c.dataset.cawid);
+    ok(JSON.stringify(ids1) === JSON.stringify(['0xa1', '0xr1', '0xc1', '0xc2', '0xc3', '0xc4', '0xc5', '0xc6', '0xc7']),
+      'v31 behaviour: the walk keeps only followed posts + Recaws and stops a chunk at >= 8 matches');
+    ok(f.els.followingMoreBtn.style.display === '', 'v31 behaviour: more remains while the feed is not exhausted');
+    await f.api.loadFollowing(true);
+    const ids2 = f.els.followingFeed.children.filter(c => c.className === 'post').map(c => c.dataset.cawid);
+    ok(ids2.length === 10 && ids2[9] === '0xd1' && f.els.followingMoreBtn.style.display === 'none',
+      'v31 behaviour: See more continues the walk to the end of the feed');
+  }
+
+  /* behavioural: the tip sheet + confirm flow against a stub DOM */
+  const tipSrc = VS.slice(VS.indexOf('let tipState = null;'), VS.indexOf('/* ----- painting the marks'));
+  const OWNER = '0x1234567890AbcdEF1234567890abcdef12345678';
+  const bootTip = ({ names, ownerSeq, balance }) => {
+    const els = {}, captured = { confirms: [], messages: [], sends: [], ownerCalls: 0 };
+    const mkEl = () => ({ innerHTML: '', textContent: '', value: '', disabled: false, style: {},
+      onclick: null, oninput: null, classList: { toggle() {} } });
+    const $id = id => (els[id] = els[id] || mkEl());
+    const chip = v => ({ _v: v, onclick: null, getAttribute() { return this._v; }, classList: { toggle() {} } });
+    const chips = { '#tipPresets [data-tippreset]': ['10', '50', '100', 'custom'].map(chip),
+                    '#tipPctChips [data-tipchip]': ['25', '50', '75', '100'].map(chip) };
+    const doc = { querySelectorAll: sel => chips[sel] || [] };
+    const api = new Function('$', 'document', 'esc', 'T', 'TIP_PRESETS', 'tipPresetRaw', 'parseTipAmount',
+      'tipChipAmount', 'tipShortfall', 'tipBlockReason', 'pctChipsHtml', 'rawToInputStr', 'resolveName',
+      'nameOwnerOf', 'phoenixBalanceOf', 'postTargetLabel', 'openConfirmPanel', 'openMessagePanel',
+      'pwSession', 'pwNames', 'pwTouch', 'sendLocalTx', 'buildTransferData', 'PHOENIX_TOKEN', 'fmtAmt',
+      'shortAddr', 'scrollToWallet',
+      tipSrc + '\nreturn { onTipTap, openTipSheet, tipAmountRaw, state: () => tipState };')(
+      $id, doc, s => String(s),
+      { tipTitle: 'TIPTITLE', tipBody: 'Send PHOENIX to {name}.', tipBalance: 'Balance: {balance}',
+        tipCustom: 'CUSTOM', tipOver: 'OVER', tipSend: 'SENDTIP', tipTo: 'SENDTO', tipMismatch: 'MISMATCH',
+        tipDone: 'TIPDONE', tipSelf: 'SELF', tipShortfall: 'SHORTFALL', unknownName: 'name #',
+        slTarget: 'POST', confirmAmountLbl: 'AMOUNT', confirmCancelBtn: 'CANCEL', actFail: 'FAIL' },
+      V.TIP_PRESETS, V.tipPresetRaw, V.parseTipAmount, V.tipChipAmount, V.tipShortfall, V.tipBlockReason,
+      () => 'PCTHTML',
+      (raw, dec) => { const s = BigInt(raw).toString().padStart(dec + 1, '0');
+        const w = s.slice(0, -dec), fr = s.slice(-dec).replace(/0+$/, ''); return fr ? w + '.' + fr : w; },
+      async () => 'alice',
+      async () => ownerSeq[Math.min(captured.ownerCalls++, ownerSeq.length - 1)],
+      async () => balance,
+      async () => '@alice — hello',
+      opts => { captured.confirms.push(opts); },
+      (title, lines, err) => { captured.messages.push({ title, lines, err }); },
+      { address: ME, keyBytes: new Uint8Array([7]) }, names, () => {},
+      async (kb, o) => { captured.sends.push(o); return { hash: '0xhash' }; },
+      V.buildTransferData, V.PHOENIX_TOKEN, V.fmtAmt,
+      a => a.slice(0, 6) + '…' + a.slice(-4), () => {});
+    return { api, els, captured, chips };
+  };
+  const post9 = { senderId: 9n, cawId: '0x' + 'ab'.repeat(32), text: 'hello' };
+  {
+    const t = bootTip({ names: [{ id: 9n }], ownerSeq: [OWNER], balance: 1000n * E18 });
+    t.api.onTipTap(post9);
+    await tick();
+    ok(t.captured.messages.length === 1 && t.captured.messages[0].err === 'SELF' &&
+       (!t.els.tipOverlay || t.els.tipOverlay.style.display !== ''),
+      'v31 behaviour: tapping Tip on my own name\'s post shows the self message and never opens the sheet');
+  }
+  {
+    const t = bootTip({ names: [], ownerSeq: [OWNER], balance: 1000n * E18 });
+    t.api.onTipTap(post9);
+    await tick();
+    ok(t.els.tipOverlay.style.display === '' && t.api.state() && t.api.state().preset === 10 &&
+       t.api.tipAmountRaw() === 10n * E18,
+      'v31 behaviour: the sheet opens on the first preset (10 PHOENIX)');
+    ok(t.els.tipToLine.innerHTML.includes('<b>5678</b>') && t.els.tipToLine.innerHTML.includes('0x1234…'),
+      'v31 behaviour: the recipient line shows the short address with the last four emphasised');
+    ok(t.els.tipBalLine.textContent.includes('1,000'), 'v31 behaviour: the balance line shows my PHOENIX balance');
+    t.chips['#tipPresets [data-tippreset]'][3].onclick(); /* Custom */
+    t.els.tipAmount.value = '2.5';
+    t.els.tipAmount.oninput();
+    ok(t.api.tipAmountRaw() === 25n * 10n ** 17n, 'v31 behaviour: a custom amount parses from the input');
+    t.chips['#tipPctChips [data-tipchip]'][1].onclick(); /* 50% */
+    ok(t.els.tipAmount.value === '500' && t.api.tipAmountRaw() === 500n * E18,
+      'v31 behaviour: the 50% chip fills half the balance');
+    t.els.tipAmount.value = '2000';
+    t.els.tipAmount.oninput();
+    ok(t.els.tipErr.innerHTML.includes('OVER') && t.els.tipSendBtn.disabled === true,
+      'v31 behaviour: over-balance shows the error and disables Send');
+    t.els.tipAmount.value = '50';
+    t.els.tipAmount.oninput();
+    ok(t.els.tipSendBtn.disabled === false, 'v31 behaviour: a valid amount re-enables Send');
+    t.els.tipSendBtn.onclick();
+    await tick();
+    ok(t.els.tipOverlay.style.display === 'none' && t.captured.confirms.length === 1,
+      'v31 behaviour: Send closes the sheet into the confirm panel');
+    const lines = t.captured.confirms[0].lines.map(l => l.join('=')).join('|');
+    ok(lines.includes('50 PHOENIX') && lines.includes('0x1234…5678'),
+      'v31 behaviour: the panel shows the amount and the resolved recipient');
+    ok(t.captured.ownerCalls === 2, 'v31 behaviour: the recipient was resolved for the sheet and re-resolved for the panel');
+    await t.captured.confirms[0].onSign();
+    ok(t.captured.ownerCalls === 3 && t.captured.sends.length === 1 &&
+       t.captured.sends[0].to === V.PHOENIX_TOKEN &&
+       t.captured.sends[0].data === V.buildTransferData(OWNER, 50n * E18) &&
+       t.captured.sends[0].gasFallback === 60000,
+      'v31 behaviour: the send re-resolves a third time and transfers to that address through sendLocalTx');
+  }
+  {
+    const OTHER2 = '0x9999999999999999999999999999999999999999';
+    const t = bootTip({ names: [], ownerSeq: [OWNER, OWNER, OTHER2], balance: 1000n * E18 });
+    t.api.onTipTap(post9);
+    await tick();
+    t.els.tipSendBtn.onclick();
+    await tick();
+    let threw = null;
+    try { await t.captured.confirms[0].onSign(); } catch (e) { threw = e; }
+    ok(threw && threw.message === 'tip-mismatch' && t.captured.sends.length === 0,
+      'v31 behaviour: a recipient that changes by send time refuses the tip (nothing is sent)');
+  }
+  {
+    const t = bootTip({ names: [], ownerSeq: [ME, ME, ME], balance: 1000n * E18 });
+    t.api.onTipTap(post9);
+    await tick();
+    t.els.tipSendBtn.onclick();
+    await tick();
+    let threw = null;
+    try { await t.captured.confirms[0].onSign(); } catch (e) { threw = e; }
+    ok(threw && threw.message === 'self-tip' && t.captured.sends.length === 0,
+      'v31 behaviour: an author owner equal to my address refuses the tip inside the send');
+  }
+  {
+    const t = bootTip({ names: [], ownerSeq: [OWNER], balance: 5n * E18 });
+    t.api.onTipTap(post9);
+    await tick();
+    t.els.tipSendBtn.onclick(); /* preset 10 > balance 5 — the panel still opens; the send is the guard */
+    await tick();
+    let threw = null;
+    try { await t.captured.confirms[0].onSign(); } catch (e) { threw = e; }
+    ok(threw && threw.message === 'shortfall-tip' && t.captured.sends.length === 0,
+      'v31 behaviour: a balance that fell short by send time refuses the tip');
   }
 }
 
