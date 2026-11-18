@@ -284,11 +284,39 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v23: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=23') && jaHtml.includes('?v=23'), 'shells reference ?v=23 assets');
-ok(swSrc.includes("caw-view-v23"), 'sw.js cache name is caw-view-v23');
+console.log('— v24: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=24') && jaHtml.includes('?v=24'), 'shells reference ?v=24 assets');
+ok(swSrc.includes("caw-view-v24"), 'sw.js cache name is caw-view-v24');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
+
+console.log('— v24: menu destinations audit (profile must not land on the wallet) —');
+{
+  const expect = { home: '', search: '?lookup=1', reactions: '?reactions=1', wallet: '?wallet=1',
+    getname: '?getname=1', dex: '?dex=1', burnhawk: '?burnhawk=1', bookmarks: '?bookmarks=1', mirror: '?mirror=1' };
+  for (const [label, html, file] of [['en.html', enHtml, 'en.html'], ['ja.html', jaHtml, 'ja.html']]) {
+    const anchors = [...html.matchAll(/<a[^>]*data-nav="([^"]+)"[^>]*>/g)];
+    let bad = [];
+    for (const m of anchors) {
+      const nav = m[1], tag = m[0];
+      const href = (tag.match(/href="([^"]*)"/) || [])[1] || '';
+      if (nav === 'lang') continue;
+      if (nav === 'profile' || nav === 'mynames') {
+        // state-dependent rows: static placeholder is the wallet view,
+        // syncChrome rewrites them when an acting name exists
+        if (href !== file + '?wallet=1') bad.push(nav + ' placeholder ' + href);
+        continue;
+      }
+      if (!(nav in expect)) { bad.push('unknown nav ' + nav); continue; }
+      if (href !== file + expect[nav]) bad.push(nav + ' -> ' + href);
+    }
+    ok(anchors.length >= 20 && bad.length === 0, label + ' every menu item points at its own view' + (bad.length ? ' (bad: ' + bad.join('; ') + ')' : ''));
+  }
+  ok(viewerSrc.includes("sumEl.setAttribute('href', acting ? profUrl(acting.username) : pageFile + '?wallet=1')"),
+    'syncChrome rewrites the summary header href (profile when acting, wallet when locked)');
+  ok(viewerSrc.includes("'sideSummary'") && viewerSrc.includes("'drawerSummary'"),
+    'both summary headers (sidebar + drawer) are passed to setSummary');
+}
 
 console.log('— v20: the 入れる／出す jump button never dead-ends —');
 ok(viewerSrc.includes('id="pwDepJump"') && viewerSrc.includes("esc(T.depostLbl)"),

@@ -5662,8 +5662,8 @@ function closeDrawer() {
 }
 async function syncChrome() {
   const acting = pwSession ? pwActing() : null;
-  const setSummary = async (avaId, nameId, subId, followId, profileRowId) => {
-    const ava = $(avaId), nm = $(nameId), sub = $(subId), fol = $(followId), prow = $(profileRowId);
+  const setSummary = async (avaId, nameId, subId, followId, profileRowId, summaryId) => {
+    const ava = $(avaId), nm = $(nameId), sub = $(subId), fol = $(followId), prow = $(profileRowId), sumEl = $(summaryId);
     /* v16: the Profile row is ALWAYS in the drawer / sidebar
        (the app's drawer keeps every row in every state — v15
        hid it with no acting name and the shape broke). Its
@@ -5671,6 +5671,13 @@ async function syncChrome() {
        locked / nameless → the wallet view, where a wallet can
        be made, imported or unlocked and a name chosen. */
     if (prow) prow.setAttribute('href', acting ? profUrl(acting.username) : pageFile + '?wallet=1');
+    /* v24: the summary header (avatar + name at the top of the
+       sidebar / drawer) follows the same rule — it is the most
+       profile-looking element in the menu, but its href was a
+       static ?wallet=1 that nothing ever rewrote, so tapping
+       your own name always landed on the wallet, even with an
+       acting name. */
+    if (sumEl) sumEl.setAttribute('href', acting ? profUrl(acting.username) : pageFile + '?wallet=1');
     if (acting) {
       if (nm) nm.textContent = acting.username || '';
       if (sub) sub.textContent = '@' + acting.username + ' · #' + acting.id.toString();
@@ -5717,8 +5724,8 @@ async function syncChrome() {
     el.setAttribute('href', acting ? pageFile + '?getname=1#myNames' : pageFile + '?wallet=1');
   });
   await Promise.all([
-    setSummary('sideAvatar', 'sideName', 'sideSub', 'sideFollow', 'sideProfileRow'),
-    setSummary('drawerAvatar', 'drawerName', 'drawerSub', 'drawerFollow', 'drawerProfileRow'),
+    setSummary('sideAvatar', 'sideName', 'sideSub', 'sideFollow', 'sideProfileRow', 'sideSummary'),
+    setSummary('drawerAvatar', 'drawerName', 'drawerSub', 'drawerFollow', 'drawerProfileRow', 'drawerSummary'),
   ]);
   /* current-place highlight */
   const mode = (typeof postQuery !== 'undefined' && postQuery) ? 'post'
