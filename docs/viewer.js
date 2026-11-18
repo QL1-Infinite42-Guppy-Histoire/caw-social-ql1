@@ -149,13 +149,42 @@ const T = {
     pwWroteIt: 'I wrote it down and will keep it offline',
     pwContinueBtn: 'Continue', pwBackBtn: 'Back', pwCancelBtn: 'Cancel',
     pwSetPasswordTitle: 'Set a password for this browser',
-    pwPasswordPh: 'Password (8 or more characters)', pwPassword2Ph: 'Type the same password again',
-    pwPasswordShort: 'Please use a password of 8 or more characters.',
+    pwPasswordPh: 'Password (6 or more characters)', pwPassword2Ph: 'Type the same password again',
+    pwPasswordShort: 'Please use a password of 6 or more characters.',
     pwPasswordMismatch: 'The two passwords do not match.',
     pwSaveBtn: 'Save this wallet',
     pwImportExplain: 'Type a recovery phrase (12 or 24 words) or a private key. It will be encrypted with a password you set next, and stored only in this browser.',
     pwImportPh: 'recovery phrase, or a private key (0x…)',
     pwImportInvalid: 'That does not look right — check the words (or the key) and try again.',
+    /* v34 (M6/D18): multi-wallet + the app's specific import
+       errors (its wallet.badKey / badWords causes, split out). */
+    pwImportBadKey: 'That private key does not look right.',
+    pwImportBadWords: 'That recovery phrase does not look right.',
+    pwImportUnknownWord: 'That phrase has a word that is not in the word list.',
+    pwImportBadChecksum: 'Those words do not check out — one word is probably wrong.',
+    pwCreateAddrLbl: 'Wallet address',
+    pwAddTitle: 'Add a wallet',
+    pwAddNote: 'This browser can hold more than one wallet. Each wallet keeps its own password, and adding one does not change the others.',
+    pwWalletKindPhrase: 'Recovery phrase', pwWalletKindKey: 'Private key',
+    pwWalletLegacy: 'Wallet (from before multi-wallet)',
+    pwInUse: 'In use', pwSwitchBtn: 'Switch',
+    pwWalletsTitle: 'Wallets in this browser',
+    pwRevealCopy: 'Copy',
+    pwAmtTapHint: 'Tap an amount to see the exact figure.',
+    pwCawInNameLbl: 'CAW in this name',
+    /* v34 (M15): the Settings view — wording mirrors the app's
+       Settings screen where it has one. */
+    setTitle: 'Settings', setLanguage: 'Language',
+    setAddressLbl: 'My address', setBackup: 'Back up the recovery phrase / key',
+    setBackupNote: 'Opens the wallet screen — showing the phrase there asks for your password first.',
+    setLockNow: 'Lock now',
+    setAboutTitle: 'About',
+    setAboutBody: 'CAW is a social app on QL1, a chain that runs without a central operator. Posts and follows are written to the public record — nobody can quietly rewrite them. Names are NFTs: yours stays yours.',
+    setViewsNote: 'View counts are not public. Nobody — not the app, not this page — can see how many people looked at a post. Only on-chain actions (posts, likes, follows) are public.',
+    setVersionLbl: 'CAW Social — web v34',
+    setDangerTitle: 'Danger zone',
+    setNoWallet: 'No posting wallet in this browser yet.',
+    setSetupBtn: 'Set up the posting wallet',
     pwLockedTitle: 'This browser’s posting wallet is locked',
     pwLockedText: 'Type the password you set for it to unlock. Unlocking stays on for 15 minutes at a time.',
     pwNextProfile: 'You came here from Profile — once unlocked, you will be taken straight to your profile.',
@@ -457,13 +486,41 @@ const T = {
     pwWroteIt: '紙に書き留めました。オフラインで保管します',
     pwContinueBtn: '進む', pwBackBtn: '戻る', pwCancelBtn: 'やめる',
     pwSetPasswordTitle: 'このブラウザ用のパスワードを決めてください',
-    pwPasswordPh: 'パスワード（8文字以上）', pwPassword2Ph: '同じパスワードをもう一度',
-    pwPasswordShort: 'パスワードは8文字以上にしてください。',
+    pwPasswordPh: 'パスワード（6文字以上）', pwPassword2Ph: '同じパスワードをもう一度',
+    pwPasswordShort: '6文字以上にしてください。',
     pwPasswordMismatch: '2つのパスワードが一致しません。',
     pwSaveBtn: 'このウォレットを保存する',
     pwImportExplain: '復元フレーズ（12語または24語）か、秘密鍵を入力してください。次に決めるパスワードで暗号化して、このブラウザの中にだけ保存します。',
     pwImportPh: '復元フレーズ、または秘密鍵（0x…）',
     pwImportInvalid: 'うまく読み取れませんでした。語句（または鍵）を確認してもう一度どうぞ。',
+    /* v34 (M6/D18): マルチウォレット＋アプリ側の具体的な
+       インポートエラー（wallet.badKey / badWords を分割）。 */
+    pwImportBadKey: '秘密鍵の形式が正しくありません。',
+    pwImportBadWords: '復旧フレーズの形式が正しくありません。',
+    pwImportUnknownWord: '単語リストにない単語が含まれています。',
+    pwImportBadChecksum: 'フレーズのチェックサムが合いません。単語が1つ間違っているかもしれません。',
+    pwCreateAddrLbl: 'ウォレットアドレス',
+    pwAddTitle: 'ウォレットを追加',
+    pwAddNote: 'このブラウザには複数のウォレットを入れられます。各ウォレットは自分のパスワードで守られ、追加しても他のウォレットは変わりません。',
+    pwWalletKindPhrase: '復旧フレーズ', pwWalletKindKey: '秘密鍵',
+    pwWalletLegacy: 'ウォレット（マルチウォレット以前のもの）',
+    pwInUse: '使用中', pwSwitchBtn: '切り替え',
+    pwWalletsTitle: 'このブラウザのウォレット',
+    pwRevealCopy: 'コピー',
+    pwAmtTapHint: '※ 金額をタップすると正確な数字を表示',
+    pwCawInNameLbl: '名前の中のCAW',
+    /* v34 (M15): 設定画面 — 文言はアプリの設定画面に合わせた。 */
+    setTitle: '設定', setLanguage: '言語',
+    setAddressLbl: '自分のアドレス', setBackup: '復旧フレーズ／秘密鍵をバックアップ',
+    setBackupNote: 'ウォレット画面を開きます。フレーズの表示には、そこでパスワードが必要です。',
+    setLockNow: '今すぐロック',
+    setAboutTitle: 'このアプリについて',
+    setAboutBody: 'CAW は QL1 上のソーシャルアプリです。QL1 は中央の運営者なしに動くチェーンで、投稿やフォローは公開記録に書かれ、誰もこっそり書き換えられません。名前は NFT で、あなたの名前はあなたのものです。',
+    setViewsNote: '閲覧数は公開されません。アプリにもこのページにも、投稿が何回見られたかを知る方法はありません。公開されるのはオンチェーンの操作（投稿・いいね・フォロー）だけです。',
+    setVersionLbl: 'CAW Social — web v34',
+    setDangerTitle: '危険ゾーン',
+    setNoWallet: 'このブラウザには、まだ投稿用ウォレットがありません。',
+    setSetupBtn: '投稿用ウォレットを作る',
     pwLockedTitle: 'このブラウザの投稿用ウォレットはロック中です',
     pwLockedText: '設定したパスワードを入力すると開きます。開いた状態は15分まで続きます。',
     pwNextProfile: 'プロフィールから来ています。解除すると、そのままあなたのプロフィールへ進みます。',
@@ -1858,6 +1915,16 @@ function fmtAmt(raw, decimals) {
   const frac = dec ? s.slice(-dec).replace(/0+$/, '') : '';
   return frac ? whole + '.' + frac.slice(0, 6) : whole;
 }
+function fmtExactAmt(raw, decimals) {
+  /* v34 (D11): the app's tap-to-expand figure — the FULL
+     precision amount (trailing zeros trimmed), where fmtAmt /
+     fmtQcaw stop at 6 fraction digits */
+  const dec = Number(decimals);
+  const s = BigInt(raw).toString().padStart(dec + 1, '0');
+  const whole = (dec ? s.slice(0, -dec) : s).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  const frac = dec ? s.slice(-dec).replace(/0+$/, '') : '';
+  return frac ? whole + '.' + frac : whole;
+}
 /* Plain decimal amount -> raw units at the given decimals
    (the parseAmount rule, parameterised). Null on bad input. */
 function parseAmountDec(str, decimals) {
@@ -2818,15 +2885,18 @@ const bip39WordSet = () => new Map(BIP39_WORDS.map((w, i) => [w, i]));
 function normalizePhrase(input) {
   return String(input || '').normalize('NFKD').trim().toLowerCase().replace(/\s+/g, ' ');
 }
-async function validateMnemonic(phrase) {
-  if (!BIP39_WORDS) return false;
+async function checkMnemonicDetail(phrase) {
+  /* v34 (D18): WHY a phrase fails, not just that it fails —
+     the app's import causes: wrong word count / a word that is
+     not in the list / a checksum mismatch. 'ok' when it passes. */
+  if (!BIP39_WORDS) return 'unknown';
   const words = normalizePhrase(phrase).split(' ').filter(Boolean);
-  if (![12, 15, 18, 21, 24].includes(words.length)) return false;
+  if (![12, 15, 18, 21, 24].includes(words.length)) return 'count';
   const set = bip39WordSet();
   let bits = '';
   for (const w of words) {
     const idx = set.get(w);
-    if (idx === undefined) return false;
+    if (idx === undefined) return 'unknown';
     bits += idx.toString(2).padStart(11, '0');
   }
   const csLen = bits.length / 33;
@@ -2836,7 +2906,21 @@ async function validateMnemonic(phrase) {
   for (let i = 0; i < ent.length; i++) ent[i] = parseInt(entBits.slice(i * 8, i * 8 + 8), 2);
   const hash = await sha256Bytes(ent);
   const expect = hash[0].toString(2).padStart(8, '0').slice(0, csLen);
-  return expect === csBits;
+  return expect === csBits ? 'ok' : 'checksum';
+}
+async function validateMnemonic(phrase) {
+  return (await checkMnemonicDetail(phrase)) === 'ok';
+}
+async function classifyImportSecret(raw) {
+  /* v34 (D18): the import box accepts a phrase OR a 0x key, and
+     the error names the actual cause (the app's wallet.badKey /
+     wallet.badWords split): {kind, secret} or {error}. */
+  const s = String(raw || '').trim();
+  if (/^0x[0-9a-fA-F]{64}$/.test(s)) return { kind: 'key', secret: s };
+  if (/^0x/i.test(s) || /^[0-9a-fA-F]{64}$/.test(s)) return { error: 'badkey' };
+  const chk = await checkMnemonicDetail(s);
+  if (chk === 'ok') return { kind: 'phrase', secret: normalizePhrase(s) };
+  return { error: chk === 'unknown' ? 'unknownword' : chk === 'checksum' ? 'checksum' : 'badwords' };
 }
 async function generateMnemonic() {
   if (!webCryptoObj) throw new Error('no secure random source');
@@ -2927,15 +3011,160 @@ async function vaultDecrypt(password, stored) {
   const pt = await subtleCrypto().decrypt({ name: 'AES-GCM', iv }, key, ct); // throws on a wrong password
   return JSON.parse(new TextDecoder().decode(pt));
 }
-function vaultLoad() {
+function vaultLoadLegacy() {
+  /* the pre-v34 single vault, exactly as v12–v33 read it */
   try {
     if (typeof localStorage === 'undefined') return null;
     const j = JSON.parse(localStorage.getItem(VAULT_STORE_KEY) || 'null');
     return (j && j.v === 1 && j.salt && j.iv && j.ct) ? j : null;
   } catch (e) { return null; }
 }
-function vaultSave(stored) {
-  try { if (typeof localStorage !== 'undefined') localStorage.setItem(VAULT_STORE_KEY, JSON.stringify(stored)); } catch (e) {}
+/* ---------- v34 (M6): the wallet registry ----------
+   The single vault becomes a registry of wallets. Each entry
+   keeps its OWN AES-GCM ciphertext under its OWN password; the
+   registry (caw-wallets-v1) stores ciphertexts + addresses +
+   kinds only — never a secret. A pre-v34 vault under the legacy
+   key is presented by walletsLoad() as a synthetic first entry
+   (address unknown until its password proves it) and is adopted
+   for real by pwAdoptLegacyWallet() on the next successful
+   unlock: the SAME ciphertext moves into the registry, the
+   stored copy is read back and compared, and only then is the
+   legacy key removed — no data loss, and single-wallet users
+   see no behaviour change. */
+const WALLETS_STORE_KEY = 'caw-wallets-v1';
+let pwUnlockTarget = null; // address the locked views open; sessionStorage-backed (an address is public)
+function pwTarget() {
+  if (pwUnlockTarget) return pwUnlockTarget;
+  try { pwUnlockTarget = sessionStorage.getItem('caw-pw-target') || null; } catch (e) {}
+  return pwUnlockTarget;
+}
+function pwSetUnlockTarget(addr) {
+  pwUnlockTarget = addr ? String(addr).toLowerCase() : null;
+  try {
+    if (pwUnlockTarget) sessionStorage.setItem('caw-pw-target', pwUnlockTarget);
+    else sessionStorage.removeItem('caw-pw-target');
+  } catch (e) {}
+}
+function walletsLoad() {
+  try {
+    if (typeof localStorage === 'undefined') return { active: null, wallets: [] };
+    const j = JSON.parse(localStorage.getItem(WALLETS_STORE_KEY) || 'null');
+    if (j && j.v === 1 && Array.isArray(j.wallets)) {
+      return { active: j.active || null,
+        wallets: j.wallets.filter(w => w && w.vault && w.vault.ct) };
+    }
+    const legacy = vaultLoadLegacy();
+    if (legacy) return { active: null, wallets: [{ address: null, kind: null, vault: legacy, legacy: true }] };
+  } catch (e) {}
+  return { active: null, wallets: [] };
+}
+function walletsSave(reg) {
+  try {
+    if (typeof localStorage === 'undefined') return;
+    localStorage.setItem(WALLETS_STORE_KEY, JSON.stringify({
+      v: 1, active: reg.active || null,
+      wallets: reg.wallets.map(w => ({ address: w.address || null, kind: w.kind || null, vault: w.vault })),
+    }));
+  } catch (e) {}
+}
+function walletsAdd(entry) {
+  const reg = walletsLoad();
+  const addr = entry.address ? String(entry.address).toLowerCase() : null;
+  const rest = reg.wallets
+    .filter(w => !(w.address && addr && w.address.toLowerCase() === addr))
+    .map(w => w.legacy ? { address: null, kind: null, vault: w.vault } : w);
+  const clean = { address: addr, kind: entry.kind || null, vault: entry.vault };
+  rest.push(clean);
+  walletsSave({ active: addr, wallets: rest });
+  return clean;
+}
+function walletsRemove(address) {
+  const reg = walletsLoad();
+  const addr = address ? String(address).toLowerCase() : null;
+  const left = reg.wallets.filter(w => addr
+    ? !(w.address && w.address.toLowerCase() === addr)
+    : !!w.address);
+  if (!left.length) {
+    try { if (typeof localStorage !== 'undefined') localStorage.removeItem(WALLETS_STORE_KEY); } catch (e) {}
+    return 0;
+  }
+  const active = reg.active && left.some(w => w.address === reg.active) ? reg.active : (left[0].address || null);
+  walletsSave({ active, wallets: left });
+  return left.length;
+}
+function walletsSetActive(address) {
+  try {
+    if (typeof localStorage === 'undefined' || !address) return;
+    if (!localStorage.getItem(WALLETS_STORE_KEY)) return; // nothing persisted yet (legacy-only / empty)
+    const reg = walletsLoad();
+    reg.active = String(address).toLowerCase();
+    walletsSave(reg);
+  } catch (e) {}
+}
+function walletsEntryFor(address) {
+  /* the session-restore gate: the entry for an address;
+     'legacy' while an unadopted (address-unknown) wallet exists;
+     'unknown' when no wallet storage exists at all (test stubs);
+     null when a persisted registry exists but does not hold this
+     address — that wallet was removed, so its session must not
+     come back. */
+  let persisted = false;
+  try { persisted = !!(typeof localStorage !== 'undefined' && localStorage.getItem(WALLETS_STORE_KEY)); } catch (e) {}
+  const reg = walletsLoad();
+  const hit = reg.wallets.find(w => w.address && address && w.address.toLowerCase() === String(address).toLowerCase());
+  if (hit) return hit;
+  if (reg.wallets.some(w => w.legacy || !w.address)) return 'legacy';
+  return persisted ? null : 'unknown';
+}
+function walletsTargetEntry() {
+  const reg = walletsLoad();
+  if (!reg.wallets.length) return null;
+  const want = pwTarget() || reg.active;
+  if (want === 'anon') return reg.wallets.find(w => !w.address) || reg.wallets[0];
+  return (want && reg.wallets.find(w => w.address && w.address.toLowerCase() === String(want).toLowerCase())) || reg.wallets[0];
+}
+function walletsTargetAddress() {
+  const e = walletsTargetEntry();
+  return e ? (e.address || null) : null;
+}
+function vaultForAddress(address) {
+  if (!address) return null;
+  const e = walletsLoad().wallets.find(w => w.address && w.address.toLowerCase() === String(address).toLowerCase());
+  return e ? e.vault : null;
+}
+function vaultLoad() {
+  /* the vault the locked views open: the switch target when one
+     is chosen, else the active wallet, else the first entry */
+  const e = walletsTargetEntry();
+  return e ? e.vault : null;
+}
+async function pwAdoptLegacyWallet(secretObj, address) {
+  /* move the unadopted wallet (legacy key, or a null-address
+     registry entry) into the registry under the address its
+     password just proved — the same ciphertext, no
+     re-encryption; any legacy key is dropped only after the
+     stored registry copy reads back with the same ciphertext */
+  try {
+    if (typeof localStorage === 'undefined' || !address) return false;
+    const addr = String(address).toLowerCase();
+    const reg = walletsLoad();
+    if (reg.wallets.some(w => w.address && w.address.toLowerCase() === addr)) {
+      if (vaultLoadLegacy()) vaultWipe();
+      return true;
+    }
+    const legacyKeyVault = vaultLoadLegacy();
+    const anon = reg.wallets.find(w => !w.address);
+    const cipher = legacyKeyVault || (anon && anon.vault);
+    if (!cipher) return false;
+    const rest = reg.wallets.filter(w => w !== anon)
+      .map(w => w.legacy ? { address: null, kind: null, vault: w.vault } : w);
+    rest.push({ address: addr, kind: (secretObj && secretObj.kind) || (anon && anon.kind) || null, vault: cipher });
+    walletsSave({ active: addr, wallets: rest });
+    const back = walletsLoad().wallets.find(w => w.address && w.address.toLowerCase() === addr);
+    if (!back || !back.vault || back.vault.ct !== cipher.ct) return false;
+    if (legacyKeyVault) vaultWipe();
+    return true;
+  } catch (e) { return false; }
 }
 function vaultWipe() {
   try { if (typeof localStorage !== 'undefined') localStorage.removeItem(VAULT_STORE_KEY); } catch (e) {}
@@ -4600,7 +4829,7 @@ let pwSession = null;      // {kind, secret, keyBytes, address}
 let pwNames = [];          // [{id, balance, username}] for the session address
 let pwActingId = null;     // bigint
 let pwLastTouch = 0;
-let pwView = 'auto';       // auto | create-show | create-password | import | import-password
+let pwView = 'auto';       // auto | add | create-show | create-password | import | import-password
 let pwDraft = null;        // {kind, secret} while a create/import flow is mid-way
 let pwLoadSeq = 0;
 const PW_ACTING_KEY = addr => 'caw-acting-' + String(addr).toLowerCase();
@@ -4667,6 +4896,7 @@ function refreshViewsForWallet() {
   else if (typeof dexQuery !== 'undefined' && dexQuery) loadDexView();
   else if (typeof burnQuery !== 'undefined' && burnQuery) loadBurnView();
   else if (typeof namesQuery !== 'undefined' && namesQuery) renderNamesScreen();
+  else if (typeof settingsQuery !== 'undefined' && settingsQuery) renderSettings();
   else if (typeof getnameQuery !== 'undefined' && getnameQuery) { renderGetnameWallet(); renderMintArea(); }
   else if (typeof searchQuery !== 'undefined' && searchQuery) { /* search rows keep their buttons state; a fresh search re-adds them */ }
   else refreshHomeFeed();
@@ -4694,15 +4924,32 @@ function pwSetActing(id) {
 }
 
 /* ----- wallet section rendering ----- */
+async function pwGoCreate(statusEl) {
+  if (statusEl) statusEl.innerHTML = '<span class="small">' + esc(T.loading) + '</span>';
+  try {
+    const phrase = await generateMnemonic();
+    pwDraft = { kind: 'phrase', secret: phrase };
+    pwView = 'create-show';
+    renderPw();
+  } catch (e) {
+    if (statusEl) statusEl.innerHTML = '<span class="err">' + esc(T.loadFail) + '</span>' + errDetailHtml(e);
+  }
+}
+function pwGoImport() { pwDraft = null; pwView = 'import'; renderPw(); }
 function renderPw() {
   const area = $('pwArea');
   if (!area) return;
-  if (pwSession) { renderPwUnlocked(area); return; }
-  if (vaultLoad()) { renderPwLocked(area); return; }
+  /* v34 (M6): the create / import / add flows render FIRST —
+     with a registry they must stay reachable while a wallet is
+     locked or even unlocked (adding a wallet never disturbs
+     the existing ones). */
   if (pwView === 'create-show' && pwDraft) { renderPwCreateShow(area); return; }
   if (pwView === 'create-password' && pwDraft) { renderPwPassword(area, 'create'); return; }
   if (pwView === 'import') { renderPwImport(area); return; }
   if (pwView === 'import-password' && pwDraft) { renderPwPassword(area, 'import'); return; }
+  if (pwView === 'add') { renderPwAdd(area); return; }
+  if (pwSession) { renderPwUnlocked(area); return; }
+  if (vaultLoad()) { renderPwLocked(area); return; }
   pwView = 'auto';
   /* The intro + safety copy lives statically in the page shells
      above this area (it must be readable before any script runs
@@ -4712,19 +4959,23 @@ function renderPw() {
     '<div class="row"><button id="pwCreateBtn" type="button">' + esc(T.pwCreateBtn) + '</button>' +
     '<button id="pwImportBtn" class="ghost" type="button">' + esc(T.pwImportBtn) + '</button></div>' +
     '<p id="pwStatus"></p>';
-  $('pwCreateBtn').onclick = async () => {
-    const st = $('pwStatus');
-    if (st) st.innerHTML = '<span class="small">' + esc(T.loading) + '</span>';
-    try {
-      const phrase = await generateMnemonic();
-      pwDraft = { kind: 'phrase', secret: phrase };
-      pwView = 'create-show';
-      renderPw();
-    } catch (e) {
-      if (st) st.innerHTML = '<span class="err">' + esc(T.loadFail) + '</span>' + errDetailHtml(e);
-    }
-  };
-  $('pwImportBtn').onclick = () => { pwView = 'import'; renderPw(); };
+  $('pwCreateBtn').onclick = () => pwGoCreate($('pwStatus'));
+  $('pwImportBtn').onclick = () => pwGoImport();
+  syncChrome();
+}
+function renderPwAdd(area) {
+  /* v34 (M6): add ANOTHER wallet — create or import — without
+     touching the ones already here. Reached from the locked
+     view, the unlocked wallet view and Settings. */
+  area.innerHTML = '<h3>' + esc(T.pwAddTitle) + '</h3>' +
+    '<p>' + esc(T.pwAddNote) + '</p>' +
+    '<div class="row"><button id="pwAddCreate" type="button">' + esc(T.pwCreateBtn) + '</button>' +
+    '<button id="pwAddImport" class="ghost" type="button">' + esc(T.pwImportBtn) + '</button></div>' +
+    '<p id="pwStatus"></p>' +
+    '<div class="row"><button id="pwAddCancel" class="ghost" type="button">' + esc(T.pwCancelBtn) + '</button></div>';
+  $('pwAddCreate').onclick = () => pwGoCreate($('pwStatus'));
+  $('pwAddImport').onclick = () => pwGoImport();
+  $('pwAddCancel').onclick = () => { pwView = 'auto'; renderPw(); };
   syncChrome();
 }
 function renderPwCreateShow(area) {
@@ -4733,9 +4984,15 @@ function renderPwCreateShow(area) {
     '<p class="warn">' + esc(T.pwPhraseWarn) + '</p>' +
     '<div class="phrase-grid">' + words.map((w, i) =>
       '<span class="phrase-word"><span class="pw-num">' + (i + 1) + '</span>' + esc(w) + '</span>').join('') + '</div>' +
+    /* v34 (D18): the app shows the derived address on this
+       screen, BEFORE the password is set — same here */
+    '<p class="small">' + esc(T.pwCreateAddrLbl) + ': <span id="pwCreateAddr">…</span></p>' +
     '<label class="checkrow"><input type="checkbox" id="pwWrote"> ' + esc(T.pwWroteIt) + '</label>' +
     '<div class="row"><button id="pwToPassword" type="button" disabled>' + esc(T.pwContinueBtn) + '</button>' +
     '<button id="pwCreateCancel" class="ghost" type="button">' + esc(T.pwCancelBtn) + '</button></div>';
+  deriveFromPhrase(pwDraft.secret).then(d => {
+    const s = $('pwCreateAddr'); if (s) s.textContent = d.address;
+  }).catch(() => {});
   $('pwWrote').onchange = e => { $('pwToPassword').disabled = !e.target.checked; };
   $('pwToPassword').onclick = () => { pwView = 'create-password'; renderPw(); };
   $('pwCreateCancel').onclick = () => { pwDraft = null; pwView = 'auto'; renderPw(); };
@@ -4749,15 +5006,20 @@ function renderPwImport(area) {
   $('pwImportNext').onclick = async () => {
     const raw = $('pwImportText').value.trim();
     const err = $('pwImportErr');
-    const fail = () => { err.innerHTML = '<span class="err">' + esc(T.pwImportInvalid) + '</span>'; };
-    if (/^0x[0-9a-fA-F]{64}$/.test(raw)) {
-      if (!privateKeyToAddress(raw)) return fail();
-      pwDraft = { kind: 'key', secret: raw.toLowerCase() };
-    } else {
-      const phrase = normalizePhrase(raw);
-      if (!(await validateMnemonic(phrase))) return fail();
-      pwDraft = { kind: 'phrase', secret: phrase };
+    /* v34 (D18): the error names the actual cause, like the
+       app — bad key format / bad phrase / a word outside the
+       list / a checksum mismatch — not one generic message */
+    const res = await classifyImportSecret(raw);
+    if (res.error || (res.kind === 'key' && !privateKeyToAddress(res.secret))) {
+      const msg = res.error === 'badkey' ? T.pwImportBadKey
+        : res.error === 'unknownword' ? T.pwImportUnknownWord
+        : res.error === 'checksum' ? T.pwImportBadChecksum
+        : res.error === 'badwords' ? T.pwImportBadWords
+        : T.pwImportInvalid;
+      err.innerHTML = '<span class="err">' + esc(msg) + '</span>';
+      return;
     }
+    pwDraft = { kind: res.kind, secret: res.kind === 'key' ? res.secret.toLowerCase() : res.secret };
     $('pwImportText').value = '';
     pwView = 'import-password';
     renderPw();
@@ -4775,12 +5037,17 @@ function renderPwPassword(area, mode) {
   $('pwSaveBtn').onclick = async () => {
     const p1 = $('pwPass1').value, p2 = $('pwPass2').value;
     const err = $('pwPassErr');
-    if (p1.length < 8) { err.innerHTML = '<span class="err">' + esc(T.pwPasswordShort) + '</span>'; return; }
+    if (p1.length < 6) { err.innerHTML = '<span class="err">' + esc(T.pwPasswordShort) + '</span>'; return; }
     if (p1 !== p2) { err.innerHTML = '<span class="err">' + esc(T.pwPasswordMismatch) + '</span>'; return; }
     const btn = $('pwSaveBtn'); btn.disabled = true;
     try {
       const stored = await vaultEncrypt(p1, { kind: pwDraft.kind, secret: pwDraft.secret });
-      vaultSave(stored);
+      /* v34 (M6): the new wallet JOINS the registry under its
+         own address + password — existing wallets are untouched */
+      const addr = pwDraft.kind === 'key'
+        ? privateKeyToAddress(pwDraft.secret)
+        : (await deriveFromPhrase(pwDraft.secret)).address;
+      walletsAdd({ address: addr, kind: pwDraft.kind, vault: stored });
       await pwStartSession(pwDraft);
       pwDraft = null; pwView = 'auto';
       renderPw(); renderComposer(); refreshViewsForWallet();
@@ -4792,8 +5059,25 @@ function renderPwPassword(area, mode) {
   $('pwPassCancel').onclick = () => { pwDraft = null; pwView = 'auto'; renderPw(); };
 }
 function renderPwLocked(area) {
+  /* v34 (M6): with several wallets the locked view first says
+     WHICH wallet the password will open (the switch target, the
+     active wallet, or the first) and offers the others as a
+     picker — each wallet still opens only with its OWN
+     password. A single wallet renders exactly as before. */
+  const reg = walletsLoad();
+  const tAddr = walletsTargetAddress();
+  const tEntry = reg.wallets.find(w => (w.address || null) === tAddr) || reg.wallets[0];
+  let picker = '';
+  if (reg.wallets.length > 1) {
+    picker = '<div class="menu-list">' + reg.wallets.map((w, i) =>
+      '<button type="button" class="menu-row wallet-pick' + ((w.address || null) === tAddr ? ' on' : '') + '" data-wpick="' + i + '">' +
+      '<span>' + esc(walletShortLabel(w)) + '</span>' +
+      '<span class="wrow-sub">' + esc([walletKindLabel(w), reg.active && w.address === reg.active ? T.pwInUse : ''].filter(Boolean).join(' · ')) + '</span></button>').join('') + '</div>';
+  }
   area.innerHTML = '<h3>' + esc(T.pwLockedTitle) + '</h3>' +
     '<p>' + esc(T.pwLockedText) + '</p>' +
+    (tEntry ? '<p class="small">' + esc(T.pwAddressLbl) + ': ' + esc(walletShortLabel(tEntry)) + '</p>' : '') +
+    picker +
     (nextQuery === 'profile' ? '<p class="pw-next-hint">' + esc(T.pwNextProfile) + '</p>' : '') +
     (nextQuery === 'dex' ? '<p class="pw-next-hint">' + esc(T.pwNextDex) + '</p>' : '') +
     (nextQuery === 'burnhawk' ? '<p class="pw-next-hint">' + esc(T.pwNextBurn) + '</p>' : '') +
@@ -4803,7 +5087,15 @@ function renderPwLocked(area) {
     '<p id="pwUnlockErr"></p>' +
     '<div class="row"><button id="pwUnlockBtn" type="button">' + esc(T.pwUnlockBtn) + '</button>' +
     '<button id="pwRemoveBtn1" class="ghost" type="button">' + esc(T.pwRemoveBtn) + '</button></div>' +
+    '<div class="row"><button id="pwAddBtn2" class="ghost" type="button">' + esc(T.pwAddTitle) + '</button></div>' +
     '<div id="pwRemoveArea"></div>';
+  area.querySelectorAll('[data-wpick]').forEach(b => {
+    b.onclick = () => {
+      const w = reg.wallets[Number(b.dataset.wpick)];
+      pwSetUnlockTarget(w && w.address ? w.address : 'anon');
+      renderPwLocked(area);
+    };
+  });
   const tryUnlock = async () => {
     const pw = $('pwUnlockPass').value;
     const err = $('pwUnlockErr');
@@ -4811,7 +5103,7 @@ function renderPwLocked(area) {
     try {
       const secret = await vaultDecrypt(pw, vaultLoad());
       $('pwUnlockPass').value = '';
-      await pwStartSession(secret);
+      await pwStartSession(secret, { adopt: true });
       renderPw(); renderComposer(); refreshViewsForWallet();
     } catch (e) {
       err.innerHTML = '<span class="err">' + esc(T.pwUnlockWrong) + '</span>';
@@ -4821,9 +5113,13 @@ function renderPwLocked(area) {
   $('pwUnlockBtn').onclick = tryUnlock;
   $('pwUnlockPass').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
   $('pwRemoveBtn1').onclick = () => renderPwRemove($('pwRemoveArea'));
+  $('pwAddBtn2').onclick = () => { pwView = 'add'; renderPw(); };
   syncChrome();
 }
 async function pwStartSession(secretObj, opts) {
+  /* v34 (M6): starting a session replaces any live one (adding
+     a wallet while unlocked switches straight into it) */
+  if (pwSession) pwWipeSession();
   let keyBytes, address;
   if (secretObj.kind === 'key') {
     keyBytes = hexToBytesU(secretObj.secret);
@@ -4835,6 +5131,12 @@ async function pwStartSession(secretObj, opts) {
   }
   pwSession = { kind: secretObj.kind, secret: secretObj.secret, keyBytes, address };
   pwTouch();
+  /* v34 (M6): the registry records WHICH wallet is active, the
+     switch target is consumed, and an unlock (not a restore, not
+     a fresh save) adopts a pre-v34 vault into the registry. */
+  walletsSetActive(address);
+  if (opts && opts.adopt) { try { await pwAdoptLegacyWallet(secretObj, address); } catch (e) {} }
+  pwSetUnlockTarget(null);
   await pwLoadNames();
   /* v33: the unread badge refreshes off the same inbox scan
      whenever a session starts (unlock, create, import, or a
@@ -4879,14 +5181,38 @@ async function pwRestoreSession() {
   const stored = pwStoredSession();
   if (!stored) return;
   if (!vaultLoad() || Date.now() - stored.touch > 15 * 60 * 1000) { pwForgetStoredSession(); return; }
+  /* v34 (M6): the stored session names its wallet — restore
+     only while THAT wallet is still in the registry (a wallet
+     removed in another tab must not resurrect its session) */
+  if (walletsEntryFor(stored.address) === null) { pwForgetStoredSession(); return; }
   try {
     await pwStartSession({ kind: stored.kind, secret: stored.secret }, { restored: true });
   } catch (e) { pwForgetStoredSession(); return; }
   if (!pwSession || pwSession.address !== stored.address) { pwWipeSession(); return; }
   syncChrome(); renderPw(); renderComposer(); refreshViewsForWallet();
 }
-function renderPwRemove(box) {
+function pwDeleteWallet(address) {
+  /* v34 (M6): remove ONE wallet from the registry. Deleting the
+     session's own wallet ends the session; deleting the LAST
+     wallet also drops any legacy key — the full reset the
+     single remove button always did. */
+  const wasSession = !!pwSession && !!address &&
+    pwSession.address.toLowerCase() === String(address).toLowerCase();
+  walletsRemove(address);
+  if (!walletsLoad().wallets.length) vaultWipe();
+  /* an address-unknown entry can only be the session's wallet
+     when there is no live session to prove otherwise (a live
+     session's wallet is always adopted, hence addressed) */
+  if (wasSession || (!address && !pwSession)) pwWipeSession();
+  pwDraft = null;
+  if (!pwSession) pwView = 'auto';
+}
+function renderPwRemove(box, address) {
   if (!box) return;
+  /* which wallet goes: an explicit target (Settings), else the
+     session's wallet, else the one the locked view would open */
+  const target = address !== undefined ? address
+    : (pwSession ? pwSession.address : walletsTargetAddress());
   box.innerHTML = '<div class="pw-remove">' +
     '<p class="warn">' + esc(T.pwRemoveWarn) + '</p>' +
     '<p class="small">' + esc(T.pwRemoveTypeLbl) + ' <b>' + esc(T.pwRemoveWord) + '</b></p>' +
@@ -4898,11 +5224,84 @@ function renderPwRemove(box) {
   });
   $('pwRemoveCancel').onclick = () => { box.innerHTML = ''; };
   $('pwRemoveConfirm').onclick = () => {
-    vaultWipe();
-    pwWipeSession();
-    pwDraft = null; pwView = 'auto';
+    pwDeleteWallet(target);
+    box.innerHTML = '';
     renderPw(); renderComposer(); refreshViewsForWallet();
   };
+}
+/* ----- v34 (M6): shared wallet-list pieces -----
+   One row builder for the wallet view's card and the Settings
+   list: the app's short address form (first 10 … last 6), the
+   kind, an in-use marker, and the wallet's names when known. */
+function walletShortLabel(w) {
+  if (!w || !w.address) return T.pwWalletLegacy;
+  return w.address.slice(0, 10) + '…' + w.address.slice(-6);
+}
+function walletKindLabel(w) {
+  if (!w) return '';
+  return w.kind === 'key' ? T.pwWalletKindKey : w.kind === 'phrase' ? T.pwWalletKindPhrase : '';
+}
+function walletRowsHtml(reg, namesMap) {
+  if (!reg.wallets.length) return '<p class="small">' + esc(T.setNoWallet) + '</p>';
+  return reg.wallets.map(w => {
+    const inUse = !!pwSession && !!w.address &&
+      pwSession.address.toLowerCase() === w.address.toLowerCase();
+    const names = (namesMap && w.address && namesMap[w.address.toLowerCase()]) || null;
+    const sub = [walletKindLabel(w), inUse ? T.pwInUse : '', names && names.length ? names.join(', ') : '']
+      .filter(Boolean).join(' · ');
+    return '<div class="menu-row wrow"><span class="wrow-main">' +
+      '<span class="wrow-addr">' + esc(walletShortLabel(w)) + '</span>' +
+      (sub ? '<span class="wrow-sub">' + esc(sub) + '</span>' : '') + '</span>' +
+      (w.address && !inUse
+        ? '<button type="button" class="mini-btn" data-wswitch="' + esc(w.address) + '">' + esc(T.pwSwitchBtn) + '</button>'
+        : '') +
+      '</div>';
+  }).join('');
+}
+function wireWalletRows(box) {
+  if (!box) return;
+  box.querySelectorAll('[data-wswitch]').forEach(b => {
+    b.onclick = () => pwBeginSwitch(b.dataset.wswitch);
+  });
+}
+async function pwFillWalletNames(listId) {
+  /* names are read per wallet address (the session wallet's are
+     already loaded); rows re-render once they arrive */
+  const el = $(listId);
+  if (!el) return;
+  const reg = walletsLoad();
+  const map = {};
+  await Promise.all(reg.wallets.filter(w => w.address).map(async w => {
+    try {
+      if (pwSession && w.address.toLowerCase() === pwSession.address.toLowerCase() && pwNames.length) {
+        map[w.address.toLowerCase()] = pwNames.map(n => '@' + n.username);
+        return;
+      }
+      const toks = await tokensOf(w.address);
+      map[w.address.toLowerCase()] = toks.map(t => '@' + t.username);
+    } catch (e) {}
+  }));
+  const el2 = $(listId);
+  if (el2) { el2.innerHTML = walletRowsHtml(reg, map); wireWalletRows(el2); }
+}
+function pwBeginSwitch(address) {
+  /* switching authenticates: the current session locks FIRST,
+     then the locked view opens the target with its own
+     password (the target rides sessionStorage across the
+     navigation to the wallet view) */
+  pwLock();
+  pwSetUnlockTarget(address);
+  if (typeof walletQuery !== 'undefined' && walletQuery) renderPw();
+  else location.href = pageFile + '?wallet=1';
+}
+function pwSetAmt(id, short, exact) {
+  const el = $(id);
+  if (!el) return;
+  if (short === null || short === undefined) { el.textContent = '—'; return; }
+  el.dataset.short = short;
+  el.dataset.exact = exact;
+  el.dataset.ex = '';
+  el.textContent = short;
 }
 /* v30: view the recovery phrase / private key again. The
    password is asked again and the VAULT is decrypted fresh —
@@ -4926,7 +5325,10 @@ function renderPwReveal(box) {
     const err = $('pwRevealErr');
     const btn = $('pwRevealGo'); btn.disabled = true;
     let obj = null;
-    try { obj = await vaultDecrypt(pw, vaultLoad()); }
+    /* v34 (M6): the reveal opens the SESSION wallet's own vault
+       (each wallet has its own password) — still a fresh
+       decryption of stored ciphertext, never the live secret */
+    try { obj = await vaultDecrypt(pw, vaultForAddress(pwSession.address) || vaultLoad()); }
     catch (e) {
       err.innerHTML = '<span class="err">' + esc(T.pwUnlockWrong) + '</span>';
       btn.disabled = false;
@@ -4944,8 +5346,20 @@ function renderPwReveal(box) {
       inner += '<p class="small">' + esc(T.pwRevealKeyLbl) + '</p>' +
         '<p class="pw-key">' + esc(obj.secret) + '</p>';
     }
-    inner += '<div class="row"><button id="pwRevealHide" class="ghost" type="button">' + esc(T.pwRevealHide) + '</button></div></div>';
+    /* v34 (D17): Copy hands over the value JUST decrypted and
+       shown above (the phrase space-joined, the key as hex) —
+       it never re-reads storage */
+    inner += '<div class="row"><button id="pwRevealCopy" type="button">' + esc(T.pwRevealCopy) + '</button>' +
+      '<button id="pwRevealHide" class="ghost" type="button">' + esc(T.pwRevealHide) + '</button></div></div>';
     box.innerHTML = inner;
+    $('pwRevealCopy').onclick = async ev => {
+      try {
+        if (typeof navigator === 'undefined' || !navigator.clipboard) return;
+        await navigator.clipboard.writeText(obj.secret);
+        ev.target.textContent = T.copied;
+        setTimeout(() => { const b = $('pwRevealCopy'); if (b) b.textContent = T.pwRevealCopy; }, 1600);
+      } catch (e) {}
+    };
     $('pwRevealHide').onclick = () => { box.innerHTML = ''; };
   };
   $('pwRevealGo').onclick = go;
@@ -4969,14 +5383,19 @@ function renderPwUnlocked(area) {
     '<button id="pwCopyAddr" class="addr-chip" type="button" title="' + esc(s.address) + '">' + esc(shortAddr(s.address)) + ' ⧉</button>' +
     '<span class="chainbadge">QL1</span></div>' +
     '<div class="pw-actions"><button id="pwDepJump" class="pw-action-btn" type="button">' + esc(T.depostLbl) + '</button></div>' +
+    /* v34 (D11): the app's seven rows in the app's order — the
+       acting name's in-name CAW joins the wallet's own balances;
+       tapping any amount toggles the exact figure */
     '<div class="asset-list">' +
-    '<div class="asset-row"><span class="asset-sym">QOM</span><span class="asset-amt" id="pwQomBal">…</span></div>' +
-    '<div class="asset-row"><span class="asset-sym">qCAW</span><span class="asset-amt" id="pwQcawBal">…</span></div>' +
-    '<div class="asset-row"><span class="asset-sym">O</span><span class="asset-amt" id="pwOBal">…</span></div>' +
-    '<div class="asset-row"><span class="asset-sym">KET</span><span class="asset-amt" id="pwKetBal">…</span></div>' +
-    '<div class="asset-row"><span class="asset-sym">HAWK</span><span class="asset-amt" id="pwHawkBal">…</span></div>' +
-    '<div class="asset-row"><span class="asset-sym">PHOENIX</span><span class="asset-amt" id="pwPhoenixBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">QOM</span><span class="asset-amt amt-tap" id="pwQomBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">qCAW</span><span class="asset-amt amt-tap" id="pwQcawBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">' + esc(T.pwCawInNameLbl) + '</span><span class="asset-amt amt-tap" id="pwNameCawBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">O</span><span class="asset-amt amt-tap" id="pwOBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">KET</span><span class="asset-amt amt-tap" id="pwKetBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">HAWK</span><span class="asset-amt amt-tap" id="pwHawkBal">…</span></div>' +
+    '<div class="asset-row"><span class="asset-sym">PHOENIX</span><span class="asset-amt amt-tap" id="pwPhoenixBal">…</span></div>' +
     '</div>' +
+    '<p class="small">' + esc(T.pwAmtTapHint) + '</p>' +
     '<p id="pwGasWarn"></p>';
   if (!pwNames.length) {
     html += '<p class="warn" id="pwNoNamesWarn">' + esc(T.pwNoNamesYet) + '</p>';
@@ -5012,6 +5431,11 @@ function renderPwUnlocked(area) {
     '<button id="pwSendMaxBtn" class="ghost" type="button">MAX</button></div>' +
     '<p class="small">' + esc(T.pwSendGasNote) + '</p>' +
     '<p id="pwSendStatus"></p></div>';
+  /* v34 (M6): the wallets in this browser — switch (which locks
+     first, then asks the target's own password) or add another */
+  html += '<div class="pw-card" id="pwWalletsCard"><h3 class="detail-h">' + esc(T.pwWalletsTitle) + '</h3>' +
+    '<div id="pwWalletList">' + walletRowsHtml(walletsLoad(), null) + '</div>' +
+    '<div class="row"><button id="pwAddWalletBtn" class="ghost" type="button">' + esc(T.pwAddTitle) + '</button></div></div>';
   html += '<div class="menu-list">' +
     '<button id="pwRevealBtn" class="menu-row" type="button">' + esc(T.pwRevealBtn) + '</button>' +
     '<button id="pwLockBtn" class="menu-row" type="button">' + esc(T.pwLockBtn) + '</button>' +
@@ -5021,6 +5445,22 @@ function renderPwUnlocked(area) {
   $('pwCopyAddr').onclick = async ev => {
     try { await navigator.clipboard.writeText(s.address); ev.target.textContent = T.copied; setTimeout(() => { const b = $('pwCopyAddr'); if (b) b.textContent = shortAddr(s.address) + ' ⧉'; }, 1600); } catch (e) {}
   };
+  /* v34 (D11): tap an amount to swap between the short figure
+     and the exact one (the values ride on the element itself) */
+  area.querySelectorAll('.amt-tap').forEach(el => {
+    el.onclick = () => {
+      if (!el.dataset.short || el.dataset.exact === undefined) return;
+      const ex = el.dataset.ex === '1';
+      el.dataset.ex = ex ? '' : '1';
+      el.textContent = ex ? el.dataset.short : el.dataset.exact;
+    };
+  });
+  if (acting) pwSetAmt('pwNameCawBal', fmtQcaw(acting.balance), fmtExactAmt(acting.balance, 18));
+  else pwSetAmt('pwNameCawBal', null, null);
+  wireWalletRows($('pwWalletList'));
+  pwFillWalletNames('pwWalletList');
+  const addW = $('pwAddWalletBtn');
+  if (addW) addW.onclick = () => { pwView = 'add'; renderPw(); };
   area.querySelectorAll('[data-acting]').forEach(row => {
     row.onclick = () => pwSetActing(BigInt(row.dataset.acting));
   });
@@ -5073,14 +5513,13 @@ function renderPwUnlocked(area) {
         readUint(HAWK_TOKEN, SEL.decimals).then(Number).catch(() => 18),
         readUint(PHOENIX_TOKEN, SEL.decimals).then(Number).catch(() => 18),
       ]);
-      const a = $('pwQomBal'), b = $('pwQcawBal'), o = $('pwOBal'), w = $('pwGasWarn');
-      if (a) a.textContent = fmtQcaw(qom);
-      if (b) b.textContent = fmtQcaw(qc);
-      if (o) o.textContent = ob === null ? '—' : fmtQcaw(ob);
-      const kEl = $('pwKetBal'), hEl = $('pwHawkBal'), pEl = $('pwPhoenixBal');
-      if (kEl) kEl.textContent = ket === null ? '—' : fmtAmt(ket, ketDec);
-      if (hEl) hEl.textContent = hawk === null ? '—' : fmtAmt(hawk, hawkDec);
-      if (pEl) pEl.textContent = phx === null ? '—' : fmtAmt(phx, phxDec);
+      const w = $('pwGasWarn');
+      pwSetAmt('pwQomBal', fmtQcaw(qom), fmtExactAmt(qom, 18));
+      pwSetAmt('pwQcawBal', fmtQcaw(qc), fmtExactAmt(qc, 18));
+      pwSetAmt('pwOBal', ob === null ? null : fmtQcaw(ob), ob === null ? null : fmtExactAmt(ob, 18));
+      pwSetAmt('pwKetBal', ket === null ? null : fmtAmt(ket, ketDec), ket === null ? null : fmtExactAmt(ket, ketDec));
+      pwSetAmt('pwHawkBal', hawk === null ? null : fmtAmt(hawk, hawkDec), hawk === null ? null : fmtExactAmt(hawk, hawkDec));
+      pwSetAmt('pwPhoenixBal', phx === null ? null : fmtAmt(phx, phxDec), phx === null ? null : fmtExactAmt(phx, phxDec));
       if (w && qom === 0n) w.innerHTML = '<span class="warn">' + esc(T.pwNeedGas) + '</span>';
     } catch (e) { /* balances are a nicety; the sends re-read anyway */ }
   })();
@@ -5138,6 +5577,72 @@ async function pwDoDepWd(kind) {
    accordion for THAT name (the wallet card's machinery,
    openDepWdPanel). Locked: the in-place unlock wall. */
 let mnOpenId = null; // the name id whose dep/withdraw accordion is open
+/* ---------- v34 (M15): the Settings view (?settings=1) ----------
+   The app's Settings screen, gathered the same way: language,
+   my address + copy, backup (the wallet view's reveal flow),
+   the wallets list with switch / add, lock now, About (the
+   app's about text + the view-count honesty note + a version
+   line), and the danger zone — the per-wallet delete. */
+function renderSettings() {
+  const area = $('settingsArea');
+  if (!area) return;
+  const other = pageFile === 'en.html' ? 'ja.html' : 'en.html';
+  const otherLbl = pageFile === 'en.html' ? '日本語' : 'English';
+  const curLbl = pageFile === 'en.html' ? 'English' : '日本語';
+  const reg = walletsLoad();
+  let h = '<div class="pw-card"><h3 class="detail-h">' + esc(T.setLanguage) + '</h3>' +
+    '<div class="menu-list">' +
+    '<span class="menu-row"><span>' + esc(curLbl) + '</span><span class="set-check">✓</span></span>' +
+    '<a class="menu-row" href="' + other + '?settings=1"><span>' + esc(otherLbl) + '</span><span>›</span></a>' +
+    '</div></div>';
+  if (pwSession) {
+    h += '<div class="pw-card"><h3 class="detail-h">' + esc(T.setAddressLbl) + '</h3>' +
+      '<p class="pw-addr">' + esc(pwSession.address) + '</p>' +
+      '<button type="button" class="ghost" id="setCopyAddr">' + esc(T.pwCopyBtn) + '</button></div>';
+    h += '<div class="pw-card"><h3 class="detail-h">' + esc(T.setBackup) + '</h3>' +
+      '<p class="small">' + esc(T.setBackupNote) + '</p>' +
+      '<p><a class="chip" href="' + pageFile + '?wallet=1">' + esc(T.navWallet) + ' →</a></p></div>';
+  } else if (!reg.wallets.length) {
+    h += '<div class="pw-card"><p>' + esc(T.setNoWallet) + '</p>' +
+      '<p><a class="chip" href="' + pageFile + '?wallet=1">' + esc(T.setSetupBtn) + ' →</a></p></div>';
+  }
+  h += '<div class="pw-card"><h3 class="detail-h">' + esc(T.pwWalletsTitle) + '</h3>' +
+    '<div id="setWalletList">' + walletRowsHtml(reg, null) + '</div>' +
+    '<div class="row"><button type="button" id="setAddWallet">' + esc(T.pwAddTitle) + '</button></div></div>';
+  if (pwSession) {
+    h += '<div class="pw-card"><div class="row"><button type="button" class="ghost" id="setLockNow">' + esc(T.setLockNow) + '</button></div></div>';
+  }
+  h += '<div class="pw-card"><h3 class="detail-h">' + esc(T.setAboutTitle) + '</h3>' +
+    '<p>' + esc(T.setAboutBody) + '</p>' +
+    '<p class="small">' + esc(T.setViewsNote) + '</p>' +
+    '<p class="small">' + esc(T.setVersionLbl) + '<br>one.guppyguide.cawsocial</p></div>';
+  if (reg.wallets.length) {
+    h += '<div class="pw-card danger-card"><h3 class="detail-h">' + esc(T.setDangerTitle) + '</h3>' +
+      reg.wallets.map((w, i) =>
+        '<div class="menu-row wrow"><span class="wrow-addr">' + esc(walletShortLabel(w)) + '</span>' +
+        '<button type="button" class="mini-btn danger-btn" data-setdel="' + i + '">' + esc(T.pwRemoveBtn) + '</button></div>').join('') +
+      '<div id="setDelArea"></div></div>';
+  }
+  area.innerHTML = h;
+  const cp = $('setCopyAddr');
+  if (cp) cp.onclick = async ev => {
+    try {
+      if (typeof navigator === 'undefined' || !navigator.clipboard) return;
+      await navigator.clipboard.writeText(pwSession.address);
+      ev.target.textContent = T.copied;
+      setTimeout(() => { const b = $('setCopyAddr'); if (b) b.textContent = T.pwCopyBtn; }, 2000);
+    } catch (e) {}
+  };
+  wireWalletRows($('setWalletList'));
+  pwFillWalletNames('setWalletList');
+  $('setAddWallet').onclick = () => { location.href = pageFile + '?wallet=1&add=1'; };
+  const lk = $('setLockNow');
+  if (lk) lk.onclick = () => pwLock();
+  area.querySelectorAll('[data-setdel]').forEach(b => {
+    b.onclick = () => renderPwRemove($('setDelArea'), reg.wallets[Number(b.dataset.setdel)].address);
+  });
+  syncChrome();
+}
 async function renderNamesScreen() {
   const area = $('namesArea');
   if (!area) return;
@@ -5415,7 +5920,7 @@ function renderTradeWall(area, kind) {
     try {
       const secret = await vaultDecrypt(pw, vaultLoad());
       $(p + 'UnlockPass').value = '';
-      await pwStartSession(secret);
+      await pwStartSession(secret, { adopt: true });
       syncChrome(); renderComposer();
       if (kind === 'dex') loadDexView();
       else if (kind === 'names') renderNamesScreen();
@@ -7109,12 +7614,16 @@ function ntSetSeenMark(address, mark) {
 const ntPosOf = it => ({ b: it.block ?? 0, i: it.txIndex ?? 0 });
 const ntIsAfter = (pos, seen) => !seen || pos.b > seen.b || (pos.b === seen.b && pos.i > seen.i);
 
-/* The unread-count badge on the Notifications tab. */
+/* The unread-count badge on the Notifications tab — v34
+   (D24): the drawer + sidebar Reactions rows carry one too,
+   and all three stay in step. */
 function ntBadgeSet(n) {
-  const d = $('ntBadge');
-  if (!d) return;
-  d.textContent = ntBadgeText(n);
-  d.style.display = n > 0 ? '' : 'none';
+  for (const id of ['ntBadge', 'ntBadgeSide', 'ntBadgeDrawer']) {
+    const d = $(id);
+    if (!d) continue;
+    d.textContent = ntBadgeText(n);
+    d.style.display = n > 0 ? '' : 'none';
+  }
 }
 /* Refresh the badge with a real since-last-open scan. The
    scan does NOT move the seen mark — only opening the inbox
@@ -7697,6 +8206,17 @@ function closeDrawer() {
   d.classList.remove('open');
   d.setAttribute('aria-hidden', 'true');
 }
+function pwProfileTarget(acting, unlocked) {
+  /* the three-way profile target (v25), shared by the drawer /
+     sidebar profile rows, the summary headers and — v34 (D23)
+     — the bottom tab bar's Profile tab: acting name -> the own
+     profile; unlocked but nameless -> the name desk; locked ->
+     the wallet view WITH ?next=profile, so a successful unlock
+     continues to the profile on its own (see pwStartSession) */
+  if (acting) return profUrl(acting.username);
+  if (unlocked) return pageFile + '?getname=1';
+  return pageFile + '?wallet=1&next=profile';
+}
 async function syncChrome() {
   const acting = pwSession ? pwActing() : null;
   const setSummary = async (avaId, nameId, subId, followId, profileRowId, summaryId) => {
@@ -7707,13 +8227,7 @@ async function syncChrome() {
        target is what changes: acting → the own profile;
        locked / nameless → the wallet view, where a wallet can
        be made, imported or unlocked and a name chosen. */
-    /* v25: three-way target — acting name -> the own profile;
-       unlocked but nameless -> the name desk; locked -> the
-       wallet view WITH ?next=profile, so a successful unlock
-       continues to the profile on its own (see pwStartSession). */
-    const profTarget = acting ? profUrl(acting.username)
-      : pwSession ? pageFile + '?getname=1'
-      : pageFile + '?wallet=1&next=profile';
+    const profTarget = pwProfileTarget(acting, !!pwSession);
     if (prow) prow.setAttribute('href', profTarget);
     /* v24: the summary header (avatar + name at the top of the
        sidebar / drawer) follows the same rule — it is the most
@@ -7774,6 +8288,24 @@ async function syncChrome() {
     setSummary('sideAvatar', 'sideName', 'sideSub', 'sideFollow', 'sideProfileRow', 'sideSummary'),
     setSummary('drawerAvatar', 'drawerName', 'drawerSub', 'drawerFollow', 'drawerProfileRow', 'drawerSummary'),
   ]);
+  /* v34 (D23): the bottom tab bar's Profile tab follows the
+     same three-way rule as the profile rows */
+  const tabProf = $('tabProfileRow');
+  if (tabProf) tabProf.setAttribute('href', pwProfileTarget(acting, !!pwSession));
+  /* v34 (D24): the My-names row icon becomes the acting name's
+     avatar when there is one (the app's treatment), falling
+     back to the person glyph */
+  for (const icId of ['sideNamesIc', 'drawerNamesIc']) {
+    const ic = $(icId);
+    if (!ic) continue;
+    if (ic.dataset.glyph === undefined) ic.dataset.glyph = ic.innerHTML;
+    if (acting) {
+      const im = await avatarFor(acting.id).catch(() => null);
+      ic.innerHTML = avatarHtml(im, acting.username);
+    } else if (ic.dataset.glyph) {
+      ic.innerHTML = ic.dataset.glyph;
+    }
+  }
   /* current-place highlight */
   const mode = (typeof postQuery !== 'undefined' && postQuery) ? 'post'
     : (typeof profileQuery !== 'undefined' && profileQuery) ? 'profile'
@@ -7786,6 +8318,7 @@ async function syncChrome() {
     : (typeof walletQuery !== 'undefined' && walletQuery) ? 'wallet'
     : (typeof namesQuery !== 'undefined' && namesQuery) ? 'mynames'
     : (typeof getnameQuery !== 'undefined' && getnameQuery) ? 'getname'
+    : (typeof settingsQuery !== 'undefined' && settingsQuery) ? 'settings'
     : (typeof lookupQuery !== 'undefined' && lookupQuery) ? 'search' : 'home';
   document.querySelectorAll('[data-nav]').forEach(el => {
     el.classList.toggle('on', el.dataset.nav === mode);
@@ -7826,6 +8359,11 @@ const getnameQuery = new URLSearchParams(location.search).get('getname') || (has
    on the names. */
 const namesQuery = new URLSearchParams(location.search).get('names') ||
   (location.hash === '#myNames' && !postQuery && !profileQuery ? '1' : null);
+/* v34 (M15): Settings is a view of its own; ?add=1 lands on the
+   wallet view with the add-a-wallet chooser open (Settings'
+   Add button points there). */
+const settingsQuery = new URLSearchParams(location.search).get('settings');
+const addQuery = new URLSearchParams(location.search).get('add');
 const lookupQuery = new URLSearchParams(location.search).get('lookup') || (hashView === 'lookup' ? '1' : null);
 document.querySelectorAll('.langs a').forEach(a => {
   const base = a.getAttribute('href').split('?')[0];
@@ -7903,6 +8441,10 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
   document.body.classList.add('names-mode');
   $('viewNames').style.display = '';
   renderNamesScreen();
+} else if (settingsQuery) {
+  document.body.classList.add('settings-mode');
+  $('viewSettings').style.display = '';
+  renderSettings();
 } else if (getnameQuery) {
   document.body.classList.add('getname-mode');
   $('viewGetname').style.display = '';
@@ -7972,6 +8514,7 @@ if (mni) {
 renderGetnameWallet();
 renderMintArea();
 renderPw();
+if (addQuery && walletQuery) { pwView = 'add'; renderPw(); } /* v34: Settings' Add lands here */
 mirrorAdoptDraft(); /* v19: a pending mirror draft becomes the composer draft */
 renderComposer();
 pwRestoreSession(); /* v30: revive this tab's saved session, if it is still fresh */
@@ -8055,8 +8598,13 @@ if (typeof module !== 'undefined' && module.exports) {
     ntClassifyAny, ntBadgeText, NT_SCAN_MAX_PAGES,
     nameNftSvg, nameNftFontSize,
     signDigestRaw, ecrecoverAddress, addressOfPriv, privateKeyToAddress,
-    validateMnemonic, generateMnemonic, deriveFromPhrase, WALLET_PATH,
-    vaultEncrypt, vaultDecrypt, vaultLoad, vaultSave, vaultWipe,
+    validateMnemonic, checkMnemonicDetail, classifyImportSecret,
+    generateMnemonic, deriveFromPhrase, WALLET_PATH,
+    vaultEncrypt, vaultDecrypt, vaultLoad, vaultWipe,
+    vaultLoadLegacy, WALLETS_STORE_KEY, walletsLoad, walletsSave,
+    walletsAdd, walletsRemove, walletsSetActive, walletsEntryFor,
+    walletsTargetAddress, vaultForAddress, pwAdoptLegacyWallet,
+    pwTarget, pwSetUnlockTarget, fmtExactAmt,
     VAULT_STORE_KEY, VAULT_ITERATIONS, BIP39_WORDS,
     signLegacyTx, rlpEncode, sendLocalTx,
     buildDepositCalldata, buildWithdrawCalldata, buildApproveToCalldata,

@@ -106,6 +106,26 @@
    with the unfollow kind, the since-last-open scan with its
    capped note, and the unread COUNT badge (M11/D12 —
    ntClassifyAny + ntBadgeText unit-checked).
+   v34 (batch 4a): the single vault becomes a REGISTRY of
+   wallets (M6 — each wallet its own AES-GCM ciphertext under
+   its own password; add / switch-with-auth / per-wallet
+   delete; the pre-v34 vault is adopted on first unlock with
+   the same ciphertext, read-back verified, legacy key dropped
+   only after — the migration is behaviour-tested below against
+   stub storage, together with the no-plaintext-anywhere rule);
+   the Settings view (M15 — language / address+copy / backup /
+   wallets / lock / about / danger zone, and the right-rail
+   About card's stale "no real send yet" line replaced); the
+   wallet asset list gains the in-name CAW row and tap-to-exact
+   amounts (D11 — fmtExactAmt unit-checked); the reveal gains a
+   Copy button fed by the fresh decryption (D17); onboarding
+   matches the app (D18 — the derived address shows before the
+   password step, import errors name their cause via
+   checkMnemonicDetail / classifyImportSecret, password minimum
+   6); the bottom tab bar becomes Home / Search / Reactions /
+   Profile (D23 — pwProfileTarget extracted and unit-checked);
+   the drawer + sidebar gain a Reactions row with the count
+   badge, and the My-names icon becomes the acting avatar (D24).
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -348,15 +368,16 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=33') && jaHtml.includes('?v=33'), 'shells reference ?v=33 assets');
-ok(swSrc.includes("caw-view-v33"), 'sw.js cache name is caw-view-v33');
+ok(enHtml.includes('?v=34') && jaHtml.includes('?v=34'), 'shells reference ?v=34 assets');
+ok(swSrc.includes("caw-view-v34"), 'sw.js cache name is caw-view-v34');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
 console.log('— v24: menu destinations audit (profile must not land on the wallet) —');
 {
   const expect = { home: '', search: '?lookup=1', reactions: '?reactions=1', wallet: '?wallet=1',
-    getname: '?getname=1', dex: '?dex=1', burnhawk: '?burnhawk=1', bookmarks: '?bookmarks=1', mirror: '?mirror=1' };
+    getname: '?getname=1', dex: '?dex=1', burnhawk: '?burnhawk=1', bookmarks: '?bookmarks=1', mirror: '?mirror=1',
+    settings: '?settings=1' };
   for (const [label, html, file] of [['en.html', enHtml, 'en.html'], ['ja.html', jaHtml, 'ja.html']]) {
     const anchors = [...html.matchAll(/<a[^>]*data-nav="([^"]+)"[^>]*>/g)];
     let bad = [];
@@ -383,10 +404,12 @@ console.log('— v24: menu destinations audit (profile must not land on the wall
     'syncChrome rewrites the summary header href with the shared profile target');
   ok(viewerSrc.includes("'sideSummary'") && viewerSrc.includes("'drawerSummary'"),
     'both summary headers (sidebar + drawer) are passed to setSummary');
-  ok(viewerSrc.includes('const profTarget = acting ? profUrl(acting.username)') &&
-     viewerSrc.includes("pwSession ? pageFile + '?getname=1'") &&
-     viewerSrc.includes("pageFile + '?wallet=1&next=profile'"),
-    'v25: profile target is three-way (own profile / name desk / wallet with ?next=profile)');
+  ok(viewerSrc.includes('function pwProfileTarget(acting, unlocked)') &&
+     viewerSrc.includes('if (acting) return profUrl(acting.username);') &&
+     viewerSrc.includes("if (unlocked) return pageFile + '?getname=1';") &&
+     viewerSrc.includes("return pageFile + '?wallet=1&next=profile';") &&
+     viewerSrc.includes('const profTarget = pwProfileTarget(acting, !!pwSession);'),
+    'v25: profile target is three-way (own profile / name desk / wallet with ?next=profile) — v34: factored into pwProfileTarget, shared with the tab bar');
   ok(viewerSrc.includes("if (nextQuery === 'profile')") &&
      viewerSrc.includes("location.replace(a ? profUrl(a.username) : pageFile + '?getname=1')"),
     'v25: after unlock, ?next=profile continues to the own profile (name desk when nameless)');
@@ -926,8 +949,8 @@ console.log('— v16: post-row anatomy fixes (action pills, record link, recaw s
        !segOf('themeToggleDrawer').includes('nav-ic') && segOf('themeToggleDrawer').includes('themeLabelDrawer'),
        label + ': theme rows are 🌙/☀️ + label only (no second gear)');
   }
-  ok(viewerSrc.includes('const profTarget = acting ? profUrl(acting.username)'),
-     'profile rows route by state (v25): acting → own profile, nameless → name desk, locked → wallet + ?next=profile');
+  ok(viewerSrc.includes('const profTarget = pwProfileTarget(acting, !!pwSession);'),
+     'profile rows route by state (v25): acting → own profile, nameless → name desk, locked → wallet + ?next=profile (v34: via pwProfileTarget)');
   ok(viewerSrc.includes("el.setAttribute('href', pageFile + '?names=1')"),
      'my-names rows land on the My names view in every state (v33; the screen carries the wall/guide itself)');
   ok(!viewerSrc.includes('prow.style.display') && !viewerSrc.includes("el.style.display = acting"),
@@ -939,9 +962,9 @@ console.log('— v17: tab bar order + the notifications view (reactions to your 
   for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
     const navStart = html.indexOf('<nav class="bottomnav"');
     const nav = html.slice(navStart, html.indexOf('</nav>', navStart));
-    const order = ['home', 'search', 'reactions', 'wallet'].map(k => nav.indexOf('data-nav="' + k + '"'));
-    ok(order.every(i => i >= 0) && order.every((v, i) => i === 0 || v > order[i - 1]),
-       label + ': the tab bar is home / search / notifications / wallet (notifications second from the right, wallet last)');
+    const order = ['home', 'search', 'reactions', 'profile'].map(k => nav.indexOf('data-nav="' + k + '"'));
+    ok(order.every(i => i >= 0) && order.every((v, i) => i === 0 || v > order[i - 1]) && !nav.includes('data-nav="wallet"'),
+       label + ': the tab bar is home / search / notifications / profile (v34 D23: the app set — the wallet tab is gone, profile last)');
     ok(!nav.includes('data-nav="bookmarks"'),
        label + ': bookmarks is NOT on the tab bar (its drawer / sidebar rows remain the entry)');
     ok(nav.includes('id="ntBadge"') && !nav.includes('id="ntDot"'), label + ': the notifications tab carries the unread-count badge element (v33, the dot is gone)');
@@ -1270,7 +1293,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v33'), 'sw cache is caw-view-v33');
+  ok(swJs.includes('caw-view-v34'), 'sw cache is caw-view-v34');
 }
 
 /* ---- v28: plain send out of the posting wallet ---- */
@@ -1305,8 +1328,8 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok(VS.includes("if (!pwSession) { renderTradeWall(area, 'burnhawk'); return; }"), 'v29: the locked BurnHawk view renders its wall');
   ok(VS.includes("'?wallet=1&next=' + kind"), 'v29: the no-vault wall links to the wallet carrying ?next=<view>');
   const wallBody = VS.slice(VS.indexOf('function renderTradeWall(area, kind)'), VS.indexOf('const assetRowHtml'));
-  ok(wallBody.includes('vaultDecrypt(pw, vaultLoad())') && wallBody.includes('await pwStartSession(secret)'),
-    'v29: the in-place unlock decrypts the vault and starts the session, like the wallet form');
+  ok(wallBody.includes('vaultDecrypt(pw, vaultLoad())') && wallBody.includes('await pwStartSession(secret, { adopt: true })'),
+    'v29: the in-place unlock decrypts the vault and starts the session, like the wallet form (v34: the unlock also adopts a pre-v34 vault)');
   ok(wallBody.includes("if (kind === 'dex') loadDexView();") &&
      wallBody.includes("else if (kind === 'names') renderNamesScreen();") &&
      wallBody.includes("else if (kind === 'getname') { renderGetnameWallet(); renderMintArea(); }") &&
@@ -1416,8 +1439,12 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
      unlockedBody.includes("renderPwReveal($('pwRevealArea'))"),
     'v30: the unlocked wallet carries the reveal button, its area and the wiring');
   const revealBody = VS.slice(VS.indexOf('function renderPwReveal(box)'), VS.indexOf('function renderPwUnlocked'));
-  ok(revealBody.includes('vaultDecrypt(pw, vaultLoad())'), 'v30: the reveal decrypts the vault fresh');
-  ok(!revealBody.includes('pwSession'), 'v30: the reveal never reads the live session');
+  ok(revealBody.includes('vaultDecrypt(pw, vaultForAddress(pwSession.address) || vaultLoad())'),
+    'v30: the reveal decrypts the vault fresh (v34: the SESSION wallet’s own vault — each wallet has its own password)');
+  ok(!revealBody.includes('pwSession.secret') && !revealBody.includes('pwSession.keyBytes'),
+    'v30: the reveal never reads the live session SECRET (v34: only its address picks which vault to open)');
+  ok(revealBody.includes('navigator.clipboard.writeText(obj.secret)'),
+    'v34 D17: the reveal Copy button copies the value just decrypted (obj), never a storage re-read');
   for (const k of ['pwRevealBtn', 'pwRevealTitle', 'pwRevealWarn', 'pwRevealHide', 'pwRevealKeyLbl']) {
     ok((VS.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v30: ' + k + ' exists in both languages');
   }
@@ -1470,6 +1497,12 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       'pendingComposeRef', 'composerRef', 'compDraft', 'compFiles', 'mirrorNotice',
       'compDraftFor', 'compDraftRestored', 'compDraftTimer', 'compPrepping', 'compFrag',
       'compDirState', 'compNoteState', 'composeHomeSlot',
+      /* v34: the registry surface the cluster now calls —
+         inert stubs: no persisted registry in this sandbox, so
+         the restore gate answers 'unknown' (storage absent) */
+      'walletsLoad', 'walletsTargetAddress', 'walletsSetActive', 'walletsEntryFor',
+      'pwAdoptLegacyWallet', 'pwSetUnlockTarget', 'walletsAdd', 'privateKeyToAddress',
+      'generateMnemonic', 'walletShortLabel', 'walletKindLabel',
       clusterSrc + '\nreturn { pwStartSession, pwRestoreSession, pwLock, pwUnlocked };')(
       $id, doc, mkStorage(), sessionStore,
       { replace: u => calls.push('replace:' + u), href: '' },
@@ -1487,7 +1520,10 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       () => calls.push('burn'), () => calls.push('timeline'), () => calls.push('timeline'),
       async () => null, () => '', x => String(x), V.textBytes,
       null, null, '', [], '',
-      null, false, null, false, null, null, '', null);
+      null, false, null, false, null, null, '', null,
+      () => ({ active: null, wallets: [] }), () => null, () => {}, () => 'unknown',
+      async () => false, () => {}, () => {}, V.privateKeyToAddress,
+      async () => HK_PHRASE, () => 'WALLET', () => '');
     holder.api = api;
     return { api, els, calls, bodyCls, probe };
   };
@@ -1554,14 +1590,20 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   const mkReveal = ret => {
     const els = {};
     const $id = id => (els[id] = els[id] || mkEl());
+    const clip = { written: null };
     const renderPwReveal = new Function('$', 'esc', 'T', 'vaultLoad', 'vaultDecrypt',
+      'vaultForAddress', 'pwSession', 'navigator',
       revealBody + '\nreturn renderPwReveal;')(
       $id, s => String(s),
       { pwRevealTitle: 'TITLE', pwRevealWarn: 'WARN', pwRevealBtn: 'SHOW', pwRevealHide: 'HIDE',
-        pwRevealKeyLbl: 'KEYLBL', pwPasswordPh: 'PWPH', pwUnlockWrong: 'WRONG', pwCancelBtn: 'CANCEL' },
+        pwRevealKeyLbl: 'KEYLBL', pwPasswordPh: 'PWPH', pwUnlockWrong: 'WRONG', pwCancelBtn: 'CANCEL',
+        pwRevealCopy: 'COPY', copied: 'COPIED!' },
       () => ({ v: 1 }),
-      async pw => { if (pw !== 'hunter2') throw new Error('bad password'); return ret; });
-    return { els, renderPwReveal, box: mkEl() };
+      async pw => { if (pw !== 'hunter2') throw new Error('bad password'); return ret; },
+      () => ({ v: 1, own: true }),
+      { address: '0x00000000000000000000000000000000000000aa' },
+      { clipboard: { writeText: async t => { clip.written = t; } } });
+    return { els, renderPwReveal, box: mkEl(), clip };
   };
   {
     const r = mkReveal({ kind: 'phrase', secret: 'alpha bravo charlie' });
@@ -1576,6 +1618,10 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     ok(r.box.innerHTML.includes('phrase-grid') && r.box.innerHTML.includes('alpha') &&
        r.box.innerHTML.includes('charlie'),
       'v30 behaviour: the right password shows the freshly decrypted phrase');
+    /* v34 (D17): Copy hands the clipboard the very value shown */
+    await r.els.pwRevealCopy.onclick({ target: r.els.pwRevealCopy });
+    ok(r.clip.written === 'alpha bravo charlie' && r.els.pwRevealCopy.textContent === 'COPIED!',
+      'v34 D17 behaviour: reveal Copy copies the decrypted phrase (space-joined) with copied feedback');
     r.els.pwRevealHide.onclick();
     ok(r.box.innerHTML === '', 'v30 behaviour: Hide clears the reveal');
   }
@@ -2509,6 +2555,219 @@ console.log('— v33: app-parity batch 3 (customs, My names, posting-wallet mint
     await els.gnUnlockBtn.onclick();
     ok(calls.join(',') === 'session,composer,gn,mint',
       'v33 behaviour: unlocking on the getname wall re-renders the wallet strip and the mint area');
+  }
+}
+
+console.log('— v34: multi-wallet registry, Settings, onboarding + chrome parity (batch 4a) —');
+{
+  const VS = viewerSrc;
+  /* ---- storage shape + security invariants ---- */
+  ok(VS.includes("const WALLETS_STORE_KEY = 'caw-wallets-v1'") &&
+     VS.includes('wallets: reg.wallets.map(w => ({ address: w.address || null, kind: w.kind || null, vault: w.vault }))'),
+     'v34 M6: the registry persists only {address, kind, vault ciphertext} per wallet — never a secret');
+  ok((VS.match(/eth_sendRawTransaction/g) || []).length === 1 &&
+     !VS.includes('eth_sendTransaction') && !VS.includes('eth_sign') && !VS.includes('personal_sign'),
+     'v34: still exactly one raw-send site, zero eth_sendTransaction, no sign-method literals');
+  ok(VS.includes('if (walletsEntryFor(stored.address) === null) { pwForgetStoredSession(); return; }'),
+     'v34 M6: a stored session restores only while ITS wallet is still in the registry');
+  ok(VS.includes('walletsSetActive(address)') && VS.includes('pwSetUnlockTarget(null)'),
+     'v34 M6: starting a session records the active wallet and consumes the switch target');
+
+  /* ---- migration + multi-wallet behaviour (stub storage) ---- */
+  const store = new Map();
+  globalThis.localStorage = {
+    getItem: k => (store.has(k) ? store.get(k) : null),
+    setItem: (k, v) => store.set(k, String(v)),
+    removeItem: k => store.delete(k),
+  };
+  try {
+    const phrase = await V.generateMnemonic();
+    const addr = (await V.deriveFromPhrase(phrase)).address;
+    const addrLc = addr.toLowerCase();
+    const KEY2 = '0x59c6995e998f97a5a0044966f0945389dc9e86dfcedcbf17785cd0f2b24a30f5c';
+    const addr2 = V.privateKeyToAddress(KEY2);
+    const PW1 = 'first-password', PW2 = 'second-password';
+    /* a v33-style single vault, exactly as v12–v33 stored it */
+    const legacyVault = await V.vaultEncrypt(PW1, { kind: 'phrase', secret: phrase });
+    store.set(V.VAULT_STORE_KEY, JSON.stringify(legacyVault));
+    let reg = V.walletsLoad();
+    ok(reg.wallets.length === 1 && reg.wallets[0].legacy === true && reg.wallets[0].address === null &&
+       reg.wallets[0].vault.ct === legacyVault.ct,
+       'v34 migration: a lone pre-v34 vault presents as the registry’s first (address-unknown) wallet');
+    ok(V.vaultLoad() && V.vaultLoad().ct === legacyVault.ct,
+       'v34 migration: the locked views open the legacy vault exactly as before');
+    ok(V.walletsEntryFor(addr) === 'legacy',
+       'v34 migration: the restore gate treats the unadopted wallet as present');
+    const adopted = await V.pwAdoptLegacyWallet({ kind: 'phrase', secret: phrase }, addr);
+    reg = V.walletsLoad();
+    ok(adopted === true && reg.wallets.length === 1 && reg.wallets[0].address === addrLc &&
+       reg.wallets[0].kind === 'phrase' && reg.wallets[0].vault.ct === legacyVault.ct &&
+       store.get(V.WALLETS_STORE_KEY) !== undefined && !store.has(V.VAULT_STORE_KEY),
+       'v34 migration: adoption moves the SAME ciphertext into the registry under the proved address and drops the legacy key');
+    const round = await V.vaultDecrypt(PW1, reg.wallets[0].vault);
+    ok(round.kind === 'phrase' && round.secret === phrase,
+       'v34 migration: the adopted wallet still unlocks with its original password');
+    ok(V.walletsEntryFor(addr) && V.walletsEntryFor(addr).address === addrLc &&
+       V.walletsEntryFor(addr2) === null,
+       'v34 M6: the restore gate finds the adopted wallet and refuses an address the registry does not hold');
+    ok(V.vaultForAddress(addr) && V.vaultForAddress(addr).ct === legacyVault.ct && V.vaultLoad().ct === legacyVault.ct,
+       'v34 M6: vault lookup by address and the default (active) target both reach the adopted wallet');
+    /* add a second wallet: the first is untouched, each keeps
+       its OWN password */
+    const vault2 = await V.vaultEncrypt(PW2, { kind: 'key', secret: KEY2 });
+    V.walletsAdd({ address: addr2, kind: 'key', vault: vault2 });
+    reg = V.walletsLoad();
+    ok(reg.wallets.length === 2 && reg.active === addr2.toLowerCase(),
+       'v34 M6: adding a wallet appends it and makes it active, existing wallets untouched');
+    let crossFails = false;
+    try { await V.vaultDecrypt(PW1, V.vaultForAddress(addr2)); } catch (e) { crossFails = true; }
+    ok(crossFails && (await V.vaultDecrypt(PW2, V.vaultForAddress(addr2))).secret === KEY2,
+       'v34 M6: each wallet opens only with its OWN password');
+    /* switch target: the locked views open the chosen wallet */
+    V.pwSetUnlockTarget(addr);
+    ok(V.vaultLoad().ct === legacyVault.ct, 'v34 M6: the switch target decides which vault the locked view opens');
+    V.pwSetUnlockTarget(null);
+    V.walletsSetActive(addr);
+    ok(V.walletsLoad().active === addrLc && V.vaultLoad().ct === legacyVault.ct,
+       'v34 M6: the recorded active wallet is the default unlock target');
+    /* per-wallet delete, then the last delete = full reset */
+    ok(V.walletsRemove(addr2) === 1 && V.walletsLoad().wallets.length === 1 &&
+       V.vaultForAddress(addr).ct === legacyVault.ct,
+       'v34 M6: deleting one wallet leaves the other fully intact');
+    ok(V.walletsRemove(addr) === 0 && !store.has(V.WALLETS_STORE_KEY) && V.vaultLoad() === null,
+       'v34 M6: deleting the last wallet removes the registry (the full reset)');
+    /* add BEFORE ever unlocking the legacy wallet: the legacy
+       entry is materialized, not orphaned */
+    store.clear();
+    store.set(V.VAULT_STORE_KEY, JSON.stringify(legacyVault));
+    V.walletsAdd({ address: addr2, kind: 'key', vault: vault2 });
+    reg = V.walletsLoad();
+    ok(reg.wallets.length === 2 && reg.wallets.some(w => !w.address && w.vault.ct === legacyVault.ct),
+       'v34 M6: adding a wallet while the legacy one is unadopted keeps it as an address-unknown entry');
+    await V.pwAdoptLegacyWallet({ kind: 'phrase', secret: phrase }, addr);
+    reg = V.walletsLoad();
+    ok(reg.wallets.length === 2 && reg.wallets.every(w => !!w.address) && !store.has(V.VAULT_STORE_KEY),
+       'v34 M6: the materialized legacy entry adopts on its first unlock, same as the key form');
+    /* no plaintext secret anywhere in storage, ever */
+    const allStored = [...store.values()].join('\n');
+    ok(!allStored.includes(phrase) && !allStored.includes(KEY2),
+       'v34 M6: no stored value ever contains a phrase or a private key');
+  } finally {
+    delete globalThis.localStorage;
+  }
+
+  /* ---- D18: import causes + the create-flow address ---- */
+  ok(await V.checkMnemonicDetail('abandon '.repeat(11) + 'about') === 'ok',
+     'v34 D18: the known-good BIP39 vector passes');
+  ok(await V.checkMnemonicDetail('abandon '.repeat(12).trim()) === 'checksum',
+     'v34 D18: a word-list phrase with a bad checksum is named as a checksum failure');
+  ok(await V.checkMnemonicDetail('abandon zzzzz') === 'count',
+     'v34 D18: a wrong word count is named');
+  ok(await V.checkMnemonicDetail('abandon '.repeat(11) + 'zzzzz') === 'unknown',
+     'v34 D18: a word outside the list is named');
+  const ciKey = await V.classifyImportSecret('0x' + 'ab'.repeat(32));
+  ok(ciKey.kind === 'key', 'v34 D18: a 0x key classifies as a key');
+  ok((await V.classifyImportSecret('0x1234')).error === 'badkey' &&
+     (await V.classifyImportSecret('ab'.repeat(32))).error === 'badkey',
+     'v34 D18: malformed keys (short 0x, bare hex) are badkey, not a phrase attempt');
+  ok((await V.classifyImportSecret('abandon '.repeat(12).trim())).error === 'checksum' &&
+     (await V.classifyImportSecret('two words')).error === 'badwords',
+     'v34 D18: phrase failures map to the specific import errors');
+  ok(VS.includes('id="pwCreateAddr"') && VS.includes('deriveFromPhrase(pwDraft.secret)'),
+     'v34 D18: the create flow derives + shows the address on the phrase screen, before the password step');
+  ok(VS.includes('p1.length < 6') && !VS.includes('p1.length < 8'),
+     'v34 D18: the password minimum is the app’s 6 (existing longer passwords unaffected)');
+  for (const k of ['pwImportBadKey', 'pwImportBadWords', 'pwImportUnknownWord', 'pwImportBadChecksum', 'pwCreateAddrLbl']) {
+    ok((VS.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v34 D18: ' + k + ' exists in both languages');
+  }
+
+  /* ---- D11: exact amounts ---- */
+  ok(V.fmtExactAmt(1234567890123456789n, 18) === '1.234567890123456789' &&
+     V.fmtAmt(1234567890123456789n, 18) === '1.234567',
+     'v34 D11: the exact figure keeps full precision where the short one truncates');
+  ok(V.fmtExactAmt(1000000n, 6) === '1' && V.fmtExactAmt(0n, 18) === '0' &&
+     V.fmtExactAmt(1234500000n, 6) === '1,234.5',
+     'v34 D11: exact formatting trims trailing zeros and groups thousands');
+  const unlockedBody = VS.slice(VS.indexOf('function renderPwUnlocked(area)'), VS.indexOf('async function pwDoDepWd'));
+  ok((unlockedBody.match(/class="asset-amt amt-tap"/g) || []).length === 7 && unlockedBody.includes('id="pwNameCawBal"') &&
+     unlockedBody.includes("pwSetAmt('pwNameCawBal', fmtQcaw(acting.balance), fmtExactAmt(acting.balance, 18))"),
+     'v34 D11: seven tappable asset rows in the app order, the in-name CAW row fed by the acting name');
+
+  /* ---- M6 UI wiring ---- */
+  ok(VS.includes('function renderPwAdd(area)') && VS.includes("pwView === 'add'") &&
+     VS.includes("get('add')") && VS.includes("'?wallet=1&add=1'"),
+     'v34 M6: the add-a-wallet chooser exists and Settings’ Add lands on it via ?wallet=1&add=1');
+  ok(VS.includes('data-wpick') && VS.includes("pwSetUnlockTarget(w && w.address ? w.address : 'anon')"),
+     'v34 M6: the locked view’s picker chooses which wallet the password opens');
+  ok(VS.includes('function pwBeginSwitch(address)') && VS.includes('pwLock();') &&
+     VS.includes('function pwDeleteWallet(address)') && VS.includes('walletsRemove(address)'),
+     'v34 M6: switch locks first and asks the target’s password; delete is per-wallet');
+  ok(VS.includes('id="pwWalletsCard"') && VS.includes('function walletRowsHtml(reg, namesMap)'),
+     'v34 M6: the wallet view carries the wallets card built by the shared row builder');
+  {
+    const rowsSrc = VS.slice(VS.indexOf('function walletShortLabel'), VS.indexOf('function pwBeginSwitch'));
+    const walletRowsHtml = new Function('T', 'esc', 'pwSession', 'tokensOf', 'walletsLoad', 'pwNames',
+      rowsSrc + '\nreturn walletRowsHtml;')(
+      { pwWalletLegacy: 'LEGACY', pwWalletKindPhrase: 'PHRASE', pwWalletKindKey: 'KEY', pwInUse: 'IN USE',
+        pwSwitchBtn: 'SWITCH', setNoWallet: 'NONE' },
+      s => String(s), { address: '0xAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' }, async () => [], () => ({}), []);
+    const html = walletRowsHtml({ active: null, wallets: [
+      { address: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', kind: 'phrase', vault: {} },
+      { address: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', kind: 'key', vault: {} },
+    ] }, { '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb': ['@neptune'] });
+    ok(html.includes('0xaaaaaaaa…aaaaaa') && html.includes('IN USE') && !html.includes('data-wswitch="0xaaaa'),
+       'v34 M6 behaviour: the session wallet is marked in use and offers no switch button');
+    ok(html.includes('data-wswitch="0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"') && html.includes('@neptune'),
+       'v34 M6 behaviour: other wallets offer Switch and show their names when known');
+  }
+
+  /* ---- M15: the Settings view ---- */
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    ok(html.includes('id="viewSettings"') && html.includes('id="settingsArea"') &&
+       (html.match(/data-nav="settings"/g) || []).length === 2,
+       'v34 M15: ' + label + ' carries the settings view and both chrome Settings links');
+  }
+  const setBody = VS.slice(VS.indexOf('function renderSettings()'), VS.indexOf('async function renderNamesScreen()'));
+  ok(setBody.includes('setWalletList') && setBody.includes('setAddWallet') && setBody.includes('setLockNow') &&
+     setBody.includes('setCopyAddr') && setBody.includes('data-setdel') && setBody.includes('renderPwRemove') &&
+     setBody.includes('one.guppyguide.cawsocial') && setBody.includes('T.setVersionLbl') && setBody.includes('T.setViewsNote'),
+     'v34 M15: Settings gathers language, address+copy, backup, wallets+add, lock, about (app text + views note + version + app id) and the per-wallet danger zone');
+  ok(VS.includes("const settingsQuery = new URLSearchParams(location.search).get('settings')") &&
+     VS.includes('settingsQuery) renderSettings();') &&
+     VS.includes("else if (settingsQuery) {"),
+     'v34 M15: ?settings=1 routes to the view and wallet changes re-render it');
+  ok(!enHtml.includes('No real send from this web version') &&
+     !jaHtml.includes('最初の送信が、その確認になります') &&
+     enHtml.includes('Sends from this web version are live') && jaHtml.includes('Web版からの送信も使えます'),
+     'v34 M15: the right-rail About card no longer claims sends are unexercised (they work since v28)');
+
+  /* ---- D23/D24: tab bar + drawer rows ---- */
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    ok(html.includes('id="tabProfileRow"') && html.includes('id="ntBadgeSide"') && html.includes('id="ntBadgeDrawer"') &&
+       html.includes('id="sideNamesIc"') && html.includes('id="drawerNamesIc"'),
+       'v34 D23/D24: ' + label + ' carries the profile tab, both row badges and both my-names icon slots');
+    const chrome = html.slice(0, html.indexOf('<nav class="bottomnav"'));
+    const rIdx = chrome.indexOf('data-nav="reactions"');
+    ok(rIdx > chrome.indexOf('data-nav="bookmarks"') && rIdx < chrome.indexOf('data-nav="settings"'),
+       'v34 D24: ' + label + ' the Reactions row sits after Bookmarks, before Settings, in sidebar + drawer');
+  }
+  ok(VS.includes("'ntBadge', 'ntBadgeSide', 'ntBadgeDrawer'"),
+     'v34 D24: one badge writer keeps the tab + both row badges in step');
+  ok(VS.includes("tabProf.setAttribute('href', pwProfileTarget(acting, !!pwSession))") &&
+     VS.includes('ic.dataset.glyph'),
+     'v34 D23/D24: syncChrome rewrites the Profile tab by the three-way rule and swaps the my-names icon to the acting avatar');
+  {
+    const ptSrc = VS.slice(VS.indexOf('function pwProfileTarget'), VS.indexOf('async function syncChrome'));
+    const pwProfileTarget = new Function('pageFile', 'profUrl', ptSrc + '\nreturn pwProfileTarget;')(
+      'en.html', n => 'en.html?name=' + encodeURIComponent(n));
+    ok(pwProfileTarget({ username: 'neptune' }, true) === 'en.html?name=neptune' &&
+       pwProfileTarget(null, true) === 'en.html?getname=1' &&
+       pwProfileTarget(null, false) === 'en.html?wallet=1&next=profile',
+       'v34 D23 behaviour: the profile target rule — acting → own profile, nameless-unlocked → name desk, locked → wallet ?next=profile');
+  }
+  for (const k of ['pwAddTitle', 'pwWalletsTitle', 'pwSwitchBtn', 'pwInUse', 'pwRevealCopy',
+                   'setTitle', 'setLockNow', 'setDangerTitle', 'pwAmtTapHint', 'pwCawInNameLbl']) {
+    ok((VS.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v34: ' + k + ' exists in both languages');
   }
 }
 

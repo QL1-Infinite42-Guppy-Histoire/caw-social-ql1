@@ -745,6 +745,29 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
 #profEditOverlay input, #profEditOverlay textarea { width: 100%; box-sizing: border-box; margin: 4px 0 10px; }
 #profEditOverlay label { display: block; margin-top: 8px; }
 .bottomnav a.on { color: var(--accent); }
+/* v34: multi-wallet + Settings + the tab/drawer parity batch.
+   The drawer/sidebar badge sits inline at the row's end (the
+   tab badge above keeps its absolute spot); the My-names icon
+   slot can hold the acting name's avatar; amounts in the
+   wallet asset list are tappable (exact figure toggle). */
+.nav-badge-row { position: static; margin-left: auto; border: 0; }
+.nav-it .nav-ic img.avatar { width: 25px; height: 25px; border-radius: 50%; display: block; }
+.drawer .nav-it .nav-ic img.avatar { width: 23px; height: 23px; }
+.amt-tap { cursor: pointer; }
+.wrow { justify-content: space-between; gap: 10px; }
+.wrow-main { display: flex; flex-direction: column; min-width: 0; }
+.wrow-addr { font-weight: 700; }
+.wrow-sub { font-size: 12.5px; color: var(--sub); font-weight: 500; }
+.menu-row.wallet-pick { flex-direction: column; align-items: flex-start; gap: 2px; }
+.menu-row.wallet-pick.on { outline: 2px solid var(--accent); outline-offset: -2px; }
+.mini-btn {
+  background: var(--chip); color: var(--ink); border: 1px solid var(--line);
+  border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13.5px;
+  font-weight: 700; cursor: pointer; flex: 0 0 auto;
+}
+.danger-btn { color: #d33; }
+.danger-card { border-color: #d33; }
+.set-check { color: var(--accent); font-weight: 800; }
 @media (max-width: 899.98px) {
   .bottomnav { display: flex; }
   body { padding-bottom: 60px; }
