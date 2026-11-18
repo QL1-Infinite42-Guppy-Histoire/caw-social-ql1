@@ -983,3 +983,55 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .compose-sheet { position: relative; }
 .compose-close { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--text); cursor: pointer; z-index: 1; }
 .compose-sheet .composer-card { border-bottom: 0; padding-top: 20px; }
+
+/* ================= v36 (M14): language picker =================
+   The .lang-slot in each nav is filled by viewer.js
+   (wireLangPickers): a globe toggle showing the current
+   language's native name, opening the twenty-language list. */
+.lang-slot { position: relative; }
+.lang-btn { width: 100%; }
+.lang-list { display: flex; flex-direction: column; padding: 2px 6px 8px; }
+.lang-list[hidden] { display: none; }
+.lang-it {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 9px 12px; border-radius: 999px;
+  color: var(--ink); text-decoration: none; font-size: 16px; line-height: 1.25;
+}
+.lang-it:hover { background: var(--hover); }
+.lang-it.on { font-weight: 800; }
+.drawer .lang-it { font-size: 16px; padding: 10px 14px; }
+@media (min-width: 900px) and (max-width: 1099.98px) {
+  /* icon-only sidebar: the list wraps inside the rail */
+  .sidebar .lang-it { font-size: 13px; padding: 8px 6px; word-break: break-word; }
+}
+
+/* ================= v36 (M14): RTL (fa / ar) =================
+   dir="rtl" on <html> mirrors every flex row by itself; the
+   rules below mirror what the stylesheet pins physically —
+   the drawer side and slide direction, corner buttons, the
+   FAB / to-top corner, left accent borders and dividers,
+   margin-left:auto pushes, and left-aligned row text. */
+[dir="rtl"] .drawer-panel {
+  left: auto; right: 0;
+  transform: translateX(105%);
+  box-shadow: -2px 0 12px rgba(0,0,0,.25);
+}
+[dir="rtl"] .drawer.open .drawer-panel { transform: translateX(0); }
+[dir="rtl"] .drawer-close { right: auto; left: 12px; }
+[dir="rtl"] .fab { right: auto; left: 18px; }
+[dir="rtl"] .to-top { right: auto; left: 16px; }
+[dir="rtl"] .nav-badge { left: auto; right: calc(50% + 2px); }
+[dir="rtl"] .nav-it, [dir="rtl"] .acting-row,
+[dir="rtl"] .menu-row, [dir="rtl"] .name-pick-row { text-align: right; }
+[dir="rtl"] .count-cell + .count-cell { border-left: 0; border-right: 1px solid var(--line); }
+[dir="rtl"] .pw-safety { border-left: 1px solid var(--line2); border-right: 4px solid var(--warn); }
+[dir="rtl"] .phrase-word .pw-num { margin-right: 0; margin-left: 6px; }
+[dir="rtl"] .stats-row .cnt, [dir="rtl"] .nav-badge-row,
+[dir="rtl"] .asset-amt, [dir="rtl"] .ar-bal,
+[dir="rtl"] .bm-missing .bm-del { margin-left: 0; margin-right: auto; }
+[dir="rtl"] .nt-time { margin-left: 0; margin-right: 2px; }
+[dir="rtl"] .comp-thumb-x { right: auto; left: -6px; }
+[dir="rtl"] .compose-close { right: auto; left: 8px; }
+@media (min-width: 1100px) {
+  [dir="rtl"] .side-logo { padding-left: 0; padding-right: 8px; }
+}

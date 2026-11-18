@@ -6,22 +6,36 @@
 <title>CAW Social — QL1</title>
 <meta name="theme-color" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png?v=25">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=25">
+<link rel="icon" type="image/png" href="icon-192.png?v=36">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=36">
 <script>
   (function () {
+    /* v36: twenty language shells. A returning visitor goes to
+       the shell of the language they last used (viewer.js stores
+       it as caw-lang on every boot); a new visitor to the shell
+       matching their browser language when there is one, else
+       English. */
+    var LANGS = ['en', 'ja', 'zh', 'ko', 'es', 'tr', 'fa', 'id', 'vi', 'th',
+                 'it', 'pt', 'nl', 'pl', 'uk', 'de', 'ru', 'ar', 'hi', 'fr'];
     var saved = null;
     try { saved = localStorage.getItem('caw-lang'); } catch (e) {}
-    var lang = saved || ((navigator.language || 'en').toLowerCase().indexOf('ja') === 0 ? 'ja' : 'en');
+    var lang = null;
+    if (saved && LANGS.indexOf(saved) >= 0) lang = saved;
+    if (!lang) {
+      var nav = ((navigator.language || 'en').toLowerCase()).slice(0, 2);
+      if (LANGS.indexOf(nav) >= 0) lang = nav;
+    }
+    if (!lang) lang = 'en';
     /* Keep the query string (and fragment) across the redirect:
        deep links such as ?mirror=1&item=<id> (the push-notification
        landing), ?post=, ?name= and ?reactions=1 must survive the
        language gate or they land on a plain home page. */
-    location.replace((lang === 'ja' ? 'ja.html' : 'en.html') + location.search + location.hash);
+    location.replace(lang + '.html' + location.search + location.hash);
   })();
 </script>
 </head>
 <body>
-<p>CAW SocialFi (QL1) — <a href="en.html">English</a> / <a href="ja.html">日本語</a></p>
+<p>CAW SocialFi (QL1) —
+<a href="en.html">English</a> / <a href="ja.html">日本語</a> / <a href="zh.html">简体中文</a> / <a href="ko.html">한국어</a> / <a href="es.html">Español</a> / <a href="tr.html">Türkçe</a> / <a href="fa.html">فارسی</a> / <a href="id.html">Bahasa Indonesia</a> / <a href="vi.html">Tiếng Việt</a> / <a href="th.html">ภาษาไทย</a> / <a href="it.html">Italiano</a> / <a href="pt.html">Português</a> / <a href="nl.html">Nederlands</a> / <a href="pl.html">Polski</a> / <a href="uk.html">Українська</a> / <a href="de.html">Deutsch</a> / <a href="ru.html">Русский</a> / <a href="ar.html">العربية</a> / <a href="hi.html">हिन्दी</a> / <a href="fr.html">Français</a></p>
 </body>
 </html>

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="ja" dir="ltr">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -13,20 +13,20 @@
 <link rel="preconnect" href="https://scan.qom.network">
 <meta name="theme-color" id="themeColorMeta" content="#ffffff">
 <link rel="manifest" href="manifest.webmanifest">
-<link rel="icon" type="image/png" href="icon-192.png?v=35">
-<link rel="apple-touch-icon" href="apple-touch-icon.png?v=35">
+<link rel="icon" type="image/png" href="icon-192.png?v=36">
+<link rel="apple-touch-icon" href="apple-touch-icon.png?v=36">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="apple-mobile-web-app-title" content="CAW Social">
 <script>(function(){try{var t=localStorage.getItem('guppy-theme');document.documentElement.dataset.theme=(t==='dark'?'dark':'light');}catch(e){document.documentElement.dataset.theme='light';}})();</script>
-<link rel="stylesheet" href="style.css?v=35">
+<link rel="stylesheet" href="style.css?v=36">
 </head>
 <body>
 <header class="topbar">
   <div class="topbar-inner">
     <div class="mt-side">
-      <button id="drawerBtn" class="mt-avatar-btn" type="button" aria-label="メニュー"><span id="mtAvatar"><img class="avatar" src="icon-192.png?v=35" alt=""></span></button>
+      <button id="drawerBtn" class="mt-avatar-btn" type="button" aria-label="メニュー"><span id="mtAvatar"><img class="avatar" src="icon-192.png?v=36" alt=""></span></button>
     </div>
     <div class="mt-mark"><span class="word">CAW</span></div>
     <div class="mt-side end"></div>
@@ -35,9 +35,9 @@
 
 <div class="layout">
   <aside class="sidebar" id="sidebar">
-    <a class="side-logo" href="ja.html" aria-label="CAW Social ホーム"><img src="icon-192.png?v=35" alt=""></a>
+    <a class="side-logo" href="ja.html" aria-label="CAW Social ホーム"><img src="icon-192.png?v=36" alt=""></a>
     <a class="side-summary" id="sideSummary" href="ja.html?wallet=1&next=profile">
-      <span id="sideAvatar"><img class="avatar" src="icon-192.png?v=35" alt=""></span>
+      <span id="sideAvatar"><img class="avatar" src="icon-192.png?v=36" alt=""></span>
       <span><span class="side-name" id="sideName">CAW Social</span><br><span class="side-sub" id="sideSub">QL1 版・ウェブ</span><br><span class="side-follow" id="sideFollow" style="display:none"></span></span>
     </a>
     <nav>
@@ -48,7 +48,6 @@
       <a class="nav-it" data-nav="dex" href="ja.html?dex=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span><span class="nav-label">HuntersDEX</span></a>
       <a class="nav-it" data-nav="burnhawk" href="ja.html?burnhawk=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22c4.4 0 7-2.8 7-6.5 0-3.2-2.3-5.4-3.5-7C14.3 6.8 13 4.9 13 2c-3 2.2-4.5 4.6-4.6 7-.3-1-1-2-2-3 .1 2.8-.4 4.3-1.1 5.6C4.6 13 5 14.4 5 15.5 5 19.2 7.6 22 12 22z"/></svg></span><span class="nav-label">BurnHawk</span></a>
       <a class="nav-it" data-nav="bookmarks" href="ja.html?bookmarks=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><span class="nav-label">ブックマーク</span></a>
-      <a class="nav-it" data-nav="reactions" href="ja.html?reactions=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="nav-label">通知</span><span class="nav-badge nav-badge-row" id="ntBadgeDrawer" style="display:none"></span></a>
       <a class="nav-it" data-nav="reactions" href="ja.html?reactions=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="nav-label">通知</span><span class="nav-badge nav-badge-row" id="ntBadgeSide" style="display:none"></span></a>
       <a class="nav-it" data-nav="mirror" href="ja.html?mirror=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span><span class="nav-label">X転写</span></a>
     </nav>
@@ -56,7 +55,7 @@
     <div class="side-sep"></div>
     <a class="nav-it nav-settings" data-nav="settings" href="ja.html?settings=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label">設定</span></a>
     <button id="themeToggle" class="nav-it" type="button"><span class="nav-label" id="themeLabel">🌙 黒背景</span></button>
-    <a class="nav-it" data-nav="lang" href="en.html"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="nav-label">English</span></a>
+    <div class="lang-slot"></div>
     <div class="side-foot">CAW Social（QL1）は有志が作ったものです。公式の CAW チームが運営しているものではありません。<br><a href="https://ql1-infinite42-guppy-histoire.github.io/links/">Guppy's Guide</a> の一部です — Don't Panic.</div>
   </aside>
 
@@ -292,7 +291,7 @@
   <div class="drawer-panel" role="dialog" aria-label="メニュー">
     <button id="drawerClose" class="drawer-close" type="button" aria-label="閉じる">✕</button>
     <a class="drawer-summary" id="drawerSummary" href="ja.html?wallet=1&next=profile">
-      <span id="drawerAvatar"><img class="avatar" src="icon-192.png?v=35" alt=""></span>
+      <span id="drawerAvatar"><img class="avatar" src="icon-192.png?v=36" alt=""></span>
       <div class="drawer-name" id="drawerName">CAW Social</div>
       <div class="drawer-sub" id="drawerSub">QL1 版・ウェブ</div>
       <div class="drawer-follow" id="drawerFollow" style="display:none"></div>
@@ -306,12 +305,13 @@
       <a class="nav-it" data-nav="dex" href="ja.html?dex=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></span><span class="nav-label">HuntersDEX</span></a>
       <a class="nav-it" data-nav="burnhawk" href="ja.html?burnhawk=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22c4.4 0 7-2.8 7-6.5 0-3.2-2.3-5.4-3.5-7C14.3 6.8 13 4.9 13 2c-3 2.2-4.5 4.6-4.6 7-.3-1-1-2-2-3 .1 2.8-.4 4.3-1.1 5.6C4.6 13 5 14.4 5 15.5 5 19.2 7.6 22 12 22z"/></svg></span><span class="nav-label">BurnHawk</span></a>
       <a class="nav-it" data-nav="bookmarks" href="ja.html?bookmarks=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg></span><span class="nav-label">ブックマーク</span></a>
+      <a class="nav-it" data-nav="reactions" href="ja.html?reactions=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></span><span class="nav-label">通知</span><span class="nav-badge nav-badge-row" id="ntBadgeDrawer" style="display:none"></span></a>
       <a class="nav-it" data-nav="mirror" href="ja.html?mirror=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.45 5.11L2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg></span><span class="nav-label">X転写</span></a>
     </nav>
     <div class="drawer-sep"></div>
     <a class="nav-it nav-settings" data-nav="settings" href="ja.html?settings=1"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span><span class="nav-label">設定</span></a>
     <button id="themeToggleDrawer" class="nav-it" type="button"><span class="nav-label" id="themeLabelDrawer">🌙 黒背景</span></button>
-    <a class="nav-it" data-nav="lang" href="en.html"><span class="nav-ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span><span class="nav-label">English</span></a>
+    <div class="lang-slot"></div>
   </div>
 </div>
 
@@ -404,8 +404,8 @@
     <a href="ja.html?reactions=1" data-nav="reactions" aria-label="通知"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><span class="nav-badge" id="ntBadge" style="display:none"></span></a>
   <a href="ja.html?wallet=1&next=profile" data-nav="profile" id="tabProfileRow" aria-label="プロフィール"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
 </nav>
-<script src="bip39-words.js?v=35"></script>
-<script src="viewer.js?v=35"></script>
+<script src="bip39-words.js?v=36"></script>
+<script src="viewer.js?v=36"></script>
 <script>
 /* If the viewer script was blocked or replaced by an older saved
    copy of this site, say so instead of loading forever. */

@@ -16,9 +16,20 @@
    users on 2026-11-08). viewer.js is in no old cache and matches no
    stub rule, so it reaches the network untouched; once this worker
    installs (skipWaiting + clients.claim) it takes over cleanly. */
-const CACHE = 'caw-view-v35';
+const CACHE = 'caw-view-v36';
 const SHELL = [
   './', 'index.html', 'en.html', 'ja.html',
+  /* v36: the eighteen further language shells + their dict
+     scripts (dict-<lang>.js sets window.__CAW_T for viewer.js).
+     Each shell is cached under its own URL, so one language's
+     shell is never served for another. */
+  'zh.html', 'ko.html', 'es.html', 'tr.html', 'fa.html', 'id.html',
+  'vi.html', 'th.html', 'it.html', 'pt.html', 'nl.html', 'pl.html',
+  'uk.html', 'de.html', 'ru.html', 'ar.html', 'hi.html', 'fr.html',
+  'dict-zh.js', 'dict-ko.js', 'dict-es.js', 'dict-tr.js', 'dict-fa.js',
+  'dict-id.js', 'dict-vi.js', 'dict-th.js', 'dict-it.js', 'dict-pt.js',
+  'dict-nl.js', 'dict-pl.js', 'dict-uk.js', 'dict-de.js', 'dict-ru.js',
+  'dict-ar.js', 'dict-hi.js', 'dict-fr.js',
   'style.css', 'viewer.js', 'bip39-words.js', 'manifest.webmanifest',
   'icon-192.png', 'icon-512.png', 'apple-touch-icon.png',
 ];

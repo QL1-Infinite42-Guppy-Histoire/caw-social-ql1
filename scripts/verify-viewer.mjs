@@ -145,6 +145,27 @@
    home-feed cache (D20 — sessionStorage, char-capped, public
    post data only, round-trip tested; paint instantly, then
    refresh).
+   v36 (M14, the final parity batch): twenty languages — the
+   app's full set. en + ja stay embedded in viewer.js; the other
+   eighteen ship as dict-<lang>.js tables generated from the
+   app's i18n by scripts/build-i18n.mjs (a web key takes the
+   app's string when it maps to an app key — exact, normalised
+   or the hand-checked MANUAL pairs — and keeps the English
+   string otherwise; the shipped dicts are compared against a
+   fresh regeneration below, and every value's placeholders
+   must fit the English string's). One shell per language,
+   generated from en.html (static strings ported through the
+   en<->ja chunk diff); fa/ar shells are dir="rtl" and the
+   stylesheet mirrors the physically-pinned layout. The
+   language picker (drawer/sidebar slots + the Settings list)
+   links to the same view in the target shell, query included;
+   the root gate routes by the stored caw-lang, then the
+   browser language. Stub-DOM boots below prove an es boot and
+   an ar boot render from their dicts. (Also fixed en route:
+   ja.html had v34's drawer Reactions row duplicated in its
+   sidebar and missing from its drawer — the row was moved to
+   the drawer, restoring the en/ja structural alignment the
+   shell generator relies on.)
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -387,8 +408,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=35') && jaHtml.includes('?v=35'), 'shells reference ?v=35 assets');
-ok(swSrc.includes("caw-view-v35"), 'sw.js cache name is caw-view-v35');
+ok(enHtml.includes('?v=36') && jaHtml.includes('?v=36'), 'shells reference ?v=36 assets');
+ok(swSrc.includes("caw-view-v36"), 'sw.js cache name is caw-view-v36');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1312,7 +1333,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v35'), 'sw cache is caw-view-v35');
+  ok(swJs.includes('caw-view-v36'), 'sw cache is caw-view-v36');
 }
 
 /* ---- v28: plain send out of the posting wallet ----
@@ -3001,6 +3022,130 @@ console.log('— v35: multi-chain send, address book, faucet, DEX header + impac
                    'fcDoneAmt', 'fcLeft', 'fcNotReady', 'fcLoadFailed', 'fcErrAddrCd', 'fcErrDaily', 'fcErrFailed',
                    'dexImpact', 'dexDepositTitle', 'dexDepositSame', 'dexCopyAddr']) {
     ok((VS.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v35: ' + k + ' exists in both languages');
+  }
+}
+
+console.log('— v36: twenty languages + RTL (M14) —');
+{
+  const B = await import('./build-i18n.mjs');
+  const appI18nSrc = fs.readFileSync(new URL('../../caw-social-app/src/i18n.ts', import.meta.url), 'utf8');
+  const appDicts = B.loadAppDicts(appI18nSrc);
+  const webDicts = B.loadWebDicts(viewerSrc);
+  const mapping = B.buildMapping(webDicts, appDicts);
+  const indexHtml = read('../docs/index.html');
+  const css36 = read('../docs/style.css');
+  const codes = B.LANGS.map(([c]) => c);
+  const enNavSeq = [...enHtml.matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',');
+
+  /* the language table matches the app's LANGS (codes + native labels) */
+  const appLangs = [...appI18nSrc.matchAll(/\{ code: '([a-z]{2})', label: '([^']+)' \}/g)]
+    .map(m => ({ code: m[1], label: m[2] }));
+  ok(JSON.stringify(V.CAW_LANGS) === JSON.stringify(appLangs),
+    'v36 M14: CAW_LANGS is the app\u2019s twenty languages with their native names');
+  ok(JSON.stringify(V.CAW_RTL) === JSON.stringify(['fa', 'ar']), 'v36 M14: fa + ar are the RTL pair');
+  ok(codes.every(c => V.CAW_LOCALES[c]), 'v36 M14: every language has a date locale');
+  ok(V.LANG === 'en' && V.T === V.T_EMBEDDED.en, 'v36 M14: with no shell language, the viewer boots English');
+
+  /* the root gate knows all twenty */
+  ok(codes.every(c => indexHtml.includes("'" + c + "'")) && indexHtml.includes('caw-lang'),
+    'v36 M14: the root gate routes by stored caw-lang / browser language across all twenty shells');
+
+  /* per-language shells */
+  for (const [code] of B.LANGS) {
+    const html = read('../docs/' + code + '.html');
+    const rtl = B.RTL_LANGS.includes(code);
+    ok(html.includes('<html lang="' + code + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">'),
+      'v36 M14: ' + code + '.html declares lang=' + code + ' dir=' + (rtl ? 'rtl' : 'ltr'));
+    ok(html.includes('viewer.js?v=36') && html.includes('style.css?v=36') && html.includes('__cawViewerBooted'),
+      'v36 M14: ' + code + '.html loads the v36 assets + watchdog');
+    ok([...html.matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',') === enNavSeq,
+      'v36 M14: ' + code + '.html nav rows match the en shell, row for row');
+    ok((html.match(/class="lang-slot"/g) || []).length === 2,
+      'v36 M14: ' + code + '.html carries both language-picker slots');
+    ok(codes.every(o => o === code || !html.includes('href="' + o + '.html')),
+      'v36 M14: ' + code + '.html links only at its own shell');
+    if (rtl) ok(html.includes('>→<') && !html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point forward (RTL)');
+    else ok(html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point back');
+    if (code !== 'en' && code !== 'ja') {
+      const at = html.indexOf('dict-' + code + '.js?v=36');
+      ok(at >= 0 && at < html.indexOf('viewer.js?v=36'),
+        'v36 M14: ' + code + '.html loads its dict before viewer.js');
+      ok(!html.includes('var ja ='), 'v36 M14: ' + code + '.html theme script has its labels baked in');
+    }
+    ok(swSrc.includes("'" + code + ".html'"), 'v36 M14: sw.js precaches ' + code + '.html');
+  }
+
+  /* per-language dicts: complete, fresh, placeholder-safe */
+  const enKeys = Object.keys(webDicts.en);
+  const tokSet = s => [...String(s).matchAll(/\{[a-zA-Z]+\}/g)].map(m => m[0]);
+  for (const [code] of B.LANGS) {
+    if (code === 'en' || code === 'ja') continue;
+    const src = read('../docs/dict-' + code + '.js');
+    const w = {};
+    new Function('window', src)(w);
+    const d = w.__CAW_T;
+    ok(d && typeof d === 'object', 'v36 M14: dict-' + code + '.js sets window.__CAW_T');
+    ok(d && JSON.stringify(Object.keys(d).sort()) === JSON.stringify([...enKeys].sort()),
+      'v36 M14: dict-' + code + ' covers the full key set (' + enKeys.length + ' keys, no blanks)');
+    ok(d && Object.values(d).every(v => typeof v === 'string' && v.length > 0),
+      'v36 M14: dict-' + code + ' values are all non-empty strings');
+    const { dict: fresh, fallbacks } = B.buildDict(code, webDicts, appDicts, mapping);
+    ok(JSON.stringify(d) === JSON.stringify(fresh),
+      'v36 M14: dict-' + code + ' matches a fresh regeneration from the app i18n');
+    ok(fallbacks.length <= 200 && enKeys.length - fallbacks.length >= 300,
+      'v36 M14: dict-' + code + ' translates the bulk of the UI', (enKeys.length - fallbacks.length) + ' translated, ' + fallbacks.length + ' English fallbacks');
+    ok(d && enKeys.every(k => tokSet(d[k]).every(t => tokSet(webDicts.en[k]).includes(t))),
+      'v36 M14: dict-' + code + ' never demands a placeholder the web does not supply');
+    ok(swSrc.includes("'dict-" + code + ".js'"), 'v36 M14: sw.js precaches dict-' + code + '.js');
+  }
+
+  /* the picker + settings list are wired to all twenty */
+  ok(viewerSrc.includes("querySelectorAll('.lang-slot')") && viewerSrc.includes('location.search + location.hash'),
+    'v36 M14: wireLangPickers fills the slots, links keeping the current query + fragment');
+  const setBody = viewerSrc.slice(viewerSrc.indexOf('function renderSettings()'), viewerSrc.indexOf('async function renderNamesScreen()'));
+  ok(setBody.includes('CAW_LANGS.map') && setBody.includes('l.code === LANG'),
+    'v36 M14: the Settings language section lists all twenty, current checked');
+  ok(css36.includes('.lang-list') && css36.includes('[dir="rtl"] .drawer-panel') &&
+     css36.includes('[dir="rtl"] .drawer.open .drawer-panel') && css36.includes('[dir="rtl"] .pw-safety'),
+    'v36 M14: the stylesheet carries the picker styles + the RTL mirror block');
+
+  /* relTime suffixes come from the table now, in both embedded languages */
+  for (const k of ['relMin', 'relHour', 'relDay']) {
+    ok((viewerSrc.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v36: ' + k + ' exists in both embedded languages');
+  }
+  ok(viewerSrc.includes('m + T.relMin') && viewerSrc.includes('h + T.relHour') && viewerSrc.includes('d + T.relDay'),
+    'v36 M14: relTime builds from T.relMin / T.relHour / T.relDay');
+  ok((viewerSrc.match(/CAW Social — web v36/g) || []).length === 2, 'v36: the version label reads web v36 in both embedded languages');
+
+  /* stub-DOM boots: es and ar render from their dicts */
+  const headSrc = viewerSrc.slice(0, viewerSrc.indexOf('/* ---------- minimal ABI helpers'));
+  const bootLang = (code, dictSrc) => {
+    const store = new Map();
+    const win = {};
+    if (dictSrc) new Function('window', dictSrc)(win);
+    const api = new Function('document', 'window', 'localStorage',
+      headSrc + '\nreturn { T, LANG };')(
+      { documentElement: { lang: code } }, win,
+      { getItem: k => (store.has(k) ? store.get(k) : null), setItem: (k, v) => store.set(k, String(v)), removeItem: k => store.delete(k) });
+    return { api, store };
+  };
+  {
+    const { api, store } = bootLang('es', read('../docs/dict-es.js'));
+    ok(api.LANG === 'es' && store.get('caw-lang') === 'es', 'v36 M14: an es shell boots as Spanish and stores caw-lang');
+    ok(api.T.moreBtn === appDicts.es['tl.more'] && api.T.compPh === appDicts.es['compose.ph'],
+      'v36 M14: the es boot renders composer/home strings from the Spanish dict');
+    ok(api.T.noticeTitle === webDicts.en.noticeTitle && api.T.relMin === 'm',
+      'v36 M14: web-only keys fall back to English inside the es boot (no blanks)');
+  }
+  {
+    const { api } = bootLang('ar', read('../docs/dict-ar.js'));
+    ok(api.LANG === 'ar' && api.T.moreBtn === appDicts.ar['tl.more'] && api.T.setLanguage === appDicts.ar['settings.language'],
+      'v36 M14: an ar (RTL) boot renders from the Arabic dict');
+  }
+  {
+    const { api } = bootLang('ja', null);
+    ok(api.LANG === 'ja' && api.T.moreBtn === 'もっと見る',
+      'v36 M14: a ja boot still renders the embedded Japanese table');
   }
 }
 
