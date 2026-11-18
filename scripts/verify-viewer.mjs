@@ -285,8 +285,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=27') && jaHtml.includes('?v=27'), 'shells reference ?v=27 assets');
-ok(swSrc.includes("caw-view-v27"), 'sw.js cache name is caw-view-v27');
+ok(enHtml.includes('?v=28') && jaHtml.includes('?v=28'), 'shells reference ?v=28 assets');
+ok(swSrc.includes("caw-view-v28"), 'sw.js cache name is caw-view-v28');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1195,7 +1195,30 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v27'), 'sw cache is caw-view-v27');
+  ok(swJs.includes('caw-view-v28'), 'sw cache is caw-view-v28');
+}
+
+/* ---- v28: plain send out of the posting wallet ---- */
+{
+  const VS = read('../docs/viewer.js');
+  const depIdx = VS.indexOf('id="pwDepCard"');
+  const sendIdx = VS.indexOf('id="pwSendCard"');
+  ok(sendIdx > 0 && depIdx > 0 && sendIdx > depIdx, 'send card renders in the unlocked wallet, below the deposit card');
+  for (const id of ['pwSendToken', 'pwSendTo', 'pwSendAmount', 'pwSendBtn', 'pwSendMaxBtn', 'pwSendStatus']) {
+    ok(VS.includes('id="' + id + '"'), 'send card control #' + id + ' exists');
+  }
+  ok(VS.includes("DEX_TOKENS.map(t => '<option value=\"' + t.id + '\">'"), 'send token selector is built from the wallet token table');
+  ok(VS.includes("sendLocalTx(pwSession.keyBytes, { to, value: amt, data: '0x', gasFallback: 21000 })"), 'QOM send is a value transfer through sendLocalTx');
+  ok(VS.includes("sendLocalTx(pwSession.keyBytes, { to: tok.address, data: buildTransferData(to, amt), gasFallback: 60000 })"), 'token send is a transfer() through sendLocalTx');
+  ok(VS.includes('async function pwQomGasReserve()') && VS.includes('gp * 25200n'), 'QOM gas reserve is gas price x 21000 x 1.2');
+  ok(VS.includes('amt + reserve > qomBal'), 'QOM send refuses to eat the fee reserve');
+  ok(VS.includes('async function pwSendMax()') && VS.includes('bal - reserve'), 'MAX leaves the fee reserve behind for QOM');
+  ok(VS.includes('/^0x[0-9a-fA-F]{40}$/.test(to)'), 'recipient address is validated before sending');
+  ok(VS.includes('parseAmountDec(') && VS.includes('pwSendDecimals'), 'send amount parses at the token decimals');
+  const sendBody = VS.slice(VS.indexOf('async function pwDoSend()'), VS.indexOf('/* ----- confirm panel'));
+  ok(sendBody.includes('openConfirmPanel({') && sendBody.includes('T.confirmTitleSend') && sendBody.includes('T.pwSendIrreversible'), 'send goes through the confirm panel with the cannot-be-undone warning');
+  ok(sendBody.includes('txLinkHtml(sentHash)'), 'send success shows the record link on the card');
+  ok((VS.match(/pwSendTitle:/g) || []).length === 2 && (VS.match(/confirmTitleSend:/g) || []).length === 2, 'send strings exist in both languages');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

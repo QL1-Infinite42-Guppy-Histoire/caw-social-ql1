@@ -182,6 +182,13 @@ const T = {
     pwDoneOk: 'Done.', pwSendFailPlain: 'That did not go through.',
     pwUnconfirmed: 'It was sent, but the record is slow to confirm. Give it a moment and check again.',
     pwNeedGas: 'This posting wallet holds no QOM, so it cannot pay the small fees. Send a little QOM to the address above first.',
+    pwSendTitle: 'Send from this wallet',
+    pwSendNote: 'Send QOM or a token from the posting wallet to any address — a plain wallet transfer, not through a name.',
+    pwSendToPh: 'Recipient address (0x…)', pwSendAmountPh: 'Amount',
+    pwSendBtn: 'Send', pwSendToBad: 'That does not look like an address — check it and try again.',
+    pwSendGasNote: 'For QOM, MAX leaves a little behind for the fee.',
+    pwSendIrreversible: 'Once sent, this cannot be undone.',
+    confirmTitleSend: 'Send this?', confirmToLbl: 'To',
     compPh: 'What is happening?',
     compPostBtn: 'Post', compBytes: '{n} / 420 characters’ worth',
     compTooLong: 'That is too long — posts can be up to 420 in length, counting the marker for replies and quotes.',
@@ -426,6 +433,13 @@ const T = {
     pwDoneOk: 'できました。', pwSendFailPlain: '送信できませんでした。',
     pwUnconfirmed: '送信はしましたが、記録の確定が遅れています。少し待ってから確認してください。',
     pwNeedGas: 'この投稿用ウォレットに QOM がありません。手数料が払えないので、先に上のアドレスへ少し QOM を送ってください。',
+    pwSendTitle: 'このウォレットから送る',
+    pwSendNote: '投稿用ウォレットから、任意のアドレスへ QOM やトークンを送ります。名前を経由しない、通常の送金です。',
+    pwSendToPh: '送り先アドレス（0x…）', pwSendAmountPh: '量',
+    pwSendBtn: '送る', pwSendToBad: 'アドレスの形になっていません — 確認してもう一度どうぞ。',
+    pwSendGasNote: 'QOM の MAX は、手数料分を少し残します。',
+    pwSendIrreversible: '送ると取り消せません。',
+    confirmTitleSend: '送りますか？', confirmToLbl: '送り先',
     compPh: 'いまどうしてる？',
     compPostBtn: '投稿する', compBytes: '{n} / 420 文字分',
     compTooLong: '長すぎます。投稿は、返信や引用の目印を含めて420文字分までです。',
@@ -4160,6 +4174,22 @@ function renderPwUnlocked(area) {
         '<p id="pwDepStatus"></p></div>';
     }
   }
+  /* v28: a plain send out of the posting wallet, to any address.
+     The deposit card moves qCAW through a NAME; this card is the
+     wallet's own transfer — the app has always had one, the web
+     wallet did not. Always shown when unlocked (it does not need
+     an acting name). */
+  html += '<div class="pw-card" id="pwSendCard"><h3 class="detail-h">' + esc(T.pwSendTitle) + '</h3>' +
+    '<p class="small">' + esc(T.pwSendNote) + '</p>' +
+    '<select id="pwSendToken">' +
+    DEX_TOKENS.map(t => '<option value="' + t.id + '">' + esc(t.sym) + '</option>').join('') +
+    '</select>' +
+    '<input type="text" id="pwSendTo" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="' + esc(T.pwSendToPh) + '">' +
+    '<input type="text" id="pwSendAmount" inputmode="decimal" autocomplete="off" placeholder="' + esc(T.pwSendAmountPh) + '">' +
+    '<div class="row"><button id="pwSendBtn" type="button">' + esc(T.pwSendBtn) + '</button>' +
+    '<button id="pwSendMaxBtn" class="ghost" type="button">MAX</button></div>' +
+    '<p class="small">' + esc(T.pwSendGasNote) + '</p>' +
+    '<p id="pwSendStatus"></p></div>';
   html += '<div class="menu-list">' +
     '<button id="pwLockBtn" class="menu-row" type="button">' + esc(T.pwLockBtn) + '</button>' +
     '<button id="pwRemoveBtn2" class="menu-row" type="button">' + esc(T.pwRemoveBtn) + '</button></div>' +
@@ -4198,6 +4228,8 @@ function renderPwUnlocked(area) {
   };
   const dep = $('pwDepBtn'); if (dep) dep.onclick = () => pwDoDepWd('deposit');
   const wd = $('pwWdBtn'); if (wd) wd.onclick = () => pwDoDepWd('withdraw');
+  const sendBtn = $('pwSendBtn'); if (sendBtn) sendBtn.onclick = () => pwDoSend();
+  const sendMax = $('pwSendMaxBtn'); if (sendMax) sendMax.onclick = () => pwSendMax();
   $('pwLockBtn').onclick = () => pwLock();
   $('pwRemoveBtn2').onclick = () => renderPwRemove($('pwRemoveArea'));
   /* balances fill in async */
@@ -4260,6 +4292,105 @@ async function pwDoDepWd(kind) {
     afterSuccess: async () => {
       await pwLoadNames();
       renderPw(); renderComposer();
+    },
+  });
+}
+
+/* ----- v28: plain send out of the posting wallet ----- */
+/* The QOM a plain native send needs for its fee, priced the
+   way sendLocalTx prices it: the current gas price x 21,000
+   gas, with the same x1.2 headroom sendLocalTx adds on top of
+   its estimate. MAX leaves this much behind, and a QOM send
+   that would eat into it is refused before signing — a send
+   of the whole balance would otherwise fail on the record
+   for want of the fee. If the price cannot be read the send
+   itself cannot go out either, so no reserve is invented. */
+async function pwQomGasReserve() {
+  try {
+    const gp = BigInt(await rpc('eth_gasPrice', []));
+    return gp * 25200n; /* 21,000 x 1.2 */
+  } catch (e) { return 0n; }
+}
+/* Decimals for a send token, read the way the balance list
+   reads them (native QOM is 18 by definition). */
+async function pwSendDecimals(tok) {
+  if (tok.native) return 18;
+  return Number(await readUint(tok.address, SEL.decimals).catch(() => 18n));
+}
+async function pwSendMax() {
+  if (!pwSession) return;
+  const st = $('pwSendStatus');
+  const tok = dexTokenById($('pwSendToken').value) || DEX_TOKENS[0];
+  try {
+    let raw;
+    if (tok.native) {
+      const bal = BigInt(await rpc('eth_getBalance', [pwSession.address, 'latest']));
+      const reserve = await pwQomGasReserve();
+      raw = bal > reserve ? bal - reserve : 0n;
+    } else {
+      raw = await readUint(tok.address, SEL.balanceOf + encAddr(pwSession.address));
+    }
+    $('pwSendAmount').value = rawToInputStr(raw, await pwSendDecimals(tok));
+    if (st) st.innerHTML = '';
+  } catch (e) {
+    if (st) st.innerHTML = '<span class="err">' + esc(T.actFail) + '</span>' + errDetailHtml(e);
+  }
+}
+async function pwDoSend() {
+  if (!pwSession) return;
+  const st = $('pwSendStatus');
+  const tok = dexTokenById($('pwSendToken').value) || DEX_TOKENS[0];
+  const to = String($('pwSendTo').value || '').trim();
+  if (!/^0x[0-9a-fA-F]{40}$/.test(to)) {
+    if (st) st.innerHTML = '<span class="err">' + esc(T.pwSendToBad) + '</span>';
+    return;
+  }
+  const dec = await pwSendDecimals(tok);
+  const amt = parseAmountDec($('pwSendAmount').value, dec);
+  if (amt === null || amt <= 0n) {
+    if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>';
+    return;
+  }
+  /* Balances are re-read at send time (the list above can be
+     stale); a token send also needs QOM in the wallet for its
+     fee, and a QOM send must keep the fee reserve behind. */
+  const qomBal = BigInt(await rpc('eth_getBalance', [pwSession.address, 'latest']));
+  if (tok.native) {
+    const reserve = await pwQomGasReserve();
+    if (amt + reserve > qomBal) {
+      if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>';
+      return;
+    }
+  } else {
+    if (qomBal === 0n) {
+      if (st) st.innerHTML = '<span class="err">' + esc(T.pwNeedGas) + '</span>';
+      return;
+    }
+    const bal = await readUint(tok.address, SEL.balanceOf + encAddr(pwSession.address));
+    if (amt > bal) {
+      if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>';
+      return;
+    }
+  }
+  let sentHash = null;
+  openConfirmPanel({
+    title: T.confirmTitleSend,
+    lines: [
+      [T.confirmToLbl, to],
+      [T.confirmAmountLbl, fmtAmt(amt, dec) + ' ' + tok.sym],
+    ],
+    statusHtml: '<span class="warn">' + esc(T.pwSendIrreversible) + '</span>',
+    onSign: async () => {
+      pwTouch();
+      const res = tok.native
+        ? await sendLocalTx(pwSession.keyBytes, { to, value: amt, data: '0x', gasFallback: 21000 })
+        : await sendLocalTx(pwSession.keyBytes, { to: tok.address, data: buildTransferData(to, amt), gasFallback: 60000 });
+      sentHash = res.hash;
+    },
+    afterSuccess: async () => {
+      renderPw();
+      const st2 = $('pwSendStatus');
+      if (st2) st2.innerHTML = '<span class="ok">' + esc(T.pwDoneOk) + '</span>' + txLinkHtml(sentHash);
     },
   });
 }
