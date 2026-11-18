@@ -181,7 +181,7 @@ const T = {
     setAboutTitle: 'About',
     setAboutBody: 'CAW is a social app on QL1, a chain that runs without a central operator. Posts and follows are written to the public record — nobody can quietly rewrite them. Names are NFTs: yours stays yours.',
     setViewsNote: 'View counts are not public. Nobody — not the app, not this page — can see how many people looked at a post. Only on-chain actions (posts, likes, follows) are public.',
-    setVersionLbl: 'CAW Social — web v34',
+    setVersionLbl: 'CAW Social — web v35',
     setDangerTitle: 'Danger zone',
     setNoWallet: 'No posting wallet in this browser yet.',
     setSetupBtn: 'Set up the posting wallet',
@@ -230,6 +230,46 @@ const T = {
     pwSendGasNote: 'For QOM, MAX leaves a little behind for the fee.',
     pwSendIrreversible: 'Once sent, this cannot be undone.',
     confirmTitleSend: 'Send this?', confirmToLbl: 'To',
+    /* v35 (M8/M9/M10/D10): the app's Send screen, faucet,
+       DEX header and price-impact wording (its send.* /
+       faucet.* / hs.* / dex.impact strings). */
+    sendTitle: 'Send', sendPickAsset: 'What will you send?',
+    sendTo: 'Send to', sendSameAddress: 'All four chains use the same kind of address.',
+    sendPaste: 'Paste', sendBadAddress: "That address doesn't look right. Please check it.",
+    sendAmount: 'Amount', sendOver: 'That is more than you have.',
+    sendBook: 'Address book', sendBookEmpty: 'No addresses saved yet.', sendBookAdd: 'Add',
+    sendLabelPh: 'Name (like "Exchange")', sendNeedLabel: 'Give it a name first.',
+    sendDuplicate: 'Already saved as "{label}".',
+    sendDelete: 'Delete', sendEdit: 'Edit', sendSave: 'Save',
+    sendConfirmTitle: 'Check before you send', sendChainLbl: 'Chain',
+    sendGas: 'Fee (about)', sendSending: 'Sending…', sendSent: 'Sent!',
+    sendFailed: "It didn't go through. Your coins are still in your wallet.",
+    sendHash: 'Transaction ID', sendSaveOffer: 'Save this address for next time?',
+    sendSaved: 'Saved!', sendLowGas: 'You may not have enough {sym} for the fee.',
+    sendNext: 'Next',
+    fcTitle: 'Faucet',
+    fcIntro: 'Free coins for gas and small tests. Each pool needs a pause between claims.',
+    fcClaim: 'Claim', fcClaiming: 'Sending…',
+    fcDoneAmt: 'Sent {amount} {sym} to your wallet.', fcViewTx: 'View the transfer',
+    fcLeft: 'About {n} claims left', fcNotReady: 'Not available right now',
+    fcLoadFailed: 'Could not load the faucet. Check your connection and try again.',
+    fcGoFaucet: 'Open the faucet', fcClose: 'Close',
+    fcInDays: 'in about {n} days', fcInHours: 'in about {n} hours', fcInMinutes: 'in about {n} minutes',
+    fcErrAddrCd: 'This address claimed recently. You can claim again {t}.',
+    fcErrIpCd: 'This connection claimed recently. You can claim again {t}.',
+    fcErrDaily: "Today's share for this pool is finished. Please come back tomorrow.",
+    fcErrBalHigh: 'Your wallet already has enough of this coin, so the faucet cannot send more.',
+    fcErrLow: 'The faucet is running low on this coin. Please try again later.',
+    fcErrNotReady: 'The faucet is not ready yet. Please try again later.',
+    fcErrRpc: 'The network did not answer. Please try again in a little while.',
+    fcErrSend: 'The faucet could not send this time. Please try again later.',
+    fcErrAddr: 'That address does not look right, so nothing was sent.',
+    fcErrTurnstile: 'The human check did not pass, so nothing was sent. Please try again.',
+    fcErrFailed: 'The claim did not go through this time. Please try again later.',
+    fcNeedWallet: 'Unlock the posting wallet first — claims are sent to its address.',
+    dexImpact: 'Price impact',
+    dexDepositTitle: 'Deposit address', dexDepositSame: 'The same address works on every chain.',
+    dexCopyAddr: 'Copy address', dexCopied: 'Copied!',
     compPh: 'What is happening?',
     compPostBtn: 'Post', compBytes: '{n} / 420 characters’ worth',
     compTooLong: 'That is too long — posts can be up to 420 in length, counting the marker for replies and quotes.',
@@ -517,7 +557,7 @@ const T = {
     setAboutTitle: 'このアプリについて',
     setAboutBody: 'CAW は QL1 上のソーシャルアプリです。QL1 は中央の運営者なしに動くチェーンで、投稿やフォローは公開記録に書かれ、誰もこっそり書き換えられません。名前は NFT で、あなたの名前はあなたのものです。',
     setViewsNote: '閲覧数は公開されません。アプリにもこのページにも、投稿が何回見られたかを知る方法はありません。公開されるのはオンチェーンの操作（投稿・いいね・フォロー）だけです。',
-    setVersionLbl: 'CAW Social — web v34',
+    setVersionLbl: 'CAW Social — web v35',
     setDangerTitle: '危険ゾーン',
     setNoWallet: 'このブラウザには、まだ投稿用ウォレットがありません。',
     setSetupBtn: '投稿用ウォレットを作る',
@@ -566,6 +606,46 @@ const T = {
     pwSendGasNote: 'QOM の MAX は、手数料分を少し残します。',
     pwSendIrreversible: '送ると取り消せません。',
     confirmTitleSend: '送りますか？', confirmToLbl: '送り先',
+    /* v35 (M8/M9/M10/D10): アプリの送金画面・フォーセット・
+       DEX ヘッダー・価格への影響の文言（send.* / faucet.* /
+       hs.* / dex.impact）。 */
+    sendTitle: '送る', sendPickAsset: '何を送りますか？',
+    sendTo: '送り先', sendSameAddress: '4つのチェーンとも、アドレスの形は同じです',
+    sendPaste: '貼り付け', sendBadAddress: 'アドレスの形が正しくないようです。確認してください',
+    sendAmount: '量', sendOver: '持っている量を超えています',
+    sendBook: 'アドレス帳', sendBookEmpty: 'まだ登録がありません', sendBookAdd: '追加',
+    sendLabelPh: '名前（例：取引所）', sendNeedLabel: '名前を入れてください',
+    sendDuplicate: '「{label}」として登録済みです',
+    sendDelete: '削除', sendEdit: '編集', sendSave: '登録する',
+    sendConfirmTitle: '送る前に確認', sendChainLbl: 'チェーン',
+    sendGas: '手数料（目安）', sendSending: '送っています…', sendSent: '送りました！',
+    sendFailed: '送れませんでした。コインは財布に残っています',
+    sendHash: '送信のID', sendSaveOffer: 'このアドレスを次回用に登録しますか？',
+    sendSaved: '登録しました！', sendLowGas: '手数料用の {sym} が足りないかもしれません',
+    sendNext: '次へ',
+    fcTitle: 'フォーセット',
+    fcIntro: 'ガス代や少額のテストに使える無料のコインです。各プールは間隔をあけて受け取れます。',
+    fcClaim: '受け取る', fcClaiming: '送っています…',
+    fcDoneAmt: '{amount} {sym} をあなたの財布に送りました。', fcViewTx: '送信を見る',
+    fcLeft: 'のこり約{n}回分', fcNotReady: '今は受け取れません',
+    fcLoadFailed: 'フォーセットの情報を読み込めませんでした。接続を確認してもう一度お試しください。',
+    fcGoFaucet: 'フォーセットを開く', fcClose: '閉じる',
+    fcInDays: '約{n}日後', fcInHours: '約{n}時間後', fcInMinutes: '約{n}分後',
+    fcErrAddrCd: 'このアドレスは最近受け取りました。次は{t}に受け取れます。',
+    fcErrIpCd: 'この接続からは最近受け取りがありました。次は{t}に受け取れます。',
+    fcErrDaily: 'このプールの今日の分は終わりました。明日また来てください。',
+    fcErrBalHigh: 'このコインは財布に十分あるので、フォーセットからは送れません。',
+    fcErrLow: 'フォーセットのこのコインが少なくなっています。あとでもう一度お試しください。',
+    fcErrNotReady: 'フォーセットの準備がまだできていません。あとでもう一度お試しください。',
+    fcErrRpc: 'ネットワークが応答しませんでした。少し待ってもう一度お試しください。',
+    fcErrSend: '今回は送れませんでした。あとでもう一度お試しください。',
+    fcErrAddr: 'アドレスの形が正しくないので、送りませんでした。',
+    fcErrTurnstile: '本人確認チェックを通らなかったので、送りませんでした。もう一度お試しください。',
+    fcErrFailed: '今回は受け取れませんでした。あとでもう一度お試しください。',
+    fcNeedWallet: '先に投稿用ウォレットを開いてください — 受け取りはそのアドレスへ送られます。',
+    dexImpact: '価格への影響',
+    dexDepositTitle: '入金用アドレス', dexDepositSame: 'どのチェーンでも同じアドレスです',
+    dexCopyAddr: 'アドレスをコピー', dexCopied: 'コピーしました！',
     compPh: 'いまどうしてる？',
     compPostBtn: '投稿する', compBytes: '{n} / 420 文字分',
     compTooLong: '長すぎます。投稿は、返信や引用の目印を含めて420文字分までです。',
@@ -2067,6 +2147,7 @@ const NAME_DIR_KEY = 'caw-name-directory-v1';
 const NAME_DIR_BATCH = 120;
 let nameDir = { names: [''], upTo: 0 };
 let nameDirPromise = null;
+let nameDirTotal = 0;   // v35 (M12): the last totalSupply the walk read
 function nameDirLoad() {
   if (typeof localStorage === 'undefined') return;
   try {
@@ -2090,6 +2171,7 @@ async function ensureNameDirectory(onProgress) {
   nameDirPromise = (async () => {
     try {
       const total = Number(await readUint(CAW_NAME, SEL.totalSupply));
+      nameDirTotal = total;
       if (onProgress) onProgress(nameDir.upTo, total);
       while (nameDir.upTo < total) {
         const from = nameDir.upTo + 1;
@@ -2155,6 +2237,18 @@ function searchNameDirectory(query, limit) {
 /** Harness hook: replace the in-memory directory. */
 function nameDirSetForTest(names, upTo) {
   nameDir = { names: (names || ['']).slice(), upTo: upTo == null ? (names || ['']).length - 1 : upTo };
+}
+/** Build progress for the lookup desk (v35, M12 — the app's
+ *  directoryStatus): how far the walk has got against the last
+ *  totalSupply it read. `complete` only when the walk reached
+ *  that total; before the first read the total is unknown and
+ *  the desk shows no progress line rather than a made-up one. */
+function nameDirStatus() {
+  return {
+    done: nameDir.upTo,
+    total: Math.max(nameDirTotal, nameDir.upTo),
+    complete: nameDirTotal > 0 && nameDir.upTo >= nameDirTotal,
+  };
 }
 /* --- the plain-post draft (the app's drafts.ts) ---
    ONE draft per wallet address, plain posts only: the reply and
@@ -3211,29 +3305,327 @@ async function signLegacyTx(privBytes, tx) {
   const signed = rlpEncode([...fields, bigToMinBytes(v), hexToBytesU(sig.r), hexToBytesU(sig.s)]);
   return '0x' + bytesToHexU(signed);
 }
+/* ================= v35: multi-chain send, address book,
+   faucet, price impact, feed cache (app-parity batch 4b) ====
+   The pure half lives here; the screens live in the browser
+   section. Chain / token constants are the app's own
+   (src/lib/chains.ts + src/lib/sendAssets.ts), not re-typed
+   from memory: one EVM key works on every chain, so the
+   posting wallet's address is the same everywhere. */
+const SEND_CHAINS = [
+  { key: 'bsc', chainId: 56, label: 'BSC', nativeSym: 'BNB',
+    rpcs: ['https://bsc-rpc.publicnode.com', 'https://bsc-dataseed.bnbchain.org'] },
+  { key: 'ethereum', chainId: 1, label: 'Ethereum', nativeSym: 'ETH',
+    rpcs: ['https://ethereum-rpc.publicnode.com', 'https://eth.drpc.org'] },
+  { key: 'infinite', chainId: 421018, label: '42 Chain', nativeSym: '42',
+    rpcs: ['https://evm-rpc.infinitedrive.xyz', 'https://evm-rpc-infinite.mschihuahua.org'] },
+  { key: 'ql1', chainId: 766, label: 'QL1', nativeSym: 'QOM',
+    rpcs: ['https://evm-rpc-ql1.mschihuahua.org'] },
+];
+const sendChainByKey = key => SEND_CHAINS.find(c => c.key === key) || null;
+const SEND_CHAIN_QL1 = SEND_CHAINS[3];
+/* The sendable assets (the app's SEND_ASSETS, with the web's
+   wider QL1 token set kept from v28: the wallet already shows
+   O / KET / HAWK / PHOENIX, so they stay sendable). decimals
+   null = read live from the contract, the wallet list's way. */
+const SEND_ASSETS = [
+  { id: 'bsc:BNB', chain: 'bsc', symbol: 'BNB', decimals: 18, kind: 'native' },
+  { id: 'bsc:USDT', chain: 'bsc', symbol: 'USDT', decimals: 18, kind: 'erc20', token: '0x55d398326f99059fF775485246999027B3197955' },
+  { id: 'ethereum:ETH', chain: 'ethereum', symbol: 'ETH', decimals: 18, kind: 'native' },
+  { id: 'ethereum:USDT', chain: 'ethereum', symbol: 'USDT', decimals: 6, kind: 'erc20', token: '0xdAC17F958D2ee523a2206206994597C13D831ec7' },
+  { id: 'infinite:42', chain: 'infinite', symbol: '42', decimals: 18, kind: 'native' },
+  { id: 'infinite:USDT', chain: 'infinite', symbol: 'USDT', decimals: 18, kind: 'erc20', token: '0xC2684966e5c95B2bc636FB4a1f3Da9Ad23d94753' },
+  { id: 'ql1:QOM', chain: 'ql1', symbol: 'QOM', decimals: 18, kind: 'native' },
+  { id: 'ql1:qCAW', chain: 'ql1', symbol: 'qCAW', decimals: 18, kind: 'erc20', token: QCAW },
+  { id: 'ql1:O', chain: 'ql1', symbol: 'O', decimals: null, kind: 'erc20', token: O_TOKEN },
+  { id: 'ql1:KET', chain: 'ql1', symbol: 'KET', decimals: null, kind: 'erc20', token: KET_TOKEN },
+  { id: 'ql1:HAWK', chain: 'ql1', symbol: 'HAWK', decimals: null, kind: 'erc20', token: HAWK_TOKEN },
+  { id: 'ql1:PHOENIX', chain: 'ql1', symbol: 'PHOENIX', decimals: null, kind: 'erc20', token: PHOENIX_TOKEN },
+];
+const sendAssetById = id => SEND_ASSETS.find(a => a.id === id) || null;
+/* Gas units budgeted for a plain send, and the reserve math
+   (the app's sendAssets.ts): the reserve is units x price
+   with a x1.2 headroom, MAX leaves it behind for natives. */
+const SEND_GAS_UNITS = { native: 21000n, erc20: 65000n };
+const sendGasReserve = (kind, gasPrice) =>
+  (SEND_GAS_UNITS[kind] * BigInt(gasPrice) * 12n) / 10n;
+function sendMaxSendable(asset, balance, gasPrice) {
+  const bal = BigInt(balance || 0n);
+  if (asset.kind === 'erc20') return bal;
+  const left = bal - sendGasReserve(asset.kind, gasPrice);
+  return left > 0n ? left : 0n;
+}
+const sendGasAffordable = (asset, nativeBalance, gasPrice) =>
+  BigInt(nativeBalance || 0n) >= sendGasReserve(asset.kind, gasPrice);
+/* Fallback gas prices (wei) when the live read fails — the
+   app's table; used for the MAX reserve and the fee estimate
+   only, never sent. */
+const SEND_FALLBACK_GAS_PRICE = {
+  bsc: 3000000000n, ethereum: 20000000000n, infinite: 6000000000n, ql1: 1000000000n,
+};
+/* The unsigned send tx (the app's buildSendTx): native is a
+   plain value transfer; ERC-20 is transfer() to the token. */
+function buildSendTxReq(asset, to, amountRaw) {
+  if (asset.kind === 'native') return { to, data: '0x', value: BigInt(amountRaw) };
+  return { to: asset.token, data: buildTransferData(to, amountRaw), value: 0n };
+}
+/* JSON-RPC against any send chain: QL1 goes through the
+   viewer's own rpc() (same endpoint, same error shape); the
+   other chains try their endpoints in the app's order. */
+async function chainRpc(chain, method, params) {
+  if (!chain || chain.key === 'ql1') return rpc(method, params);
+  let lastErr = null;
+  for (const url of chain.rpcs) {
+    try {
+      const res = await fetchTimeout(url, {
+        method: 'POST', headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: ++rpcSeq, method, params }),
+      });
+      const j = await res.json();
+      if (j.error) throw new Error(j.error.message || 'rpc error');
+      return j.result;
+    } catch (e) { lastErr = e; }
+  }
+  throw lastErr || new Error('rpc failed');
+}
+const chainEthCall = (chain, to, data) => chainRpc(chain, 'eth_call', [{ to, data }, 'latest']);
+const chainReadUint = async (chain, to, data) => decUintRet(await chainEthCall(chain, to, data));
+
+/* ----- the address book (the app's addressBook.ts) -----
+   On-device only, one book per wallet address (the task's
+   scope): entries are {label, address, addedAt} in
+   localStorage under 'caw-address-book-v1-<address>'.
+   Addresses are public data and labels never leave the
+   device. The pure entry operations throw the app's coded
+   errors — 'bad-label' / 'bad-address' / 'duplicate' /
+   'not-found' — which the screen maps to its messages. */
+const ADDRESS_BOOK_KEY_PREFIX = 'caw-address-book-v1-';
+const bookKeyFor = address => ADDRESS_BOOK_KEY_PREFIX + String(address || '').toLowerCase();
+const sameBookAddr = (a, b) => String(a || '').toLowerCase() === String(b || '').toLowerCase();
+const isBookAddress = a => /^0x[0-9a-fA-F]{40}$/.test(String(a || '').trim());
+function bookEntries(address) {
+  if (!address || typeof localStorage === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(bookKeyFor(address));
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr.filter(e => e && typeof e.label === 'string' &&
+      typeof e.address === 'string' && isBookAddress(e.address));
+  } catch (e) { return []; }
+}
+function bookPersist(address, entries) {
+  if (!address || typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(bookKeyFor(address), JSON.stringify(entries)); } catch (e) {}
+}
+const bookFindEntry = (entries, address) =>
+  (entries || []).find(e => sameBookAddr(e.address, address)) || null;
+function bookAddEntry(entries, label, address, now) {
+  const name = String(label || '').trim();
+  if (!name) throw new Error('bad-label');
+  const addr = String(address || '').trim();
+  if (!isBookAddress(addr)) throw new Error('bad-address');
+  if (bookFindEntry(entries, addr)) throw new Error('duplicate');
+  return [...(entries || []), { label: name, address: addr, addedAt: now || Date.now() }];
+}
+function bookUpdateEntry(entries, address, label) {
+  const name = String(label || '').trim();
+  if (!name) throw new Error('bad-label');
+  const found = bookFindEntry(entries, address);
+  if (!found) throw new Error('not-found');
+  return (entries || []).map(e => (e === found ? { ...e, label: name } : e));
+}
+function bookRemoveEntry(entries, address) {
+  return (entries || []).filter(e => !sameBookAddr(e.address, address));
+}
+
+/* ----- the faucet (the app's faucet.ts) -----
+   The user's public faucet Worker pays small gas-relief
+   amounts into the wallet; this side only ASKS for the
+   active wallet's address — no keys are involved and claims
+   are never signed here. Every worker rejection code maps
+   to its own message (the app's taxonomy). */
+const FAUCET_BASE = 'https://42-faucet.nepicobsv.workers.dev';
+const FAUCET_POOLS = [
+  { chain: '42', token: 'native', sym: '42', chainLabel: '42 Chain' },
+  { chain: 'ql1', token: 'native', sym: 'QOM', chainLabel: 'QL1' },
+  { chain: '42', token: 'zap', sym: 'ZAP', chainLabel: '42 Chain' },
+];
+const FAUCET_ERROR_CODES = [
+  'address_cooldown', 'ip_cooldown', 'daily_limit', 'balance_too_high',
+  'faucet_low', 'not_ready', 'rpc_error', 'send_failed',
+  'invalid_address', 'turnstile_failed',
+];
+/* Worker code -> this viewer's T key for its message. */
+const FAUCET_ERROR_TKEYS = {
+  address_cooldown: 'fcErrAddrCd', ip_cooldown: 'fcErrIpCd',
+  daily_limit: 'fcErrDaily', balance_too_high: 'fcErrBalHigh',
+  faucet_low: 'fcErrLow', not_ready: 'fcErrNotReady',
+  rpc_error: 'fcErrRpc', send_failed: 'fcErrSend',
+  invalid_address: 'fcErrAddr', turnstile_failed: 'fcErrTurnstile',
+};
+const faucetErrorTKey = code => FAUCET_ERROR_TKEYS[code] || 'fcErrFailed';
+const isCooldownCode = code => code === 'address_cooldown' || code === 'ip_cooldown';
+/* Bucket a retry-after duration (the app's retryParts): the
+   address cooldown runs up to 7 days, the IP one 24 hours. */
+function faucetRetryParts(sec) {
+  const s = Math.max(0, Math.floor(Number(sec) || 0));
+  if (s >= 36 * 3600) return { unit: 'days', n: Math.ceil(s / 86400) };
+  if (s >= 90 * 60) return { unit: 'hours', n: Math.ceil(s / 3600) };
+  return { unit: 'minutes', n: Math.max(1, Math.ceil(s / 60)) };
+}
+const faucetFetch = (url, init) => fetchTimeout(url, init || {}, 15000);
+async function fetchFaucetStatus(pool, fetchImpl) {
+  const f = fetchImpl || faucetFetch;
+  try {
+    const r = await f(FAUCET_BASE + '/status?chain=' + pool.chain + '&token=' + pool.token);
+    if (!r.ok) return null;
+    const j = await r.json();
+    return j && typeof j.claimAmount === 'string' ? j : null;
+  } catch (e) { return null; }
+}
+async function claimFaucet(pool, address, fetchImpl) {
+  const f = fetchImpl || faucetFetch;
+  let j = null;
+  try {
+    const r = await f(FAUCET_BASE + '/claim', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ chain: pool.chain, token: pool.token, address }),
+    });
+    j = await r.json().catch(() => null);
+  } catch (e) {
+    /* the request itself failed — the screen shows the
+       network message (code 'network'), distinct from every
+       worker code */
+    return { ok: false, code: 'network' };
+  }
+  if (j && j.ok === true) {
+    return {
+      ok: true,
+      txHash: typeof j.txHash === 'string' ? j.txHash : '',
+      amount: typeof j.amount === 'string' ? j.amount : '',
+      explorerUrl: typeof j.explorerUrl === 'string' ? j.explorerUrl : undefined,
+    };
+  }
+  return {
+    ok: false,
+    code: j && typeof j.code === 'string' ? j.code : 'failed',
+    retryAfterSec: j && typeof j.retryAfterSec === 'number' ? j.retryAfterSec : undefined,
+  };
+}
+
+/* ----- DEX price impact (D10; the app's aggEngine rule) -----
+   impact = (1 - amountOut / spotOut) x 100, where spotOut is
+   what the same input would fetch at the pools' spot price.
+   The app reads spot from pair reserves; the web adapts the
+   same formula to its router quotes: a dust slice of the
+   input is quoted along the SAME path (a dust trade rides
+   the spot price) and scaled up to the full input. */
+function priceImpactPct(amountIn, amountOut, spotOut) {
+  if (spotOut === null || spotOut === undefined) return null;
+  const s = Number(spotOut);
+  if (!(s > 0)) return null;
+  return (1 - Number(amountOut) / s) * 100;
+}
+function dexSpotOutFromDust(amountIn, dustIn, dustOut) {
+  const di = BigInt(dustIn || 0n), dout = BigInt(dustOut || 0n);
+  if (di <= 0n || dout <= 0n) return null;
+  return (BigInt(amountIn) * dout) / di;
+}
+
+/* ----- the home-feed cache (D20; the app's instant paint) --
+   The last Latest page's items, in tab-scoped sessionStorage:
+   public post data only (the same record anyone can read),
+   never anything about the wallet. On boot the home paints
+   from this cache at once and the live walk replaces it —
+   the app's module-cache model, adapted: pull-to-refresh has
+   no web equivalent (the browser owns the overscroll
+   gesture), so the Refresh button is the manual refresh.
+   Size-capped: items drop off the tail until the record
+   fits, so a long text can never wedge the storage. */
+const FEED_CACHE_KEY = 'caw-feed-cache-v1';
+const FEED_CACHE_MAX_CHARS = 60000;
+function feedItemToCache(it) {
+  if (!it) return null;
+  return {
+    type: it.type,
+    senderId: String(it.senderId),
+    receiverId: String(it.receiverId === undefined || it.receiverId === null ? 0 : it.receiverId),
+    ts: it.ts, sender: it.sender, cawId: it.cawId, text: it.text,
+    hash: it.hash,
+    blockTs: it.blockTs === undefined ? null : it.blockTs,
+    block: it.block === undefined ? null : it.block,
+    txIndex: it.txIndex === undefined ? null : it.txIndex,
+  };
+}
+function feedItemFromCache(o) {
+  if (!o || typeof o !== 'object' || typeof o.cawId !== 'string') return null;
+  try {
+    return {
+      type: o.type,
+      senderId: BigInt(o.senderId),
+      receiverId: BigInt(o.receiverId || 0),
+      ts: o.ts, sender: o.sender, cawId: o.cawId, text: o.text || '',
+      hash: o.hash,
+      blockTs: o.blockTs === null ? undefined : o.blockTs,
+      block: o.block === null ? undefined : o.block,
+      txIndex: o.txIndex === null ? undefined : o.txIndex,
+    };
+  } catch (e) { return null; }
+}
+function feedCacheSave(items) {
+  if (typeof sessionStorage === 'undefined') return;
+  try {
+    const rows = (items || []).map(feedItemToCache).filter(Boolean);
+    while (rows.length) {
+      const s = JSON.stringify(rows);
+      if (s.length <= FEED_CACHE_MAX_CHARS) {
+        sessionStorage.setItem(FEED_CACHE_KEY, s);
+        return;
+      }
+      rows.pop();
+    }
+    sessionStorage.removeItem(FEED_CACHE_KEY);
+  } catch (e) { /* a full or blocked store just skips the cache */ }
+}
+function feedCacheLoad() {
+  if (typeof sessionStorage === 'undefined') return [];
+  try {
+    const raw = sessionStorage.getItem(FEED_CACHE_KEY);
+    if (!raw) return [];
+    const arr = JSON.parse(raw);
+    if (!Array.isArray(arr)) return [];
+    return arr.map(feedItemFromCache).filter(Boolean);
+  } catch (e) { return []; }
+}
+
 /* The local wallet's ONLY broadcast path: builds, signs and
-   sends one raw transaction from the in-page key, then waits
-   for the record like the mint path does. Gas comes from the
-   network estimate with a margin, falling back to the caller's
-   sane cap when the estimate is unavailable. Throws with
-   .unconfirmed + .txHash when the record is slow to settle. */
-async function sendLocalTx(privBytes, opts) {
+   sends one raw transaction from the in-page key on the
+   chosen chain, then waits for the record like the mint path
+   does. Gas comes from the network estimate with a margin,
+   falling back to the caller's sane cap when the estimate is
+   unavailable. Throws with .unconfirmed + .txHash when the
+   record is slow to settle. sendLocalTx is the QL1 case —
+   every QL1 flow keeps calling it exactly as before. */
+async function sendChainTx(privBytes, opts) {
+  const chain = (opts && opts.chain) || SEND_CHAIN_QL1;
+  const crpc = (m, p) => chainRpc(chain, m, p);
   const from = addressOfPriv(privBytes);
-  const nonce = BigInt(await rpc('eth_getTransactionCount', [from, 'pending']));
-  const gasPrice = BigInt(await rpc('eth_gasPrice', []));
+  const nonce = BigInt(await crpc('eth_getTransactionCount', [from, 'pending']));
+  const gasPrice = BigInt(await crpc('eth_gasPrice', []));
   let gasLimit = BigInt(opts.gasFallback || 200000);
   try {
-    const est = BigInt(await rpc('eth_estimateGas', [{ from, to: opts.to, data: opts.data, value: '0x' + BigInt(opts.value || 0n).toString(16) }]));
+    const est = BigInt(await crpc('eth_estimateGas', [{ from, to: opts.to, data: opts.data, value: '0x' + BigInt(opts.value || 0n).toString(16) }]));
     if (est > 0n) gasLimit = (est * 12n) / 10n + 1000n;
   } catch (e) { /* keep the fallback */ }
   const raw = await signLegacyTx(privBytes, {
     nonce, gasPrice, gasLimit, to: opts.to, data: opts.data,
-    value: BigInt(opts.value || 0n), chainId: 766,
+    value: BigInt(opts.value || 0n), chainId: chain.chainId,
   });
-  const hash = await rpc('eth_sendRawTransaction', [raw]);
+  const hash = await crpc('eth_sendRawTransaction', [raw]);
   for (let i = 0; i < 60; i++) {
     await new Promise(r => setTimeout(r, 2500));
-    const rc = await rpc('eth_getTransactionReceipt', [hash]).catch(() => null);
+    const rc = await crpc('eth_getTransactionReceipt', [hash]).catch(() => null);
     if (rc) {
       if (rc.status !== '0x1') { const e = new Error('the record says this one failed'); e.txHash = hash; throw e; }
       return { hash, receipt: rc };
@@ -3242,6 +3634,9 @@ async function sendLocalTx(privBytes, opts) {
   const e = new Error('no confirmation yet');
   e.txHash = hash; e.unconfirmed = true;
   throw e;
+}
+async function sendLocalTx(privBytes, opts) {
+  return sendChainTx(privBytes, { ...(opts || {}), chain: SEND_CHAIN_QL1 });
 }
 
 /* Sign + submit one CAW action from the built-in wallet — the
@@ -3684,14 +4079,20 @@ async function postCard(a, opts) {
     shares.some(s => String(s.senderId) === String(pwActingId));
   const recawCount = shares.length + (mineRecaw && !myShareScanned ? 1 : 0);
   const saved = pwSession ? bmHas(pwSession.address, a.cawId) : false;
+  /* v35 (D13): on bookmark rows the app wires reply and the
+     bookmark toggle only — like / Recaw / SuperLike render
+     WITHOUT their data-act hooks (so wireRowActions finds
+     nothing to wire) and disabled, while my like/Recaw state
+     still paints lit, as the app shows it. */
+  const noAct = opts.noActions === true;
   html += '<div class="pfoot">' +
     '<button type="button" class="xact x-reply" data-act="reply" aria-label="' + esc(T.actReply) + '"><span class="icring">' + IC_REPLY + '</span>' +
     (replyCount > 0 ? '<span class="xcount">' + fmtCount(replyCount) + '</span>' : '') + '</button>' +
-    '<button type="button" class="xact x-recaw' + (mineRecaw ? ' on' : '') + '" data-act="recaw"' +
+    '<button type="button" class="xact x-recaw' + (mineRecaw ? ' on' : '') + '"' + (noAct ? ' disabled' : ' data-act="recaw"') +
     (mineRecaw && !myShareScanned ? ' data-myrecaw="1"' : '') + ' aria-label="' + esc(T.actRecaw) + '"><span class="icring">' + IC_REPEAT + '</span>' +
     (recawCount > 0 ? '<span class="xcount recaw-count" data-raw="' + recawCount + '">' + fmtCount(recawCount) + '</span>' : '') + '</button>' +
-    '<button type="button" class="xact x-like' + (mineLike ? ' on' : '') + '" data-act="like" aria-label="' + esc(T.actLike) + '"><span class="icring">' + IC_HEART + '</span><span class="like-count xcount"></span></button>' +
-    '<button type="button" class="xact x-super" data-act="super" aria-label="SuperLike"><span class="icring sl-ic">' + IC_STAR + '</span><span class="sl-count xcount"></span></button>' +
+    '<button type="button" class="xact x-like' + (mineLike ? ' on' : '') + '"' + (noAct ? ' disabled' : ' data-act="like"') + ' aria-label="' + esc(T.actLike) + '"><span class="icring">' + IC_HEART + '</span><span class="like-count xcount"></span></button>' +
+    '<button type="button" class="xact x-super"' + (noAct ? ' disabled' : ' data-act="super"') + ' aria-label="SuperLike"><span class="icring sl-ic">' + IC_STAR + '</span><span class="sl-count xcount"></span></button>' +
     /* v31: the Tip button, in the app's row order (after the
        SuperLike star, before bookmark/share) and labelled like
        the app's. The bookmarks view passes noTip — the app
@@ -3835,13 +4236,31 @@ async function loadTimeline(append) {
   tlLoading = true;
   const box = $('timeline');
   try {
-    if (!append) { box.innerHTML = skeletonHtml(5); tlCursor = null; tlDone = false; tlTopItem = null; }
+    /* v35 (D20): a fresh load paints the cached last page at
+       once (the app's instant paint from its feed cache) and
+       the live walk below replaces it — no skeleton flash on
+       return visits. The cache holds public post data only. */
+    if (!append) {
+      tlCursor = null; tlDone = false; tlTopItem = null;
+      const cached = feedCacheLoad();
+      if (cached.length) {
+        box.innerHTML = '';
+        const rows = await Promise.all(cached.map(a => rowFor(a).catch(() => null)));
+        for (const row of rows) if (row) box.appendChild(row);
+        if (cached[0]) tlTopItem = cached[0];
+        if (rows.some(r => r)) hydrateAttachmentsIn(box).catch(() => {});
+      } else {
+        box.innerHTML = skeletonHtml(5);
+      }
+    }
     let rendered = 0, pages = 0, cleared = append;
+    const freshItems = [];
     while (rendered === 0 && pages < 4 && !tlDone) {
       const page = await fetchPage(tlCursor);
       tlCursor = page.next;
       if (!tlCursor) tlDone = true;
       pages++;
+      if (!append) freshItems.push(...page.items);
       ntTapItems(page.items); /* v17: a real scan feeds the notifications dot */
       reconcileOwnPosts(page.items); /* v32: scanned copies graduate my pending posts */
       if (!append && tlTopItem === null && page.items.length) tlTopItem = page.items[0];
@@ -3863,6 +4282,9 @@ async function loadTimeline(append) {
       }
       if (rows.some(r => r)) hydrateAttachmentsIn(box).catch(() => {});
     }
+    /* v35 (D20): the fresh head becomes the next visit's
+       instant paint. */
+    if (!append && freshItems.length) feedCacheSave(freshItems.slice(0, 40));
     if (!box.children.length && tlDone) box.innerHTML = '<p>' + T.empty + '</p>';
     $('moreBtn').style.display = tlDone ? 'none' : '';
   } catch (e) {
@@ -4504,6 +4926,61 @@ function doPostSearch() {
 }
 
 /* ---------- name lookup (read-only) ---------- */
+/* v35 (M12): while typing, the v32 name directory offers
+   partial matches as selectable rows (exact first, then
+   prefix, then substring — the app's ranking), and while the
+   directory is still building its real progress shows
+   (done/total), never an invented one. Picking a row opens
+   the profile; the Look up button keeps the exact-match
+   jump. A slow ticker re-renders while the build runs,
+   because a build started elsewhere (the composer's) does
+   not call this desk's progress callback. */
+let lookupDirTimer = null, lookupDirTicks = 0;
+function lookupQueryOf() {
+  const el = $('lookupInput');
+  return el ? el.value.trim().toLowerCase().replace(/^@/, '') : '';
+}
+function renderLookupMatches() {
+  const box = $('lookupMatches');
+  if (!box) return;
+  const q = lookupQueryOf();
+  if (!q) { box.innerHTML = ''; return; }
+  const st = nameDirStatus();
+  const hits = searchNameDirectory(q, 12);
+  let html = '';
+  if (!st.complete && st.total > 0) {
+    html += '<p class="small">' + esc(T.dirBuilding
+      .replace('{done}', String(st.done)).replace('{total}', String(st.total))) + '</p>';
+  }
+  html += hits.map(h =>
+    '<button type="button" class="lookup-match" data-lname="' + esc(h.name) + '">' +
+    '<span>@' + esc(h.name) + '</span><span class="small">#' + h.id + '</span></button>').join('');
+  box.innerHTML = html;
+  box.querySelectorAll('[data-lname]').forEach(b => {
+    b.onclick = () => { location.href = profUrl(b.getAttribute('data-lname')); };
+  });
+}
+function onLookupInput() {
+  const q = lookupQueryOf();
+  if (!q) {
+    renderLookupMatches();
+    if (lookupDirTimer) { clearInterval(lookupDirTimer); lookupDirTimer = null; }
+    return;
+  }
+  renderLookupMatches();
+  ensureNameDirectory(() => renderLookupMatches()).catch(() => {});
+  if (!lookupDirTimer) {
+    lookupDirTicks = 0;
+    lookupDirTimer = setInterval(() => {
+      lookupDirTicks++;
+      if (nameDirStatus().complete || lookupDirTicks > 80 || !lookupQueryOf()) {
+        clearInterval(lookupDirTimer); lookupDirTimer = null;
+        if (!lookupQueryOf()) return;
+      }
+      renderLookupMatches();
+    }, 1500);
+  }
+}
 async function doLookup() {
   const input = $('lookupInput'), out = $('lookupResult');
   const q = input.value.trim();
@@ -5415,21 +5892,32 @@ function renderPwUnlocked(area) {
         '<p id="pwDepStatus"></p></div>';
     }
   }
-  /* v28: a plain send out of the posting wallet, to any address.
-     The deposit card moves qCAW through a NAME; this card is the
-     wallet's own transfer — the app has always had one, the web
-     wallet did not. Always shown when unlocked (it does not need
-     an acting name). */
-  html += '<div class="pw-card" id="pwSendCard"><h3 class="detail-h">' + esc(T.pwSendTitle) + '</h3>' +
-    '<p class="small">' + esc(T.pwSendNote) + '</p>' +
-    '<select id="pwSendToken">' +
-    DEX_TOKENS.map(t => '<option value="' + t.id + '">' + esc(t.sym) + '</option>').join('') +
-    '</select>' +
-    '<input type="text" id="pwSendTo" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="' + esc(T.pwSendToPh) + '">' +
-    '<input type="text" id="pwSendAmount" inputmode="decimal" autocomplete="off" placeholder="' + esc(T.pwSendAmountPh) + '">' +
-    '<div class="row"><button id="pwSendBtn" type="button">' + esc(T.pwSendBtn) + '</button>' +
-    '<button id="pwSendMaxBtn" class="ghost" type="button">MAX</button></div>' +
-    '<p class="small">' + esc(T.pwSendGasNote) + '</p>' +
+  /* v28's plain send, grown in v35 (M8) into the app's
+     multi-chain Send: assets on BSC / Ethereum / 42 Chain /
+     QL1 (one address on all chains), the on-device address
+     book, paste, 25/50/75/MAX chips and the app's confirm.
+     Always shown when unlocked (it needs no acting name). */
+  const sendGroups = SEND_CHAINS.map(c =>
+    '<optgroup label="' + esc(c.label) + '">' +
+    SEND_ASSETS.filter(a => a.chain === c.key).map(a =>
+      '<option value="' + a.id + '"' + (a.id === sendEnsureState().assetId ? ' selected' : '') + '>' +
+      esc(a.symbol) + '</option>').join('') + '</optgroup>').join('');
+  html += '<div class="pw-card" id="pwSendCard"><h3 class="detail-h">' + esc(T.sendTitle) + '</h3>' +
+    '<p class="small">' + esc(T.sendPickAsset) + '</p>' +
+    '<select id="pwSendToken">' + sendGroups + '</select>' +
+    '<p class="small" id="pwSendBal">—</p>' +
+    '<p class="small">' + esc(T.sendTo) + ' · ' + esc(T.sendSameAddress) + '</p>' +
+    '<input type="text" id="pwSendTo" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="0x…">' +
+    '<p class="small" id="pwSendKnown"></p>' +
+    '<div class="row"><button id="pwSendPasteBtn" class="ghost" type="button">' + esc(T.sendPaste) + '</button>' +
+    '<button id="pwSendBookBtn" class="ghost" type="button">' + esc(T.sendBook) + '</button></div>' +
+    '<div class="row bookchips" id="pwSendBookChips"></div>' +
+    '<div id="pwSendBookArea" style="display:none"></div>' +
+    '<p class="small" style="margin-top:12px">' + esc(T.sendAmount) + '</p>' +
+    '<input type="text" id="pwSendAmount" inputmode="decimal" autocomplete="off" placeholder="0.0">' +
+    '<div class="row">' + [25, 50, 75, 100].map(p =>
+      '<button type="button" class="ghost" data-sendchip="' + p + '">' + (p === 100 ? 'MAX' : p + '%') + '</button>').join('') + '</div>' +
+    '<div class="row"><button id="pwSendBtn" type="button">' + esc(T.sendNext) + '</button></div>' +
     '<p id="pwSendStatus"></p></div>';
   /* v34 (M6): the wallets in this browser — switch (which locks
      first, then asks the target's own password) or add another */
@@ -5492,7 +5980,45 @@ function renderPwUnlocked(area) {
   const dep = $('pwDepBtn'); if (dep) dep.onclick = () => pwDoDepWd('deposit');
   const wd = $('pwWdBtn'); if (wd) wd.onclick = () => pwDoDepWd('withdraw');
   const sendBtn = $('pwSendBtn'); if (sendBtn) sendBtn.onclick = () => pwDoSend();
-  const sendMax = $('pwSendMaxBtn'); if (sendMax) sendMax.onclick = () => pwSendMax();
+  const sendSel = $('pwSendToken');
+  if (sendSel) sendSel.onchange = () => {
+    sendEnsureState().assetId = sendSel.value;
+    sendEnsureState().gasPrice = null;
+    paintSendBalance();
+    sendLoadGasPrice();
+  };
+  const sendToEl = $('pwSendTo');
+  if (sendToEl) sendToEl.addEventListener('input', paintSendKnown);
+  const pasteBtn = $('pwSendPasteBtn');
+  if (pasteBtn) pasteBtn.onclick = async () => {
+    try {
+      const t = await navigator.clipboard.readText();
+      if (t) { $('pwSendTo').value = t.trim(); paintSendKnown(); }
+    } catch (e) { /* clipboard needs a permission some browsers deny; typing still works */ }
+  };
+  const bookBtn = $('pwSendBookBtn');
+  if (bookBtn) bookBtn.onclick = () => {
+    const st = sendEnsureState();
+    st.bookOpen = !st.bookOpen;
+    paintSendBook();
+  };
+  area.querySelectorAll('[data-sendchip]').forEach(b => {
+    b.onclick = () => pwSendChip(Number(b.getAttribute('data-sendchip')));
+  });
+  paintSendBookChips();
+  paintSendBalance();
+  sendLoadBalances();
+  sendLoadGasPrice();
+  /* M10's Send pill lands here (?wallet=1&send=1): bring the
+     card into view and flash it, the deposit jump's way. */
+  if (new URLSearchParams(location.search).get('send') === '1') {
+    const card = $('pwSendCard');
+    if (card) {
+      card.scrollIntoView({ block: 'center' });
+      card.classList.add('pw-flash');
+      setTimeout(() => card.classList.remove('pw-flash'), 1600);
+    }
+  }
   $('pwRevealBtn').onclick = () => renderPwReveal($('pwRevealArea'));
   $('pwLockBtn').onclick = () => pwLock();
   $('pwRemoveBtn2').onclick = () => renderPwRemove($('pwRemoveArea'));
@@ -5520,7 +6046,14 @@ function renderPwUnlocked(area) {
       pwSetAmt('pwKetBal', ket === null ? null : fmtAmt(ket, ketDec), ket === null ? null : fmtExactAmt(ket, ketDec));
       pwSetAmt('pwHawkBal', hawk === null ? null : fmtAmt(hawk, hawkDec), hawk === null ? null : fmtExactAmt(hawk, hawkDec));
       pwSetAmt('pwPhoenixBal', phx === null ? null : fmtAmt(phx, phxDec), phx === null ? null : fmtExactAmt(phx, phxDec));
-      if (w && qom === 0n) w.innerHTML = '<span class="warn">' + esc(T.pwNeedGas) + '</span>';
+      if (w && qom === 0n) {
+        /* v35 (M9): the app's gas-shortage guidance ends at
+           the faucet — the warning grows its entry button. */
+        w.innerHTML = '<span class="warn">' + esc(T.pwNeedGas) + '</span>' +
+          '<div class="row"><button type="button" class="ghost js-faucet-open">' + esc(T.fcGoFaucet) + '</button></div>';
+        const fb = w.querySelector('.js-faucet-open');
+        if (fb) fb.onclick = () => openFaucet();
+      }
     } catch (e) { /* balances are a nicety; the sends re-read anyway */ }
   })();
   syncChrome();
@@ -5755,103 +6288,373 @@ function mnDoDepWd(kind) {
   });
 }
 
-/* ----- v28: plain send out of the posting wallet ----- */
-/* The QOM a plain native send needs for its fee, priced the
-   way sendLocalTx prices it: the current gas price x 21,000
-   gas, with the same x1.2 headroom sendLocalTx adds on top of
-   its estimate. MAX leaves this much behind, and a QOM send
-   that would eat into it is refused before signing — a send
-   of the whole balance would otherwise fail on the record
-   for want of the fee. If the price cannot be read the send
-   itself cannot go out either, so no reserve is invented. */
-async function pwQomGasReserve() {
-  try {
-    const gp = BigInt(await rpc('eth_gasPrice', []));
-    return gp * 25200n; /* 21,000 x 1.2 */
-  } catch (e) { return 0n; }
-}
-/* Decimals for a send token, read the way the balance list
-   reads them (native QOM is 18 by definition). */
-async function pwSendDecimals(tok) {
-  if (tok.native) return 18;
-  return Number(await readUint(tok.address, SEL.decimals).catch(() => 18n));
-}
-async function pwSendMax() {
-  if (!pwSession) return;
-  const st = $('pwSendStatus');
-  const tok = dexTokenById($('pwSendToken').value) || DEX_TOKENS[0];
-  try {
-    let raw;
-    if (tok.native) {
-      const bal = BigInt(await rpc('eth_getBalance', [pwSession.address, 'latest']));
-      const reserve = await pwQomGasReserve();
-      raw = bal > reserve ? bal - reserve : 0n;
-    } else {
-      raw = await readUint(tok.address, SEL.balanceOf + encAddr(pwSession.address));
-    }
-    $('pwSendAmount').value = rawToInputStr(raw, await pwSendDecimals(tok));
-    if (st) st.innerHTML = '';
-  } catch (e) {
-    if (st) st.innerHTML = '<span class="err">' + esc(T.actFail) + '</span>' + errDetailHtml(e);
+/* ----- v35 (M8): the app's multi-chain send -----
+   v28's QL1-only card becomes the app's Send screen in the
+   wallet view: pick an asset on BSC / Ethereum / 42 Chain /
+   QL1 (grouped select), a recipient typed, pasted or picked
+   from the on-device address book, an amount with
+   25/50/75/MAX chips (native MAX leaves the live gas reserve
+   behind), then the shared confirm panel — chain, amount,
+   the FULL recipient, the fee estimate and the low-gas
+   warning — and one locally signed legacy tx per send
+   through sendChainTx (its one broadcast site). Balances
+   and the gas price are re-read at send time; an
+   unconfirmed broadcast surfaces through confirmErrHtml
+   with its hash, like every other send here. */
+let sendState = null;   // {assetId, balances, decimals, gasPrice, bookOpen, editing}
+function sendEnsureState() {
+  if (!sendState) {
+    sendState = { assetId: 'ql1:QOM', balances: {}, decimals: {}, gasPrice: null, bookOpen: false, editing: null };
   }
+  return sendState;
+}
+const sendAssetNow = () => sendAssetById(sendEnsureState().assetId) || SEND_ASSETS[6];
+const sendChainNow = () => sendChainByKey(sendAssetNow().chain) || SEND_CHAIN_QL1;
+function sendGasPriceEff() {
+  const gp = sendEnsureState().gasPrice;
+  return gp && gp > 0n ? gp : SEND_FALLBACK_GAS_PRICE[sendAssetNow().chain];
+}
+function sendDecimalsOf(asset) {
+  const d = sendEnsureState().decimals[asset.id];
+  return d === undefined || d === null ? (asset.decimals === null ? 18 : asset.decimals) : d;
+}
+async function sendLoadBalances() {
+  if (!pwSession || !sendState) return;
+  const addr = pwSession.address;
+  await Promise.all(SEND_ASSETS.map(async a => {
+    const chain = sendChainByKey(a.chain);
+    try {
+      sendState.balances[a.id] = a.kind === 'native'
+        ? BigInt(await chainRpc(chain, 'eth_getBalance', [addr, 'latest']))
+        : await chainReadUint(chain, a.token, SEL.balanceOf + encAddr(addr));
+    } catch (e) { /* an unread chain just shows a dash */ }
+    if (a.kind === 'erc20' && a.decimals === null && sendState.decimals[a.id] === undefined) {
+      try { sendState.decimals[a.id] = Number(await chainReadUint(chain, a.token, SEL.decimals)); }
+      catch (e) { sendState.decimals[a.id] = 18; }
+    }
+  }));
+  paintSendBalance();
+}
+async function sendLoadGasPrice() {
+  if (!sendState) return;
+  const chain = sendChainNow();
+  try { sendState.gasPrice = BigInt(await chainRpc(chain, 'eth_gasPrice', [])); }
+  catch (e) { sendState.gasPrice = null; }
+}
+function paintSendBalance() {
+  const el = $('pwSendBal');
+  if (!el || !sendState) return;
+  const a = sendAssetNow();
+  const bal = sendState.balances[a.id];
+  el.textContent = bal === undefined || bal === null
+    ? '—' : fmtAmt(bal, sendDecimalsOf(a)) + ' ' + a.symbol;
+  paintSendKnown();
+}
+function paintSendKnown() {
+  const el = $('pwSendKnown');
+  if (!el || !pwSession) return;
+  const to = String(($('pwSendTo') || {}).value || '').trim();
+  const hit = /^0x[0-9a-fA-F]{40}$/.test(to)
+    ? bookFindEntry(bookEntries(pwSession.address), to) : null;
+  el.textContent = hit ? '📖 ' + hit.label : '';
+}
+function paintSendBookChips() {
+  const box = $('pwSendBookChips');
+  if (!box || !pwSession) return;
+  const entries = bookEntries(pwSession.address);
+  box.innerHTML = entries.map(e =>
+    '<button type="button" class="bookchip" data-bookchip="' + esc(e.address) + '">' +
+    esc(e.label) + ' · ' + esc(shortAddr(e.address)) + '</button>').join('');
+  box.querySelectorAll('[data-bookchip]').forEach(b => {
+    b.onclick = () => {
+      $('pwSendTo').value = b.getAttribute('data-bookchip');
+      paintSendKnown();
+    };
+  });
+}
+function bookErrorText(e, addr) {
+  const msg = e && e.message;
+  if (msg === 'duplicate') {
+    const found = pwSession ? bookFindEntry(bookEntries(pwSession.address), addr || '') : null;
+    return T.sendDuplicate.replace('{label}', found ? found.label : '');
+  }
+  if (msg === 'bad-label') return T.sendNeedLabel;
+  return T.sendBadAddress;
+}
+function paintSendBook() {
+  const area = $('pwSendBookArea');
+  if (!area || !pwSession) return;
+  const st = sendEnsureState();
+  area.style.display = st.bookOpen ? '' : 'none';
+  if (!st.bookOpen) return;
+  const entries = bookEntries(pwSession.address);
+  let html = '<h4 class="detail-h">' + esc(T.sendBook) + '</h4>';
+  if (!entries.length) html += '<p class="small">' + esc(T.sendBookEmpty) + '</p>';
+  html += entries.map(e => {
+    if (st.editing && sameBookAddr(st.editing, e.address)) {
+      return '<div class="book-row"><input type="text" id="pwBookEditLabel" value="' + esc(e.label) + '">' +
+        '<div class="row"><button type="button" id="pwBookEditSave">' + esc(T.sendSave) + '</button></div></div>';
+    }
+    return '<div class="book-row"><button type="button" class="book-pick" data-bookpick="' + esc(e.address) + '">' +
+      '<span class="book-label">' + esc(e.label) + '</span>' +
+      '<span class="book-addr">' + esc(e.address) + '</span></button>' +
+      '<div class="row"><button type="button" class="ghost" data-bookedit="' + esc(e.address) + '">' + esc(T.sendEdit) + '</button>' +
+      '<button type="button" class="ghost" data-bookdel="' + esc(e.address) + '">' + esc(T.sendDelete) + '</button></div></div>';
+  }).join('');
+  html += '<p id="pwBookErr"></p>' +
+    '<input type="text" id="pwBookNewLabel" autocomplete="off" placeholder="' + esc(T.sendLabelPh) + '">' +
+    '<input type="text" id="pwBookNewAddr" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="0x…">' +
+    '<div class="row"><button type="button" id="pwBookAddBtn">' + esc(T.sendBookAdd) + '</button></div>';
+  area.innerHTML = html;
+  area.querySelectorAll('[data-bookpick]').forEach(b => {
+    b.onclick = () => { $('pwSendTo').value = b.getAttribute('data-bookpick'); paintSendKnown(); };
+  });
+  area.querySelectorAll('[data-bookedit]').forEach(b => {
+    b.onclick = () => { sendEnsureState().editing = b.getAttribute('data-bookedit'); paintSendBook(); };
+  });
+  area.querySelectorAll('[data-bookdel]').forEach(b => {
+    b.onclick = () => {
+      const addr = b.getAttribute('data-bookdel');
+      const entry = bookFindEntry(bookEntries(pwSession.address), addr);
+      openConfirmPanel({
+        title: entry ? entry.label : addr,
+        lines: [[T.sendTo, addr]],
+        signLabel: T.sendDelete,
+        onSign: async () => {
+          bookPersist(pwSession.address, bookRemoveEntry(bookEntries(pwSession.address), addr));
+        },
+        afterSuccess: async () => { paintSendBook(); paintSendBookChips(); paintSendKnown(); },
+      });
+    };
+  });
+  const saveEdit = $('pwBookEditSave');
+  if (saveEdit) saveEdit.onclick = () => {
+    const err = $('pwBookErr');
+    try {
+      bookPersist(pwSession.address,
+        bookUpdateEntry(bookEntries(pwSession.address), sendEnsureState().editing, $('pwBookEditLabel').value));
+      sendEnsureState().editing = null;
+      paintSendBook(); paintSendBookChips(); paintSendKnown();
+    } catch (e) { if (err) err.innerHTML = '<span class="err">' + esc(bookErrorText(e, sendEnsureState().editing)) + '</span>'; }
+  };
+  const add = $('pwBookAddBtn');
+  if (add) add.onclick = () => {
+    const err = $('pwBookErr');
+    try {
+      bookPersist(pwSession.address,
+        bookAddEntry(bookEntries(pwSession.address), $('pwBookNewLabel').value, $('pwBookNewAddr').value));
+      paintSendBook(); paintSendBookChips();
+    } catch (e) { if (err) err.innerHTML = '<span class="err">' + esc(bookErrorText(e, $('pwBookNewAddr').value)) + '</span>'; }
+  };
+}
+function pwSendChip(pct) {
+  if (!pwSession || !sendState) return;
+  const a = sendAssetNow();
+  const bal = sendState.balances[a.id];
+  if (bal === undefined || bal === null) return;
+  const spendable = sendMaxSendable(a, bal, sendGasPriceEff());
+  const amt = pct >= 100 ? spendable : (spendable * BigInt(pct)) / 100n;
+  $('pwSendAmount').value = amt === 0n ? '' : rawToInputStr(amt, sendDecimalsOf(a));
 }
 async function pwDoSend() {
   if (!pwSession) return;
   const st = $('pwSendStatus');
-  const tok = dexTokenById($('pwSendToken').value) || DEX_TOKENS[0];
+  const a = sendAssetNow();
+  const chain = sendChainNow();
   const to = String($('pwSendTo').value || '').trim();
   if (!/^0x[0-9a-fA-F]{40}$/.test(to)) {
-    if (st) st.innerHTML = '<span class="err">' + esc(T.pwSendToBad) + '</span>';
+    if (st) st.innerHTML = '<span class="err">' + esc(T.sendBadAddress) + '</span>';
     return;
   }
-  const dec = await pwSendDecimals(tok);
+  const dec = sendDecimalsOf(a);
   const amt = parseAmountDec($('pwSendAmount').value, dec);
   if (amt === null || amt <= 0n) {
     if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>';
     return;
   }
-  /* Balances are re-read at send time (the list above can be
-     stale); a token send also needs QOM in the wallet for its
-     fee, and a QOM send must keep the fee reserve behind. */
-  const qomBal = BigInt(await rpc('eth_getBalance', [pwSession.address, 'latest']));
-  if (tok.native) {
-    const reserve = await pwQomGasReserve();
-    if (amt + reserve > qomBal) {
-      if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>';
-      return;
-    }
-  } else {
-    if (qomBal === 0n) {
-      if (st) st.innerHTML = '<span class="err">' + esc(T.pwNeedGas) + '</span>';
-      return;
-    }
-    const bal = await readUint(tok.address, SEL.balanceOf + encAddr(pwSession.address));
-    if (amt > bal) {
-      if (st) st.innerHTML = '<span class="err">' + esc(T.pwAmountBad) + '</span>';
-      return;
-    }
+  /* Balances and the gas price are re-read at send time (the
+     card can be stale), like the app: the amount must fit the
+     spendable balance — for a native send that is the balance
+     minus the live gas reserve — and a token send needs the
+     chain's native coin for its fee. */
+  let bal, nativeBal, gasPrice;
+  try {
+    [bal, nativeBal, gasPrice] = await Promise.all([
+      a.kind === 'native'
+        ? chainRpc(chain, 'eth_getBalance', [pwSession.address, 'latest']).then(h => BigInt(h))
+        : chainReadUint(chain, a.token, SEL.balanceOf + encAddr(pwSession.address)),
+      chainRpc(chain, 'eth_getBalance', [pwSession.address, 'latest']).then(h => BigInt(h)),
+      chainRpc(chain, 'eth_gasPrice', []).then(h => BigInt(h)).catch(() => null),
+    ]);
+  } catch (e) {
+    if (st) st.innerHTML = '<span class="err">' + esc(T.actFail) + '</span>' + errDetailHtml(e);
+    return;
   }
+  const gpEff = gasPrice && gasPrice > 0n ? gasPrice : SEND_FALLBACK_GAS_PRICE[a.chain];
+  const spendable = sendMaxSendable(a, bal, gpEff);
+  if (amt > spendable) {
+    if (st) st.innerHTML = '<span class="err">' + esc(T.sendOver) + '</span>';
+    return;
+  }
+  const reserve = sendGasReserve(a.kind, gpEff);
+  const lowGas = a.kind === 'erc20'
+    ? !sendGasAffordable(a, nativeBal, gpEff)
+    : (bal - amt) < reserve;
+  const known = bookFindEntry(bookEntries(pwSession.address), to);
+  const req = buildSendTxReq(a, to, amt);
   let sentHash = null;
   openConfirmPanel({
-    title: T.confirmTitleSend,
+    title: T.sendConfirmTitle,
     lines: [
-      [T.confirmToLbl, to],
-      [T.confirmAmountLbl, fmtAmt(amt, dec) + ' ' + tok.sym],
+      [T.sendChainLbl, chain.label],
+      [T.sendAmount, fmtAmt(amt, dec) + ' ' + a.symbol],
+      [T.sendTo, to],
+      [T.sendGas, fmtAmt(reserve, 18) + ' ' + chain.nativeSym],
     ],
-    statusHtml: '<span class="warn">' + esc(T.pwSendIrreversible) + '</span>',
+    statusHtml: '<span class="warn">' + esc(T.pwSendIrreversible) + '</span>' +
+      (known ? '<div class="small">📖 ' + esc(known.label) + '</div>' : '') +
+      (lowGas ? '<div class="err">' + esc(T.sendLowGas.replace('{sym}', chain.nativeSym)) + '</div>' : ''),
+    signLabel: T.sendTitle,
+    doneText: T.sendSent,
     onSign: async () => {
       pwTouch();
-      const res = tok.native
-        ? await sendLocalTx(pwSession.keyBytes, { to, value: amt, data: '0x', gasFallback: 21000 })
-        : await sendLocalTx(pwSession.keyBytes, { to: tok.address, data: buildTransferData(to, amt), gasFallback: 60000 });
+      const res = await sendChainTx(pwSession.keyBytes, {
+        chain, to: req.to, data: req.data, value: req.value,
+        gasFallback: Number(SEND_GAS_UNITS[a.kind]),
+      });
       sentHash = res.hash;
     },
     afterSuccess: async () => {
-      renderPw();
+      sendLoadBalances();
       const st2 = $('pwSendStatus');
-      if (st2) st2.innerHTML = '<span class="ok">' + esc(T.pwDoneOk) + '</span>' + txLinkHtml(sentHash);
+      if (!st2) return;
+      let html = '<span class="ok">' + esc(T.sendSent) + '</span>' + txLinkHtml(sentHash);
+      /* The app's save-after-send offer, for a recipient the
+         book does not know yet. */
+      if (!bookFindEntry(bookEntries(pwSession.address), to)) {
+        html += '<div class="book-saveoffer"><p class="small">' + esc(T.sendSaveOffer) + '</p>' +
+          '<p class="small mono">' + esc(to) + '</p>' +
+          '<input type="text" id="pwSendSaveLabel" autocomplete="off" placeholder="' + esc(T.sendLabelPh) + '">' +
+          '<p id="pwSendSaveErr"></p>' +
+          '<div class="row"><button type="button" id="pwSendSaveBtn">' + esc(T.sendSave) + '</button></div></div>';
+      }
+      st2.innerHTML = html;
+      const saveBtn = $('pwSendSaveBtn');
+      if (saveBtn) saveBtn.onclick = () => {
+        const err = $('pwSendSaveErr');
+        try {
+          bookPersist(pwSession.address,
+            bookAddEntry(bookEntries(pwSession.address), $('pwSendSaveLabel').value, to));
+          st2.innerHTML = '<span class="ok">' + esc(T.sendSaved) + '</span>' + txLinkHtml(sentHash);
+          paintSendBookChips(); paintSendBook(); paintSendKnown();
+        } catch (e) { if (err) err.innerHTML = '<span class="err">' + esc(bookErrorText(e, to)) + '</span>'; }
+      };
     },
   });
+}
+
+/* ----- v35 (M9): the faucet sheet -----
+   The app's FaucetScreen as a sheet: the three pools with
+   their live status (claim amount, claims left, ready or
+   not-ready with the Worker's reason), claims paid into the
+   ACTIVE wallet's address, and every rejection code worded
+   by the app's taxonomy — cooldowns carry the retry-after
+   in days / hours / minutes. Entry points: the DEX header
+   pill (M10) and the gas-shortage guidance. */
+let faucetState = null;   // {statuses, loadFailed, claiming, notes}
+function faucetClaimErrorText(r) {
+  if (r.code === 'network') return T.fcLoadFailed;
+  const base = T[faucetErrorTKey(r.code)] || T.fcErrFailed;
+  if (isCooldownCode(r.code) && typeof r.retryAfterSec === 'number') {
+    const p = faucetRetryParts(r.retryAfterSec);
+    const t = T[p.unit === 'days' ? 'fcInDays' : p.unit === 'hours' ? 'fcInHours' : 'fcInMinutes']
+      .replace('{n}', String(p.n));
+    return base.replace('{t}', t);
+  }
+  return base;
+}
+function openFaucet() {
+  const ov = $('faucetOverlay');
+  if (!ov) return;
+  $('faucetTitle').textContent = T.fcTitle;
+  $('faucetIntro').textContent = T.fcIntro;
+  $('faucetCloseBtn').textContent = T.fcClose;
+  ov.style.display = '';
+  $('faucetCloseBtn').onclick = () => { ov.style.display = 'none'; };
+  faucetState = { statuses: null, loadFailed: false, claiming: null, notes: {} };
+  renderFaucetPools();
+  loadFaucetStatuses();
+}
+async function loadFaucetStatuses() {
+  const all = await Promise.all(FAUCET_POOLS.map(p => fetchFaucetStatus(p)));
+  if (!faucetState) return;
+  faucetState.statuses = all;
+  faucetState.loadFailed = all.every(s => s === null);
+  renderFaucetPools();
+}
+function renderFaucetPools() {
+  const box = $('faucetPools');
+  if (!box || !faucetState) return;
+  const fs = faucetState;
+  if (fs.statuses === null) {
+    box.innerHTML = '<p class="small">' + esc(T.dexChecking) + '</p>';
+    return;
+  }
+  if (fs.loadFailed) {
+    box.innerHTML = '<p class="err">' + esc(T.fcLoadFailed) + '</p>' +
+      '<div class="row"><button type="button" id="fcRetryBtn" class="ghost">' + esc(T.retryBtn) + '</button></div>';
+    const rb = $('fcRetryBtn');
+    if (rb) rb.onclick = () => { faucetState.statuses = null; renderFaucetPools(); loadFaucetStatuses(); };
+    return;
+  }
+  box.innerHTML = FAUCET_POOLS.map((pool, i) => {
+    const st = fs.statuses[i];
+    const k = pool.chain + ':' + pool.token;
+    const note = fs.notes[k];
+    let statusHtml = '';
+    if (!st) statusHtml = '<p class="err">' + esc(T.fcLoadFailed) + '</p>';
+    else if (st.ready) {
+      statusHtml = typeof st.claimsLeft === 'number'
+        ? '<p class="small">' + esc(T.fcLeft.replace('{n}', String(st.claimsLeft))) + '</p>' : '';
+    } else {
+      statusHtml = '<p class="err">' + esc(T.fcNotReady) + (st.reason ? ' — ' + esc(st.reason) : '') + '</p>';
+    }
+    const canClaim = !!st && !!st.ready && !fs.claiming && !!pwSession;
+    return '<div class="faucet-pool">' +
+      '<div class="faucet-pool-head"><b>' + esc(st ? st.claimAmount : '—') + ' ' + esc(pool.sym) + '</b>' +
+      '<span class="small">' + esc(pool.chainLabel) + '</span></div>' +
+      statusHtml +
+      (!pwSession ? '<p class="small">' + esc(T.fcNeedWallet) + '</p>' : '') +
+      (note ? '<p class="' + (note.err ? 'err' : 'ok') + '">' + esc(note.text) + '</p>' +
+        (note.url ? '<p><a href="' + esc(note.url) + '" target="_blank" rel="noopener">' + esc(T.fcViewTx) + ' ↗</a></p>' : '') : '') +
+      '<div class="row"><button type="button" data-faucet-claim="' + i + '"' +
+      (canClaim ? '' : ' disabled') + '>' +
+      esc(fs.claiming === k ? T.fcClaiming : T.fcClaim) + '</button></div></div>';
+  }).join('');
+  box.querySelectorAll('[data-faucet-claim]').forEach(b => {
+    b.onclick = () => faucetDoClaim(Number(b.getAttribute('data-faucet-claim')));
+  });
+}
+async function faucetDoClaim(i) {
+  if (!pwSession || !faucetState) return;
+  const pool = FAUCET_POOLS[i];
+  const k = pool.chain + ':' + pool.token;
+  faucetState.claiming = k;
+  renderFaucetPools();
+  try {
+    const r = await claimFaucet(pool, pwSession.address);
+    if (r.ok) {
+      faucetState.notes[k] = {
+        text: T.fcDoneAmt.replace('{amount}', r.amount).replace('{sym}', pool.sym),
+        err: false, url: r.explorerUrl,
+      };
+    } else {
+      faucetState.notes[k] = { text: faucetClaimErrorText(r), err: true };
+    }
+  } finally {
+    faucetState.claiming = null;
+    loadFaucetStatuses();
+  }
 }
 
 /* ----- confirm panel: sign what you see ----- */
@@ -6073,7 +6876,19 @@ function loadDexView() {
     '<button type="button" class="tokchip' + ((side === 'from' ? dexState.fromId : dexState.toId) === t.id ? ' on' : '') +
     '" data-dtok="' + side + ':' + t.id + '">' + esc(t.sym) + '</button>').join('');
   area.innerHTML =
-    '<section class="block"><p>' + esc(T.dexIntro) + '</p>' +
+    '<section class="block">' +
+    /* v35 (M10): the app's DEX header — Faucet + Send pills,
+       then the deposit-address card on top (the same address
+       works on every chain). */
+    '<div class="row pillrow">' +
+    '<button type="button" class="pill js-faucet-open">' + esc(T.fcTitle) + '</button>' +
+    '<a class="pill pill-accent" href="' + pageFile + '?wallet=1&send=1">' + esc(T.sendTitle) + '</a>' +
+    '</div>' +
+    '<div class="pw-card dex-deposit"><h3 class="detail-h">' + esc(T.dexDepositTitle) + '</h3>' +
+    '<p class="small">' + esc(T.dexDepositSame) + '</p>' +
+    '<p class="mono addr-full">' + esc(pwSession.address) + '</p>' +
+    '<div class="row"><button type="button" class="ghost" id="dexCopyAddrBtn">' + esc(T.dexCopyAddr) + '</button></div></div>' +
+    '<p>' + esc(T.dexIntro) + '</p>' +
     '<p id="dexGasWarn"></p>' +
     '<div class="pw-card">' +
     '<div class="small">' + esc(T.dexFrom) + ' · ' + esc(T.balLbl) + ': <span id="dexFromBal">…</span></div>' +
@@ -6100,6 +6915,16 @@ function loadDexView() {
       loadDexView();
     };
   });
+  const fcBtn = area.querySelector('.js-faucet-open');
+  if (fcBtn) fcBtn.onclick = () => openFaucet();
+  const cpBtn = $('dexCopyAddrBtn');
+  if (cpBtn) cpBtn.onclick = async () => {
+    try {
+      await navigator.clipboard.writeText(pwSession.address);
+      cpBtn.textContent = T.dexCopied;
+      setTimeout(() => { const b = $('dexCopyAddrBtn'); if (b) b.textContent = T.dexCopyAddr; }, 2000);
+    } catch (e) { /* clipboard denied; the address stays selectable on screen */ }
+  };
   $('dexAmount').value = dexState.amountStr;
   $('dexAmount').addEventListener('input', () => {
     dexState.amountStr = $('dexAmount').value;
@@ -6152,7 +6977,14 @@ function paintDexBalances() {
   paint('dexFromBal', dexState.fromId);
   paint('dexToBal', dexState.toId);
   const w = $('dexGasWarn');
-  if (w && dexState.qomBal === 0n) w.innerHTML = '<span class="warn">' + esc(T.tradeGasWarn) + '</span>';
+  if (w && dexState.qomBal === 0n) {
+    /* v35 (M9): the gas-shortage guidance ends at the faucet,
+       as in the app. */
+    w.innerHTML = '<span class="warn">' + esc(T.tradeGasWarn) + '</span>' +
+      '<div class="row"><button type="button" class="ghost js-faucet-open">' + esc(T.fcGoFaucet) + '</button></div>';
+    const fb = w.querySelector('.js-faucet-open');
+    if (fb) fb.onclick = () => openFaucet();
+  }
 }
 function dexScheduleQuote() {
   clearTimeout(dexQuoteTimer);
@@ -6188,8 +7020,28 @@ async function dexRefreshQuote() {
   dexState.quoteState = 'loading'; paintDexQuote();
   const seq = ++dexState.seq;
   const best = await dexQuoteOnce(fromTok, toTok, amountIn);
+  /* v35 (D10): the price impact, the app's formula adapted to
+     the router quotes — a dust slice (1%) of the input quoted
+     along the winning path rides the spot price; scaling it
+     up gives the spot output the real quote is compared
+     against. Optional by design: any failure just leaves the
+     impact unknown and the line unshown. */
+  let impactPct = null;
+  if (best) {
+    try {
+      const dustIn = amountIn / 100n;
+      if (dustIn > 0n) {
+        const r = await ethCall(DEX_ROUTER, encodeGetAmountsOut(dustIn, best.path));
+        const amts = decodeAmountsOut(r);
+        if (amts && amts.length) {
+          const spot = dexSpotOutFromDust(amountIn, dustIn, amts[amts.length - 1]);
+          impactPct = priceImpactPct(amountIn, best.amountOut, spot);
+        }
+      }
+    } catch (e) { /* impact is optional */ }
+  }
   if (seq !== dexState.seq || !dexState) return;
-  dexState.quote = best;
+  dexState.quote = best ? { ...best, impactPct } : null;
   dexState.quoteState = best ? 'ok' : 'none';
   paintDexQuote();
 }
@@ -6214,6 +7066,10 @@ function paintDexQuote() {
     qa.innerHTML =
       '<p>' + esc(T.dexYouGet) + ': <b>' + esc(fmtAmt(q.amountOut, toDec)) + ' ' + esc(toTok.sym) + '</b></p>' +
       '<p class="small">' + esc(T.dexRoute) + ': ' + esc(dexPathSyms(q.path)) + '</p>' +
+      /* v35 (D10): the impact line shows only at >= 1%, the
+         app's rule. */
+      (q.impactPct !== null && q.impactPct !== undefined && q.impactPct >= 1
+        ? '<p class="small">' + esc(T.dexImpact) + ': ' + q.impactPct.toFixed(1) + '%</p>' : '') +
       '<p class="small">' + esc(T.dexMin) + ': ' + esc(fmtAmt(dexMinOut(q.amountOut, DEX_SLIPPAGE_PCT), toDec)) + ' ' + esc(toTok.sym) + '</p>';
     btn.disabled = false;
   } else {
@@ -7535,7 +8391,7 @@ async function loadBookmarksView() {
       try { post = await findPostByCawId(id, 12); } catch (e) {}
       if (!post) { try { post = await findPostDeep(id); } catch (e) {} }
       if (post) {
-        const card = await postCard(post, { noTip: true }); /* v31: the app leaves tip unwired on bookmarks */
+        const card = await postCard(post, { noTip: true, noActions: true }); /* v31/v35: the app leaves tip + like/Recaw/SuperLike unwired on bookmarks (D13) */
         wrap.innerHTML = '';
         wrap.appendChild(card);
       } else {
@@ -8496,6 +9352,7 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
 }
 $('lookupBtn').onclick = doLookup;
 $('lookupInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLookup(); });
+$('lookupInput').addEventListener('input', onLookupInput); /* v35 (M12): directory partial matches while typing */
 const sb = $('searchBtn');
 if (sb) sb.onclick = doPostSearch;
 const si = $('searchInput');
@@ -8585,7 +9442,18 @@ if (typeof module !== 'undefined' && module.exports) {
     tipShortfall, tipBlockReason, phoenixBalanceOf,
     ACTION_COST_CAW, POST_COST_RAW, LIKE_COST_RAW, RECAW_COST_RAW, FOLLOW_COST_RAW, composeCostRaw,
     mentionFragmentAt, trimUrlCandidate, extractUrls, shortenUrlsInText,
-    NAME_DIR_KEY, ensureNameDirectory, searchNameDirectory, nameDirSetForTest,
+    NAME_DIR_KEY, ensureNameDirectory, searchNameDirectory, nameDirSetForTest, nameDirStatus,
+    SEND_CHAINS, SEND_CHAIN_QL1, sendChainByKey, SEND_ASSETS, sendAssetById,
+    SEND_GAS_UNITS, sendGasReserve, sendMaxSendable, sendGasAffordable,
+    SEND_FALLBACK_GAS_PRICE, buildSendTxReq, chainRpc, sendChainTx,
+    ADDRESS_BOOK_KEY_PREFIX, bookKeyFor, bookEntries, bookPersist,
+    bookFindEntry, bookAddEntry, bookUpdateEntry, bookRemoveEntry,
+    FAUCET_BASE, FAUCET_POOLS, FAUCET_ERROR_CODES, FAUCET_ERROR_TKEYS,
+    faucetErrorTKey, isCooldownCode, faucetRetryParts,
+    fetchFaucetStatus, claimFaucet,
+    priceImpactPct, dexSpotOutFromDust,
+    FEED_CACHE_KEY, FEED_CACHE_MAX_CHARS, feedItemToCache, feedItemFromCache,
+    feedCacheSave, feedCacheLoad,
     DRAFT_KEY_PREFIX, draftKeyFor, draftLoad, draftSave, draftClear,
     MYACTIONS_KEY_PREFIX, MY_KIND_LIKE, MY_KIND_RECAW, myActionEntry, myHas, myMark, myObserveItems,
     fetchPage, findPostByCawId, findPostDeep, collectPostContext,

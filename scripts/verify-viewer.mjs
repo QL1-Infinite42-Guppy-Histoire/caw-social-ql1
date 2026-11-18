@@ -126,6 +126,25 @@
    Profile (D23 — pwProfileTarget extracted and unit-checked);
    the drawer + sidebar gain a Reactions row with the count
    badge, and the My-names icon becomes the acting avatar (D24).
+   v35 (batch 4b): the send becomes the app's multi-chain send
+   (M8 — BSC / Ethereum / 42 Chain / QL1 through one
+   generalized local sender, sendChainTx, with sendLocalTx as
+   its QL1 case; the app's token sets, RPC endpoints, gas
+   units/reserve and MAX rule are cross-read from the app
+   repo and unit-checked; the per-wallet address book's CRUD
+   and validation errors are behaviour-tested against stub
+   storage); the faucet sheet (M9 — the app's Worker, three
+   pools, per-code messages with the cooldown retry-after
+   buckets, claim/status clients tested against stub fetches
+   and the live Worker's shape); the DEX header extras (M10 —
+   Faucet + Send pills, the deposit-address card) and price
+   impact (D10 — the app's spot formula on a 1% dust quote,
+   unit-checked, shown at >= 1%); the lookup desk's directory
+   partial matches with build progress (M12); bookmarks with
+   like/Recaw/SuperLike rendered non-wired (D13); and the
+   home-feed cache (D20 — sessionStorage, char-capped, public
+   post data only, round-trip tested; paint instantly, then
+   refresh).
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -368,8 +387,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=34') && jaHtml.includes('?v=34'), 'shells reference ?v=34 assets');
-ok(swSrc.includes("caw-view-v34"), 'sw.js cache name is caw-view-v34');
+ok(enHtml.includes('?v=35') && jaHtml.includes('?v=35'), 'shells reference ?v=35 assets');
+ok(swSrc.includes("caw-view-v35"), 'sw.js cache name is caw-view-v35');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1293,28 +1312,33 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v34'), 'sw cache is caw-view-v34');
+  ok(swJs.includes('caw-view-v35'), 'sw cache is caw-view-v35');
 }
 
-/* ---- v28: plain send out of the posting wallet ---- */
+/* ---- v28: plain send out of the posting wallet ----
+   v35 (M8) consciously supersedes this block's shape pins:
+   the QL1-only card became the app's multi-chain send (the
+   asset table is SEND_ASSETS now, the broadcast is the
+   generalized sendChainTx — sendLocalTx remains its QL1
+   case — the MAX button became the 25/50/75/MAX chips over
+   sendMaxSendable, and the confirm title is the app's
+   sendConfirmTitle). The invariants this block guarded —
+   the card in the unlocked wallet, recipient validation,
+   the confirm panel with the cannot-be-undone warning, the
+   success record link — are re-pinned in the new shape. */
 {
   const VS = read('../docs/viewer.js');
   const depIdx = VS.indexOf('id="pwDepCard"');
   const sendIdx = VS.indexOf('id="pwSendCard"');
   ok(sendIdx > 0 && depIdx > 0 && sendIdx > depIdx, 'send card renders in the unlocked wallet, below the deposit card');
-  for (const id of ['pwSendToken', 'pwSendTo', 'pwSendAmount', 'pwSendBtn', 'pwSendMaxBtn', 'pwSendStatus']) {
+  for (const id of ['pwSendToken', 'pwSendTo', 'pwSendAmount', 'pwSendBtn', 'pwSendStatus']) {
     ok(VS.includes('id="' + id + '"'), 'send card control #' + id + ' exists');
   }
-  ok(VS.includes("DEX_TOKENS.map(t => '<option value=\"' + t.id + '\">'"), 'send token selector is built from the wallet token table');
-  ok(VS.includes("sendLocalTx(pwSession.keyBytes, { to, value: amt, data: '0x', gasFallback: 21000 })"), 'QOM send is a value transfer through sendLocalTx');
-  ok(VS.includes("sendLocalTx(pwSession.keyBytes, { to: tok.address, data: buildTransferData(to, amt), gasFallback: 60000 })"), 'token send is a transfer() through sendLocalTx');
-  ok(VS.includes('async function pwQomGasReserve()') && VS.includes('gp * 25200n'), 'QOM gas reserve is gas price x 21000 x 1.2');
-  ok(VS.includes('amt + reserve > qomBal'), 'QOM send refuses to eat the fee reserve');
-  ok(VS.includes('async function pwSendMax()') && VS.includes('bal - reserve'), 'MAX leaves the fee reserve behind for QOM');
+  ok(VS.includes('SEND_ASSETS.filter(a => a.chain === c.key)'), 'send asset selector is built from the multi-chain asset table, grouped by chain');
   ok(VS.includes('/^0x[0-9a-fA-F]{40}$/.test(to)'), 'recipient address is validated before sending');
-  ok(VS.includes('parseAmountDec(') && VS.includes('pwSendDecimals'), 'send amount parses at the token decimals');
-  const sendBody = VS.slice(VS.indexOf('async function pwDoSend()'), VS.indexOf('/* ----- confirm panel'));
-  ok(sendBody.includes('openConfirmPanel({') && sendBody.includes('T.confirmTitleSend') && sendBody.includes('T.pwSendIrreversible'), 'send goes through the confirm panel with the cannot-be-undone warning');
+  const sendBody = VS.slice(VS.indexOf('async function pwDoSend()'), VS.indexOf('/* ----- v35 (M9): the faucet sheet'));
+  ok(sendBody.includes('openConfirmPanel({') && sendBody.includes('T.sendConfirmTitle') && sendBody.includes('T.pwSendIrreversible'), 'send goes through the confirm panel with the cannot-be-undone warning');
+  ok(sendBody.includes('sendChainTx(pwSession.keyBytes'), 'the send broadcasts through sendChainTx with the posting wallet key');
   ok(sendBody.includes('txLinkHtml(sentHash)'), 'send success shows the record link on the card');
   ok((VS.match(/pwSendTitle:/g) || []).length === 2 && (VS.match(/confirmTitleSend:/g) || []).length === 2, 'send strings exist in both languages');
 }
@@ -1668,8 +1692,8 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok(cardBody.includes('IC_COIN') && cardBody.includes('opts.noTip'),
     'v31: the tip button uses the coin glyph and honours the noTip opt-out');
   const bmBody = VS.slice(VS.indexOf('async function loadBookmarksView()'), VS.indexOf('/* ---------- notifications'));
-  ok(bmBody.includes('postCard(post, { noTip: true })'),
-    'v31: the bookmarks view leaves tip unwired, like the app');
+  ok(bmBody.includes('postCard(post, { noTip: true, noActions: true })'),
+    'v31/v35: the bookmarks view leaves tip (v31) and like/Recaw/SuperLike (v35 D13) unwired, like the app');
   const wireBody = VS.slice(VS.indexOf('function wireRowActions('), VS.indexOf('/* The Recaw choice sheet'));
   ok(wireBody.includes("btn('tip')") && wireBody.includes('onTipTap(a)'),
     'v31: the action row wires the tip tap');
@@ -2768,6 +2792,215 @@ console.log('— v34: multi-wallet registry, Settings, onboarding + chrome parit
   for (const k of ['pwAddTitle', 'pwWalletsTitle', 'pwSwitchBtn', 'pwInUse', 'pwRevealCopy',
                    'setTitle', 'setLockNow', 'setDangerTitle', 'pwAmtTapHint', 'pwCawInNameLbl']) {
     ok((VS.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v34: ' + k + ' exists in both languages');
+  }
+}
+
+console.log('— v35: multi-chain send, address book, faucet, DEX header + impact, directory search, bookmarks wiring, feed cache (batch 4b) —');
+{
+  const VS = viewerSrc;
+  const appChains = fs.readFileSync(new URL('../../caw-social-app/src/lib/chains.ts', import.meta.url), 'utf8');
+  const appSend = fs.readFileSync(new URL('../../caw-social-app/src/lib/sendAssets.ts', import.meta.url), 'utf8');
+  const appFaucet = fs.readFileSync(new URL('../../caw-social-app/src/lib/faucet.ts', import.meta.url), 'utf8');
+
+  /* ---- M8: the multi-chain config matches the app ---- */
+  ok(V.SEND_CHAINS.map(c => c.chainId).join(',') === '56,1,421018,766',
+    'v35 M8: the four chains in the app order with the app chain ids');
+  let cfgOk = true;
+  for (const c of V.SEND_CHAINS) for (const u of c.rpcs) if (!appChains.includes(u)) cfgOk = false;
+  ok(cfgOk, 'v35 M8: every RPC endpoint is the app\u2019s (chains.ts), none from memory');
+  const usdt = Object.fromEntries(V.SEND_ASSETS.filter(a => a.symbol === 'USDT').map(a => [a.chain, a]));
+  ok(usdt.bsc.token === '0x55d398326f99059fF775485246999027B3197955' && usdt.bsc.decimals === 18 &&
+     usdt.ethereum.token === '0xdAC17F958D2ee523a2206206994597C13D831ec7' && usdt.ethereum.decimals === 6 &&
+     usdt.infinite.token === '0xC2684966e5c95B2bc636FB4a1f3Da9Ad23d94753' && usdt.infinite.decimals === 18 &&
+     appChains.includes(usdt.bsc.token) && appChains.includes(usdt.ethereum.token) && appChains.includes(usdt.infinite.token),
+     'v35 M8: USDT addresses + decimals per chain match the app (BSC 18, ETH 6, 42 Chain 18)');
+  ok(V.SEND_ASSETS.filter(a => a.chain === 'ql1').map(a => a.symbol).join(',') === 'QOM,qCAW,O,KET,HAWK,PHOENIX',
+    'v35 M8: the QL1 set keeps the web\u2019s six (QOM + the five tokens)');
+  ok(V.SEND_ASSETS.filter(a => a.chain !== 'ql1').map(a => a.id).join(',') === 'bsc:BNB,bsc:USDT,ethereum:ETH,ethereum:USDT,infinite:42,infinite:USDT',
+    'v35 M8: the other chains carry the app\u2019s native + USDT sets');
+  ok(V.SEND_GAS_UNITS.native === 21000n && V.SEND_GAS_UNITS.erc20 === 65000n && appSend.includes('21000n') && appSend.includes('65000n'),
+    'v35 M8: gas units are the app\u2019s 21,000 / 65,000');
+  ok(V.sendGasReserve('native', 1000000000n) === 25200000000000n && V.sendGasReserve('erc20', 1000000000n) === 78000000000000n,
+    'v35 M8: the reserve is units x price x 1.2');
+  const qomAsset = V.sendAssetById('ql1:QOM'), usdtEth = V.sendAssetById('ethereum:USDT');
+  ok(V.sendMaxSendable(qomAsset, 1000000000000000000n, 1000000000n) === 1000000000000000000n - 25200000000000n &&
+     V.sendMaxSendable(usdtEth, 5000000n, 20000000000n) === 5000000n &&
+     V.sendMaxSendable(qomAsset, 100n, 1000000000n) === 0n,
+     'v35 M8: MAX leaves the reserve for natives, is the full balance for tokens, never negative');
+  const resEth = V.sendGasReserve('erc20', 20000000000n);
+  ok(V.sendGasAffordable(usdtEth, resEth, 20000000000n) && !V.sendGasAffordable(usdtEth, resEth - 1n, 20000000000n),
+    'v35 M8: gas affordability is the reserve comparison');
+  const addrTo = '0x' + '11'.repeat(20);
+  const reqN = V.buildSendTxReq(qomAsset, addrTo, 5n);
+  ok(reqN.to === addrTo && reqN.data === '0x' && reqN.value === 5n, 'v35 M8: a native send is a plain value transfer');
+  const reqE = V.buildSendTxReq(usdtEth, addrTo, 5n);
+  ok(reqE.to === usdtEth.token && reqE.value === 0n && reqE.data === V.buildTransferData(addrTo, 5n),
+    'v35 M8: a token send is transfer() to the contract');
+  ok(V.SEND_FALLBACK_GAS_PRICE.bsc === 3000000000n && V.SEND_FALLBACK_GAS_PRICE.ethereum === 20000000000n &&
+     V.SEND_FALLBACK_GAS_PRICE.infinite === 6000000000n && V.SEND_FALLBACK_GAS_PRICE.ql1 === 1000000000n,
+     'v35 M8: fallback gas prices are the app\u2019s table (3 / 20 / 6 / 1 gwei)');
+  ok((VS.match(/eth_sendRawTransaction/g) || []).length === 1 &&
+     VS.includes('async function sendChainTx(privBytes, opts)') &&
+     VS.includes('return sendChainTx(privBytes, { ...(opts || {}), chain: SEND_CHAIN_QL1 });') &&
+     VS.includes('chainId: chain.chainId'),
+     'v35 M8: sendLocalTx is the QL1 case of sendChainTx — still exactly one raw-send site, EIP-155 per chain');
+  ok(VS.includes('id="pwSendPasteBtn"') && VS.includes('id="pwSendBookBtn"') && VS.includes('id="pwSendBookChips"') &&
+     VS.includes('data-sendchip') && VS.includes('navigator.clipboard.readText()'),
+     'v35 M8: the send card carries paste, the book toggle + chips and the % chips');
+  const sendBody35 = VS.slice(VS.indexOf('async function pwDoSend()'), VS.indexOf('/* ----- v35 (M9): the faucet sheet'));
+  ok(sendBody35.includes('[T.sendChainLbl, chain.label]') && sendBody35.includes('[T.sendTo, to]') &&
+     sendBody35.includes('[T.sendGas,') && sendBody35.includes('T.sendLowGas') &&
+     sendBody35.includes('T.sendSaveOffer') && sendBody35.includes('bookAddEntry'),
+     'v35 M8: the confirm shows the chain, the FULL recipient and the fee; thin gas warns; a new recipient gets the save offer');
+
+  /* ---- M8: the address book, behaviour against stub storage ---- */
+  {
+    const store = new Map();
+    globalThis.localStorage = {
+      getItem: k => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, String(v)),
+      removeItem: k => store.delete(k),
+    };
+    try {
+      const W = '0x' + 'AA'.repeat(20), A1 = '0x' + '11'.repeat(20), A2 = '0x' + '22'.repeat(20);
+      ok(V.bookEntries(W).length === 0, 'v35 M8: an untouched book reads empty');
+      let entries = V.bookAddEntry([], 'Exchange', A1, 111);
+      ok(entries.length === 1 && entries[0].label === 'Exchange' && entries[0].addedAt === 111, 'v35 M8: add appends a labelled entry');
+      let code = null;
+      try { V.bookAddEntry(entries, 'Again', A1.toLowerCase()); } catch (e) { code = e.message; }
+      ok(code === 'duplicate', 'v35 M8: a duplicate address (any case) is refused as duplicate');
+      try { V.bookAddEntry(entries, '  ', A2); } catch (e) { code = e.message; }
+      ok(code === 'bad-label', 'v35 M8: an empty label is bad-label');
+      try { V.bookAddEntry(entries, 'X', '0x123'); } catch (e) { code = e.message; }
+      ok(code === 'bad-address', 'v35 M8: a malformed address is bad-address');
+      entries = V.bookAddEntry(entries, 'Second', A2, 222);
+      entries = V.bookUpdateEntry(entries, A1.toLowerCase(), 'Main exchange');
+      ok(V.bookFindEntry(entries, A1).label === 'Main exchange', 'v35 M8: edit renames in place (case-insensitive match)');
+      try { V.bookUpdateEntry(entries, '0x' + '33'.repeat(20), 'Nope'); } catch (e) { code = e.message; }
+      ok(code === 'not-found', 'v35 M8: editing an unknown address is not-found');
+      V.bookPersist(W, entries);
+      const back = V.bookEntries(W);
+      ok(back.length === 2 && back[1].address === A2, 'v35 M8: the book persists per wallet and reads back');
+      ok(V.bookEntries('0x' + 'BB'.repeat(20)).length === 0, 'v35 M8: another wallet\u2019s book is separate');
+      const afterRm = V.bookRemoveEntry(back, A1);
+      ok(afterRm.length === 1 && afterRm[0].address === A2, 'v35 M8: remove drops just that entry');
+      ok(!/secret|phrase|private/i.test(store.get(V.bookKeyFor(W)) || ''), 'v35 M8: the stored book holds labels + public addresses only');
+    } finally { delete globalThis.localStorage; }
+  }
+
+  /* ---- M9: the faucet client ---- */
+  ok(V.FAUCET_BASE === 'https://42-faucet.nepicobsv.workers.dev' && appFaucet.includes(V.FAUCET_BASE),
+    'v35 M9: the faucet Worker is the app\u2019s');
+  ok(V.FAUCET_POOLS.map(p => p.chain + ':' + p.token + ':' + p.sym).join(',') === '42:native:42,ql1:native:QOM,42:zap:ZAP',
+    'v35 M9: the three pools — [42], QOM, ZAP');
+  ok(V.FAUCET_ERROR_CODES.length === 10 && V.FAUCET_ERROR_CODES.every(c => appFaucet.includes("'" + c + "'")),
+    'v35 M9: the error taxonomy is the app\u2019s ten codes');
+  ok(V.FAUCET_ERROR_CODES.every(c => V.faucetErrorTKey(c) !== 'fcErrFailed') && V.faucetErrorTKey('something-else') === 'fcErrFailed',
+    'v35 M9: every known code maps to its own message; unknown codes fall back');
+  ok(V.isCooldownCode('address_cooldown') && V.isCooldownCode('ip_cooldown') && !V.isCooldownCode('daily_limit'),
+    'v35 M9: only the two cooldown codes carry a retry-after');
+  ok(JSON.stringify(V.faucetRetryParts(7 * 86400)) === JSON.stringify({ unit: 'days', n: 7 }) &&
+     JSON.stringify(V.faucetRetryParts(5 * 3600)) === JSON.stringify({ unit: 'hours', n: 5 }) &&
+     JSON.stringify(V.faucetRetryParts(30 * 60)) === JSON.stringify({ unit: 'minutes', n: 30 }) &&
+     JSON.stringify(V.faucetRetryParts(36 * 3600)) === JSON.stringify({ unit: 'days', n: 2 }) &&
+     JSON.stringify(V.faucetRetryParts(90 * 60)) === JSON.stringify({ unit: 'hours', n: 2 }),
+     'v35 M9: retry-after buckets — >=36h days, >=90m hours, else minutes (ceil)');
+  {
+    const okFetch = async (url) => {
+      if (url.endsWith('/claim')) return { ok: true, json: async () => ({ ok: true, txHash: '0xabc', amount: '10000000', explorerUrl: 'https://scan.example/tx/0xabc' }) };
+      return { ok: true, json: async () => ({ ready: true, claimAmount: '10,000,000', symbol: 'QOM', chain: 'ql1', token: 'native' }) };
+    };
+    const st = await V.fetchFaucetStatus(V.FAUCET_POOLS[1], okFetch);
+    ok(st && st.claimAmount === '10,000,000', 'v35 M9: status reads through and requires the claimAmount');
+    const done = await V.claimFaucet(V.FAUCET_POOLS[1], addrTo, okFetch);
+    ok(done.ok === true && done.txHash === '0xabc' && done.amount === '10000000', 'v35 M9: a claim returns the hash + amount');
+    const cdFetch = async () => ({ ok: false, json: async () => ({ ok: false, code: 'address_cooldown', retryAfterSec: 90000 }) });
+    const cd = await V.claimFaucet(V.FAUCET_POOLS[0], addrTo, cdFetch);
+    ok(cd.ok === false && cd.code === 'address_cooldown' && cd.retryAfterSec === 90000,
+      'v35 M9: a cooldown rejection keeps its code + retryAfterSec');
+    const net = await V.claimFaucet(V.FAUCET_POOLS[0], addrTo, async () => { throw new Error('down'); });
+    ok(net.ok === false && net.code === 'network', 'v35 M9: a failed request is the network code, distinct from Worker codes');
+    const badStatus = await V.fetchFaucetStatus(V.FAUCET_POOLS[0], async () => ({ ok: true, json: async () => ({ nope: 1 }) }));
+    ok(badStatus === null, 'v35 M9: a status without claimAmount reads as unavailable');
+  }
+  const liveSt = await V.fetchFaucetStatus(V.FAUCET_POOLS[1]).catch(() => null);
+  ok(liveSt === null || typeof liveSt.claimAmount === 'string',
+    'v35 M9: the live faucet status has the expected shape (any pool state, preparation mode included)',
+    liveSt ? String(liveSt.claimAmount) : 'unreachable');
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    ok(html.includes('id="faucetOverlay"') && html.includes('id="faucetPools"') && html.includes('id="faucetCloseBtn"') &&
+       html.includes('id="lookupMatches"'),
+       'v35: ' + label + ' carries the faucet sheet and the lookup matches box');
+  }
+  ok((VS.match(/js-faucet-open/g) || []).length >= 3 && VS.includes('fb.onclick = () => openFaucet();'),
+    'v35 M9: faucet entry points — the DEX header pill + both gas-shortage guidances');
+
+  /* ---- M10: the DEX header extras ---- */
+  ok(VS.includes('dex-deposit') && VS.includes('id="dexCopyAddrBtn"') && VS.includes('?wallet=1&send=1') &&
+     VS.includes('navigator.clipboard.writeText(pwSession.address)'),
+     'v35 M10: the DEX header carries the deposit card (address + copy) and the Send pill jump');
+
+  /* ---- D10: price impact ---- */
+  ok(Math.abs(V.priceImpactPct(1000n, 990n, 1000n) - 1) < 1e-9 && V.priceImpactPct(1000n, 1000n, 1000n) === 0 &&
+     V.priceImpactPct(1000n, 500n, null) === null && V.priceImpactPct(1000n, 500n, 0n) === null,
+     'v35 D10: impact = (1 - out/spot) x 100; an unknown or empty spot reads as no impact');
+  ok(V.dexSpotOutFromDust(10000n, 100n, 250n) === 25000n && V.dexSpotOutFromDust(10000n, 0n, 250n) === null &&
+     V.dexSpotOutFromDust(10000n, 100n, 0n) === null,
+     'v35 D10: the dust quote scales up to the spot output; a failed dust quote gives none');
+  const dexBody35 = VS.slice(VS.indexOf('async function dexRefreshQuote()'), VS.indexOf('const dexPathSyms'));
+  ok(dexBody35.includes('dexSpotOutFromDust(') && dexBody35.includes('priceImpactPct(') && dexBody35.includes('amountIn / 100n'),
+    'v35 D10: the quote flow prices the impact from a 1% dust quote along the winning path');
+  ok(VS.includes('q.impactPct >= 1') && VS.includes('T.dexImpact'), 'v35 D10: the impact line shows only at >= 1%');
+
+  /* ---- M12: directory partial matches at the lookup desk ---- */
+  ok(VS.includes("addEventListener('input', onLookupInput)") && VS.includes('function renderLookupMatches()') &&
+     VS.includes('searchNameDirectory(q, 12)') && VS.includes('T.dirBuilding'),
+     'v35 M12: typing in the lookup desk renders directory partial matches with the build progress');
+  ok(typeof V.nameDirStatus === 'function' && V.nameDirStatus().done >= 0 && typeof V.nameDirStatus().complete === 'boolean',
+    'v35 M12: the directory status reports done/total/complete');
+
+  /* ---- D13: bookmarks render the action buttons non-wired ---- */
+  const cardBody35 = VS.slice(VS.indexOf('async function postCard('), VS.indexOf('async function recawCard('));
+  ok(cardBody35.includes('opts.noActions') &&
+     cardBody35.includes("noAct ? ' disabled' : ' data-act=\"like\"'") &&
+     cardBody35.includes("noAct ? ' disabled' : ' data-act=\"recaw\"'") &&
+     cardBody35.includes("noAct ? ' disabled' : ' data-act=\"super\"'"),
+     'v35 D13: with noActions the like/Recaw/SuperLike buttons render hookless + disabled (my-state still paints)');
+  ok(cardBody35.includes('data-act="reply"') && cardBody35.includes('data-act="bookmark"'),
+    'v35 D13: reply + the bookmark toggle stay wired on every card');
+
+  /* ---- D20: the feed cache ---- */
+  {
+    const store = new Map();
+    globalThis.sessionStorage = {
+      getItem: k => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, String(v)),
+      removeItem: k => store.delete(k),
+    };
+    try {
+      const item = { type: 0, senderId: 190n, receiverId: 0n, ts: 1760000000, sender: '0x' + 'ab'.repeat(20), cawId: '0x' + 'cd'.repeat(32), text: 'hello', hash: '0x' + 'ef'.repeat(32), blockTs: 'x', block: 123, txIndex: 4 };
+      V.feedCacheSave([item]);
+      const back = V.feedCacheLoad();
+      ok(back.length === 1 && back[0].senderId === 190n && back[0].cawId === item.cawId && back[0].block === 123 && back[0].text === 'hello',
+        'v35 D20: a feed item round-trips through the cache (bigints revived)');
+      const big = { ...item, text: 'x'.repeat(30000) };
+      V.feedCacheSave([big, big, big]);
+      const capped = V.feedCacheLoad();
+      ok(capped.length >= 1 && capped.length < 3 && (store.get(V.FEED_CACHE_KEY) || '').length <= V.FEED_CACHE_MAX_CHARS,
+        'v35 D20: an oversized page sheds tail items until the record fits the cap');
+      ok(!/secret|phrase|private/i.test(store.get(V.FEED_CACHE_KEY) || ''), 'v35 D20: the cache holds public post data only');
+    } finally { delete globalThis.sessionStorage; }
+  }
+  const tlBody35 = VS.slice(VS.indexOf('async function loadTimeline(append)'), VS.indexOf('/* ---------- new-posts pill'));
+  ok(tlBody35.includes('feedCacheLoad()') && tlBody35.includes('feedCacheSave('),
+    'v35 D20: the timeline paints from the cache and re-saves the fresh head');
+
+  /* ---- every new string in both languages ---- */
+  for (const k of ['sendTitle', 'sendPickAsset', 'sendTo', 'sendPaste', 'sendBadAddress', 'sendAmount', 'sendOver', 'sendBook',
+                   'sendConfirmTitle', 'sendGas', 'sendSent', 'sendSaveOffer', 'sendLowGas', 'fcTitle', 'fcIntro', 'fcClaim',
+                   'fcDoneAmt', 'fcLeft', 'fcNotReady', 'fcLoadFailed', 'fcErrAddrCd', 'fcErrDaily', 'fcErrFailed',
+                   'dexImpact', 'dexDepositTitle', 'dexDepositSame', 'dexCopyAddr']) {
+    ok((VS.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v35: ' + k + ' exists in both languages');
   }
 }
 
