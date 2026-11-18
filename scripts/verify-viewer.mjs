@@ -43,6 +43,12 @@
    pool exists, two-hop via QOM where it does not), the swap
    calldata layouts, and the corrected 5,000,000 O SuperRecaw
    button label with the legacy-burn constants untouched.
+   v29 adds: the trade views' locked wall — no more dead end.
+   With a vault, the DEX / BurnHawk walls unlock in place
+   (the session is page-memory only, so the old wallet-link
+   round trip re-locked forever); without one, the wallet
+   link carries ?next= and pwStartSession continues back.
+   The wall renderer itself is run against a stub DOM below.
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -285,8 +291,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=28') && jaHtml.includes('?v=28'), 'shells reference ?v=28 assets');
-ok(swSrc.includes("caw-view-v28"), 'sw.js cache name is caw-view-v28');
+ok(enHtml.includes('?v=29') && jaHtml.includes('?v=29'), 'shells reference ?v=29 assets');
+ok(swSrc.includes("caw-view-v29"), 'sw.js cache name is caw-view-v29');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1195,7 +1201,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v28'), 'sw cache is caw-view-v28');
+  ok(swJs.includes('caw-view-v29'), 'sw cache is caw-view-v29');
 }
 
 /* ---- v28: plain send out of the posting wallet ---- */
@@ -1219,6 +1225,89 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok(sendBody.includes('openConfirmPanel({') && sendBody.includes('T.confirmTitleSend') && sendBody.includes('T.pwSendIrreversible'), 'send goes through the confirm panel with the cannot-be-undone warning');
   ok(sendBody.includes('txLinkHtml(sentHash)'), 'send success shows the record link on the card');
   ok((VS.match(/pwSendTitle:/g) || []).length === 2 && (VS.match(/confirmTitleSend:/g) || []).length === 2, 'send strings exist in both languages');
+}
+
+/* ---- v29: the trade views unlock in place (no dead end) ---- */
+{
+  const VS = read('../docs/viewer.js');
+  ok(!VS.includes('tradeUnlockedHtml'), 'v29: the dead-end tradeUnlockedHtml wall is gone');
+  ok(VS.includes('function renderTradeWall(area, kind)'), 'v29: the trade wall is a renderer');
+  ok(VS.includes("if (!pwSession) { renderTradeWall(area, 'dex'); return; }"), 'v29: the locked DEX view renders its wall');
+  ok(VS.includes("if (!pwSession) { renderTradeWall(area, 'burnhawk'); return; }"), 'v29: the locked BurnHawk view renders its wall');
+  ok(VS.includes("'?wallet=1&next=' + kind"), 'v29: the no-vault wall links to the wallet carrying ?next=<view>');
+  const wallBody = VS.slice(VS.indexOf('function renderTradeWall(area, kind)'), VS.indexOf('const assetRowHtml'));
+  ok(wallBody.includes('vaultDecrypt(pw, vaultLoad())') && wallBody.includes('await pwStartSession(secret)'),
+    'v29: the in-place unlock decrypts the vault and starts the session, like the wallet form');
+  ok(wallBody.includes("if (kind === 'dex') loadDexView(); else loadBurnView();"),
+    'v29: after the in-place unlock, the view\u2019s own loader replaces the wall');
+  ok(wallBody.includes('esc(T.pwUnlockWrong)') && wallBody.includes("e.key === 'Enter'"),
+    'v29: a wrong password is reported in place and Enter submits');
+  ok(VS.includes("else if (nextQuery === 'dex') location.replace(pageFile + '?dex=1');"),
+    'v29: pwStartSession continues to the DEX view for ?next=dex');
+  ok(VS.includes("else if (nextQuery === 'burnhawk') location.replace(pageFile + '?burnhawk=1');"),
+    'v29: pwStartSession continues to the BurnHawk view for ?next=burnhawk');
+  ok((VS.match(/pwNextDex:/g) || []).length === 2 && (VS.match(/pwNextBurn:/g) || []).length === 2,
+    'v29: the dex/burn continuation hints exist in both languages');
+  ok(VS.includes("nextQuery === 'dex' ? '<p class=\"pw-next-hint\">' + esc(T.pwNextDex)") &&
+     VS.includes("nextQuery === 'burnhawk' ? '<p class=\"pw-next-hint\">' + esc(T.pwNextBurn)"),
+    'v29: the locked wallet view shows the dex/burn continuation hints');
+  ok(!/sessionStorage/.test(VS), 'v29: no sessionStorage anywhere — the session stays page-memory only');
+
+  /* behavioural: run the real wall renderer against a stub DOM */
+  const mkEl = () => ({ innerHTML: '', value: '', disabled: false, listeners: {},
+    addEventListener(k, f) { this.listeners[k] = f; } });
+  const bootWall = vault => {
+    const els = {}, calls = [];
+    const $id = id => (els[id] = els[id] || mkEl());
+    const renderTradeWall = new Function('$', 'esc', 'T', 'pageFile', 'vaultLoad', 'vaultDecrypt',
+      'pwStartSession', 'syncChrome', 'renderComposer', 'loadDexView', 'loadBurnView',
+      wallBody + '\nreturn renderTradeWall;')(
+      $id, s => String(s),
+      { tradeNeedUnlock: 'GUIDE', mirrorOpenWallet: 'WALLET', pwLockedText: 'LOCKED',
+        pwPasswordPh: 'PW', pwUnlockBtn: 'UNLOCK', pwUnlockWrong: 'WRONG' },
+      'en.html', () => vault,
+      async pw => { if (pw !== 'hunter2') throw new Error('bad password'); return { kind: 'key', secret: 'S' }; },
+      async () => { calls.push('session'); },
+      () => {}, () => { calls.push('composer'); },
+      () => { calls.push('dex'); }, () => { calls.push('burn'); });
+    return { els, calls, renderTradeWall, area: mkEl() };
+  };
+  {
+    const w = bootWall(null);
+    w.renderTradeWall(w.area, 'dex');
+    ok(w.area.innerHTML.includes('?wallet=1&next=dex') && !w.area.innerHTML.includes('UnlockPass'),
+      'v29 behaviour: no vault -> the DEX wall is the guide + a ?next=dex wallet link, no form');
+    const w2 = bootWall(null);
+    w2.renderTradeWall(w2.area, 'burnhawk');
+    ok(w2.area.innerHTML.includes('?wallet=1&next=burnhawk'),
+      'v29 behaviour: no vault -> the BurnHawk wall links with ?next=burnhawk');
+  }
+  {
+    const w = bootWall({ v: 1, salt: 's', iv: 'i', ct: 'c' });
+    w.renderTradeWall(w.area, 'dex');
+    ok(w.area.innerHTML.includes('id="dexUnlockPass"') && w.area.innerHTML.includes('id="dexUnlockBtn"'),
+      'v29 behaviour: with a vault, the DEX wall renders its own unlock form');
+    w.els.dexUnlockPass.value = 'nope';
+    await w.els.dexUnlockBtn.onclick();
+    ok(w.els.dexUnlockErr.innerHTML.includes('WRONG') && w.calls.length === 0,
+      'v29 behaviour: a wrong password stays on the wall with the error shown');
+    w.els.dexUnlockPass.value = 'hunter2';
+    await w.els.dexUnlockBtn.onclick();
+    ok(w.calls.join(',') === 'session,composer,dex',
+      'v29 behaviour: the right password starts the session and the DEX panel replaces the wall');
+  }
+  {
+    const w = bootWall({ v: 1, salt: 's', iv: 'i', ct: 'c' });
+    w.renderTradeWall(w.area, 'burnhawk');
+    ok(w.area.innerHTML.includes('id="burnUnlockPass"') && w.area.innerHTML.includes('id="burnUnlockBtn"'),
+      'v29 behaviour: with a vault, the BurnHawk wall renders its own (burn-prefixed) unlock form');
+    w.els.burnUnlockPass.value = 'hunter2';
+    await w.els.burnUnlockPass.listeners.keydown({ key: 'Enter' });
+    /* the Enter handler fires tryUnlock without returning its promise */
+    await new Promise(r => setTimeout(r, 10));
+    ok(w.calls.join(',') === 'session,composer,burn',
+      'v29 behaviour: Enter submits, and the burn panel replaces the wall');
+  }
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

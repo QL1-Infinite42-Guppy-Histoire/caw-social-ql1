@@ -156,6 +156,8 @@ const T = {
     pwLockedTitle: 'This browser’s posting wallet is locked',
     pwLockedText: 'Type the password you set for it to unlock. Unlocking stays on for 15 minutes at a time.',
     pwNextProfile: 'You came here from Profile — once unlocked, you will be taken straight to your profile.',
+    pwNextDex: 'You came here from HuntersDEX — once unlocked, you will be taken straight to the swap panel.',
+    pwNextBurn: 'You came here from BurnHawk — once unlocked, you will be taken straight to the burn panel.',
     mediaAudio: 'Profile audio', mediaLbl: 'Profile media',
     mediaIcon: 'Icon', mediaHeader: 'Header image', mediaAudioLbl: 'Audio',
     mediaPick: 'Choose a file', mediaSet: 'Save', mediaClear: 'Remove',
@@ -407,6 +409,8 @@ const T = {
     pwLockedTitle: 'このブラウザの投稿用ウォレットはロック中です',
     pwLockedText: '設定したパスワードを入力すると開きます。開いた状態は15分まで続きます。',
     pwNextProfile: 'プロフィールから来ています。解除すると、そのままあなたのプロフィールへ進みます。',
+    pwNextDex: 'HuntersDEXから来ています。解除すると、そのまま交換の画面へ進みます。',
+    pwNextBurn: 'BurnHawkから来ています。解除すると、そのままバーンの画面へ進みます。',
     mediaAudio: 'プロフィールの音声', mediaLbl: 'プロフィールのメディア',
     mediaIcon: 'アイコン', mediaHeader: 'ヘッダー画像', mediaAudioLbl: '音声',
     mediaPick: 'ファイルを選ぶ', mediaSet: '保存', mediaClear: '削除',
@@ -4063,6 +4067,8 @@ function renderPwLocked(area) {
   area.innerHTML = '<h3>' + esc(T.pwLockedTitle) + '</h3>' +
     '<p>' + esc(T.pwLockedText) + '</p>' +
     (nextQuery === 'profile' ? '<p class="pw-next-hint">' + esc(T.pwNextProfile) + '</p>' : '') +
+    (nextQuery === 'dex' ? '<p class="pw-next-hint">' + esc(T.pwNextDex) + '</p>' : '') +
+    (nextQuery === 'burnhawk' ? '<p class="pw-next-hint">' + esc(T.pwNextBurn) + '</p>' : '') +
     '<input type="password" id="pwUnlockPass" autocomplete="current-password" placeholder="' + esc(T.pwPasswordPh) + '">' +
     '<p id="pwUnlockErr"></p>' +
     '<div class="row"><button id="pwUnlockBtn" type="button">' + esc(T.pwUnlockBtn) + '</button>' +
@@ -4110,6 +4116,13 @@ async function pwStartSession(secretObj) {
     const a = pwActing();
     location.replace(a ? profUrl(a.username) : pageFile + '?getname=1');
   }
+  /* v29: the same continuation for the trade views — a wallet
+     created or imported on the wallet view via ?next=dex /
+     ?next=burnhawk lands back on that view, whose locked wall
+     now offers the in-place unlock (renderTradeWall), so the
+     flow has no dead end. */
+  else if (nextQuery === 'dex') location.replace(pageFile + '?dex=1');
+  else if (nextQuery === 'burnhawk') location.replace(pageFile + '?burnhawk=1');
 }
 function renderPwRemove(box) {
   if (!box) return;
@@ -4420,12 +4433,45 @@ function confirmErrHtml(e) {
    with the posting wallet through sendLocalTx (its one
    broadcast path) and show the wallet page's gas warning,
    reworded for a page with no address on it, when the
-   posting wallet holds no QOM. Locked: the mirror-style
-   guide plus a wallet link. Quotes are live getAmountsOut
-   reads only — nothing here invents a number. */
-const tradeUnlockedHtml = () =>
-  '<div class="nt-guide"><p>' + esc(T.tradeNeedUnlock) + '</p>' +
-  '<p><a class="nt-wallet-link" href="' + pageFile + '?wallet=1">' + esc(T.mirrorOpenWallet) + '</a></p></div>';
+   posting wallet holds no QOM. Locked: an in-place unlock
+   wall when this browser holds a vault (v29 — the session is
+   page-memory only, so routing the unlock through the wallet
+   view could never work: every navigation re-locks), else
+   the guide plus a wallet link carrying ?next= so a fresh
+   create/import lands back here. Quotes are live
+   getAmountsOut reads only — nothing here invents a number. */
+function renderTradeWall(area, kind) {
+  if (!vaultLoad()) {
+    area.innerHTML =
+      '<div class="nt-guide"><p>' + esc(T.tradeNeedUnlock) + '</p>' +
+      '<p><a class="nt-wallet-link" href="' + pageFile + '?wallet=1&next=' + kind + '">' + esc(T.mirrorOpenWallet) + '</a></p></div>';
+    return;
+  }
+  const p = kind === 'dex' ? 'dex' : 'burn';
+  area.innerHTML =
+    '<div class="nt-guide"><p>' + esc(T.tradeNeedUnlock) + '</p>' +
+    '<p>' + esc(T.pwLockedText) + '</p>' +
+    '<input type="password" id="' + p + 'UnlockPass" autocomplete="current-password" placeholder="' + esc(T.pwPasswordPh) + '">' +
+    '<p id="' + p + 'UnlockErr"></p>' +
+    '<div class="row"><button id="' + p + 'UnlockBtn" type="button">' + esc(T.pwUnlockBtn) + '</button></div></div>';
+  const tryUnlock = async () => {
+    const pw = $(p + 'UnlockPass').value;
+    const err = $(p + 'UnlockErr');
+    const btn = $(p + 'UnlockBtn'); btn.disabled = true;
+    try {
+      const secret = await vaultDecrypt(pw, vaultLoad());
+      $(p + 'UnlockPass').value = '';
+      await pwStartSession(secret);
+      syncChrome(); renderComposer();
+      if (kind === 'dex') loadDexView(); else loadBurnView();
+    } catch (e) {
+      err.innerHTML = '<span class="err">' + esc(T.pwUnlockWrong) + '</span>';
+      btn.disabled = false;
+    }
+  };
+  $(p + 'UnlockBtn').onclick = tryUnlock;
+  $(p + 'UnlockPass').addEventListener('keydown', e => { if (e.key === 'Enter') tryUnlock(); });
+}
 const assetRowHtml = (sym, id) =>
   '<div class="asset-row"><span class="asset-sym">' + esc(sym) + '</span>' +
   '<span class="asset-amt" id="' + id + '">…</span></div>';
@@ -4444,7 +4490,7 @@ let burnState = null;   // {hawkBal, phoenixBal, hawkDec, phoenixDec}
 function loadBurnView() {
   const area = $('burnArea');
   if (!area) return;
-  if (!pwSession) { area.innerHTML = tradeUnlockedHtml(); return; }
+  if (!pwSession) { renderTradeWall(area, 'burnhawk'); return; }
   area.innerHTML =
     '<section class="block"><p>' + esc(T.bhIntro) + '</p>' +
     '<div class="asset-list">' + assetRowHtml('HAWK', 'bhHawkBal') + assetRowHtml('PHOENIX', 'bhPhoenixBal') + '</div>' +
@@ -4556,7 +4602,7 @@ let dexQuoteTimer = 0;
 function loadDexView() {
   const area = $('dexArea');
   if (!area) return;
-  if (!pwSession) { area.innerHTML = tradeUnlockedHtml(); return; }
+  if (!pwSession) { renderTradeWall(area, 'dex'); return; }
   if (!dexState) {
     dexState = { fromId: 'qom', toId: 'o', balances: {}, decimals: {}, qomBal: null,
       quote: null, quoteState: 'idle', seq: 0, amountStr: '' };
