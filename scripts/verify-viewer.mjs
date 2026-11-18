@@ -77,6 +77,19 @@
    and cross-checked against the panel's resolution. The tip
    money rules are exported and unit-checked; the sheet, the
    confirm flow and the Following walk run against stub DOMs.
+   v32 adds (app-parity batch 2): @mention candidates from the
+   whole-name directory, cawl shortening written back into the
+   composer before the confirm sheet, the per-wallet plain-post
+   draft (restore / discard / autosave; reply and quote never
+   touch it), the in-composer name picker, attachment
+   thumbnails with per-image remove, own-post insertion at the
+   feed head with scanned-record reconciliation, the on-device
+   my-actions record painting like/Recaw lit, the protocol
+   action costs in the composer and the confirm panels (plus
+   the SuperLike sheet's author address line), and reply/quote
+   opening the composer in place as a sheet. The pure helpers
+   are unit-checked; the composer cluster runs against a stub
+   DOM below.
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -319,8 +332,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=31') && jaHtml.includes('?v=31'), 'shells reference ?v=31 assets');
-ok(swSrc.includes("caw-view-v31"), 'sw.js cache name is caw-view-v31');
+ok(enHtml.includes('?v=32') && jaHtml.includes('?v=32'), 'shells reference ?v=32 assets');
+ok(swSrc.includes("caw-view-v32"), 'sw.js cache name is caw-view-v32');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1229,7 +1242,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v31'), 'sw cache is caw-view-v31');
+  ok(swJs.includes('caw-view-v32'), 'sw cache is caw-view-v32');
 }
 
 /* ---- v28: plain send out of the posting wallet ---- */
@@ -1391,7 +1404,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
      against a stub DOM, sharing one sessionStorage across boots
      (a boot = one full page load = one navigation). */
   const mkEl = () => ({ innerHTML: '', value: '', textContent: '', disabled: false, className: '',
-    dataset: {}, listeners: {},
+    style: {}, dataset: {}, listeners: {},
     classList: { toggle() {}, add() {}, remove() {} },
     addEventListener(k, f) { this.listeners[k] = f; },
     before() {}, focus() {}, scrollIntoView() {},
@@ -1423,6 +1436,8 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       'loadPostPage', 'loadProfile', 'loadBookmarksView', 'loadReactionsView', 'loadMirrorView',
       'loadDexView', 'loadBurnView', 'loadTimeline', 'refreshHomeFeed', 'avatarFor', 'avatarHtml', 'fmtQcaw', 'textBytes',
       'pendingComposeRef', 'composerRef', 'compDraft', 'compFiles', 'mirrorNotice',
+      'compDraftFor', 'compDraftRestored', 'compDraftTimer', 'compPrepping', 'compFrag',
+      'compDirState', 'compNoteState', 'composeHomeSlot',
       clusterSrc + '\nreturn { pwStartSession, pwRestoreSession, pwLock, pwUnlocked };')(
       $id, doc, mkStorage(), sessionStore,
       { replace: u => calls.push('replace:' + u), href: '' },
@@ -1438,7 +1453,8 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       () => { calls.push('dex'); probe.unlockedAtDex = holder.api ? holder.api.pwUnlocked() : null; },
       () => calls.push('burn'), () => calls.push('timeline'), () => calls.push('timeline'),
       async () => null, () => '', x => String(x), V.textBytes,
-      null, null, '', [], '');
+      null, null, '', [], '',
+      null, false, null, false, null, null, '', null);
     holder.api = api;
     return { api, els, calls, bodyCls, probe };
   };
@@ -1863,6 +1879,440 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     try { await t.captured.confirms[0].onSign(); } catch (e) { threw = e; }
     ok(threw && threw.message === 'shortfall-tip' && t.captured.sends.length === 0,
       'v31 behaviour: a balance that fell short by send time refuses the tip');
+  }
+}
+
+/* ---- v32: composer parity batch 2 (M3, M4, D1–D7) ---- */
+console.log('— v32: mentions, shortening write-back, drafts, picker, thumbs, own-post, my-actions, costs, in-place composer —');
+{
+  const E18_32 = 10n ** 18n;
+  const VS = read('../docs/viewer.js');
+  const css32 = read('../docs/style.css');
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    for (const id of ['namePickerOverlay', 'namePickerList', 'namePickerTitle', 'namePickerCancel',
+                      'composeOverlay', 'composeModalSlot', 'composeModalClose']) {
+      ok(html.includes('id="' + id + '"'), 'v32: ' + label + ' carries #' + id);
+    }
+  }
+  for (const k of ['compCost', 'compCostFrom', 'compPostAs', 'draftRestored', 'draftDiscard',
+                   'draftAutoSaved', 'confirmCostLbl', 'slAuthorAddr', 'dirBuilding', 'compCloseLbl']) {
+    ok((VS.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v32: ' + k + ' exists in both languages');
+  }
+  ok(VS.includes('function openNamePicker') && VS.includes('function openComposeModal') &&
+     VS.includes('function closeComposeModal') && VS.includes('function paintCompFiles') &&
+     VS.includes('function paintMentions') && VS.includes('function noteOwnPost') &&
+     VS.includes('function insertOwnPostIntoFeed') && VS.includes('ensureNameDirectory'),
+    'v32: the picker, the compose sheet, thumbnails, mentions and own-post insertion exist');
+  ok((VS.split('T.confirmCostLbl').length - 1) === 3,
+    'v32: the protocol cost line appears in the post, like/recaw and follow confirm panels');
+  ok(VS.includes('[T.slAuthorAddr,'), 'v32: the SuperLike sheet carries the author owner address line');
+  const cardBody32 = VS.slice(VS.indexOf('async function postCard('), VS.indexOf('async function recawCard('));
+  ok(cardBody32.includes('MY_KIND_LIKE') && cardBody32.includes('data-myrecaw'),
+    'v32: post cards paint my like/Recaw state from the on-device record');
+  const simpleBody = VS.slice(VS.indexOf('async function doSimpleAction('), VS.indexOf('/* ----- the X action row'));
+  ok(simpleBody.indexOf('myMark(pwSession.address, acting.id, kind, target.cawId, true)') >= 0 &&
+     simpleBody.indexOf('myMark(pwSession.address, acting.id, kind, target.cawId, true)') <
+     simpleBody.indexOf('submitLocalAction') &&
+     simpleBody.includes('myMark(pwSession.address, acting.id, kind, target.cawId, false)'),
+    'v32: like/Recaw are recorded as mine before the send and unmarked on failure');
+  const srcBody = VS.slice(VS.indexOf('async function performSuperRecaw('), VS.indexOf('async function performSuperRecawBurn('));
+  ok(srcBody.indexOf('submitLocalAction') >= 0 &&
+     srcBody.indexOf('submitLocalAction') < srcBody.indexOf('myMark(pwSession.address, acting.id, MY_KIND_RECAW, a.cawId, true)'),
+    'v32: a SuperRecaw records the Recaw once the Recaw leg itself has landed');
+  const compRefBody = VS.slice(VS.indexOf('function setComposerRef('), VS.indexOf('function renderComposer() {'));
+  ok(compRefBody.includes('openComposeModal()') && compRefBody.includes("'?compose=' + kind"),
+    'v32: reply/quote opens the in-place sheet, with the ?compose= navigation kept as the fallback');
+  ok(css32.includes('.x-recaw.on') && css32.includes('.comp-thumb') && css32.includes('.mention-chip') &&
+     css32.includes('.name-pick-row') && css32.includes('.comp-cost'),
+    'v32: the stylesheet carries the lit Recaw, thumbnails, mention chips, picker rows and cost line');
+
+  /* unit: the mention fragment rule (the app's) */
+  ok(JSON.stringify(V.mentionFragmentAt('hello @nep', 10)) === JSON.stringify({ partial: 'nep', atIndex: 6 }),
+    'v32 unit: a mention fragment at the caret is found');
+  ok(V.mentionFragmentAt('a@b', 3) === null, 'v32 unit: a glued @ (email-like) is not a mention');
+  ok(V.mentionFragmentAt('hi @', 4) === null, 'v32 unit: an empty fragment is not a mention');
+  ok(V.mentionFragmentAt('no at sign', 5) === null, 'v32 unit: no @, no fragment');
+  { const f = V.mentionFragmentAt('x @Ne', 5);
+    ok(f && f.partial === 'ne' && f.atIndex === 2, 'v32 unit: the fragment is lowercased'); }
+
+  /* unit: URL extraction + the shortening write-back */
+  ok(JSON.stringify(V.extractUrls('(see https://example.com/a) and https://x.co/b, plus https://x.co/b,')) ===
+     JSON.stringify(['https://example.com/a', 'https://x.co/b']),
+    'v32 unit: URLs are trimmed of sentence punctuation and deduped');
+  const LONG_URL = 'https://example.com/' + 'a'.repeat(40);
+  const SHORT_URL = 'https://c.qql1.com/Ab3dEf';
+  { const out = await V.shortenUrlsInText('look ' + LONG_URL + ' end', async () => SHORT_URL);
+    ok(out === 'look ' + SHORT_URL + ' end', 'v32 unit: a long URL is replaced by its short form'); }
+  { const out = await V.shortenUrlsInText('look ' + LONG_URL, async () => { throw new Error('down'); });
+    ok(out === 'look ' + LONG_URL, 'v32 unit: a shortening failure keeps the original URL'); }
+  { let calls = 0;
+    const out = await V.shortenUrlsInText('tiny https://x.co/a', async () => { calls++; return SHORT_URL; });
+    ok(calls === 0 && out === 'tiny https://x.co/a', 'v32 unit: a URL too short to gain is never sent to cawl'); }
+
+  /* unit: protocol costs */
+  ok(V.composeCostRaw('post') === 5000n * E18_32 && V.composeCostRaw('reply') === 5000n * E18_32 &&
+     V.composeCostRaw('quote') === 5000n * E18_32,
+    'v32 unit: post, reply and quote all cost the 5,000 post price');
+  ok(V.LIKE_COST_RAW === 2000n * E18_32 && V.RECAW_COST_RAW === 4000n * E18_32 && V.FOLLOW_COST_RAW === 30000n * E18_32,
+    'v32 unit: like 2,000 / recaw 4,000 / follow 30,000');
+
+  /* unit: directory ranking */
+  V.nameDirSetForTest(['', 'neptune', 'neo', 'xneptune', 'alice', 'neptune2']);
+  ok(JSON.stringify(V.searchNameDirectory('neptune', 6).map(h => h.id)) === JSON.stringify([1, 5, 3]),
+    'v32 unit: directory search ranks exact, then prefix, then substring');
+  ok(JSON.stringify(V.searchNameDirectory('nep', 6).map(h => h.id)) === JSON.stringify([1, 5, 3]),
+    'v32 unit: prefix matches come before substring matches, in id order');
+  ok(V.searchNameDirectory('', 6).length === 0 && V.searchNameDirectory('zzz', 6).length === 0,
+    'v32 unit: empty and unmatched queries find nothing');
+
+  /* unit: drafts + my-actions over a stub store */
+  const store32 = new Map();
+  globalThis.localStorage = {
+    getItem: k => (store32.has(k) ? store32.get(k) : null),
+    setItem: (k, v) => store32.set(k, String(v)),
+    removeItem: k => store32.delete(k),
+  };
+  try {
+    const A32 = '0xAaAa000000000000000000000000000000000001', B32 = '0xBbBb000000000000000000000000000000000002';
+    V.draftSave(A32, 'hello draft', 7n);
+    const d = V.draftLoad(A32);
+    ok(d && d.text === 'hello draft' && d.actingId === '7', 'v32 unit: a draft round-trips per wallet');
+    ok(V.draftLoad(B32) === null, 'v32 unit: another wallet has no draft');
+    V.draftClear(A32);
+    ok(V.draftLoad(A32) === null && !store32.has(V.draftKeyFor(A32)), 'v32 unit: clearing removes the record for good');
+    const CID32 = '0x' + 'ef'.repeat(32);
+    V.myMark(A32, 7n, V.MY_KIND_LIKE, CID32, true);
+    ok(V.myHas(A32, 7n, 1, CID32) === true && V.myHas(A32, 8n, 1, CID32) === false && V.myHas(A32, 7n, 2, CID32) === false,
+      'v32 unit: my-actions are scoped to the acting name and the kind');
+    ok((store32.get(V.MYACTIONS_KEY_PREFIX + A32.toLowerCase()) || '').includes('1:7:' + CID32),
+      'v32 unit: my-actions persist to the on-device store');
+    V.myMark(A32, 7n, 1, CID32, false);
+    ok(V.myHas(A32, 7n, 1, CID32) === false, 'v32 unit: unmarking removes the record');
+    V.myObserveItems(A32, [7n, 8n], [
+      { type: 1, senderId: 8n, cawId: CID32 },
+      { type: 2, senderId: 9n, cawId: CID32 },
+      { type: 0, senderId: 7n, cawId: CID32 },
+    ]);
+    ok(V.myHas(A32, 8n, 1, CID32) === true && V.myHas(A32, 9n, 2, CID32) === false,
+      'v32 unit: observation learns only my own names\u2019 likes/Recaws');
+  } finally { delete globalThis.localStorage; }
+  /* behavioural: the composer cluster against a stub DOM.
+     The stub DOM is minimal but honest about identity: $()
+     memoizes one element per id, elements track their parent
+     and children, so moving the composer into the sheet and
+     back is observable. (The stub textarea does not parse the
+     HTML the way a real one does, so the draft-load check
+     reads the card HTML, not the element's value.) */
+  const compSrc = VS.slice(VS.indexOf('function setComposerRef('), VS.indexOf('/* ----- action buttons on post cards'));
+  const ME32 = '0x1111111111111111111111111111111111111111';
+  const fmtQ32 = raw => { const s = BigInt(raw).toString().padStart(19, '0');
+    const w = s.slice(0, -18).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+    const f = s.slice(-18).replace(/0+$/, ''); return f ? w + '.' + f.slice(0, 6) : w; };
+  const mkCompEl = () => {
+    const el = { innerHTML: '', textContent: '', value: '', disabled: false, className: '',
+      style: {}, dataset: {}, children: [], parentNode: null, listeners: {}, onclick: null,
+      firstChild: { textContent: '' }, selectionStart: 0,
+      classList: { _s: new Set(),
+        toggle(c, on) { if (on === undefined) on = !this._s.has(c); on ? this._s.add(c) : this._s.delete(c); },
+        add(c) { this._s.add(c); }, remove(c) { this._s.delete(c); }, contains(c) { return this._s.has(c); } },
+      addEventListener(k, f) { this.listeners[k] = f; },
+      appendChild(c) { c.parentNode = el; el.children.push(c); return c; },
+      insertBefore(c, ref) { c.parentNode = el; const i = ref ? el.children.indexOf(ref) : -1;
+        if (i >= 0) el.children.splice(i, 0, c); else el.children.push(c); return c; },
+      querySelector(sel) { if (sel === '#compFiles') return el._fi || (el._fi = mkCompEl());
+        if (sel === '.comp-ref') return el._ref || (el._ref = mkCompEl()); return mkCompEl(); },
+      querySelectorAll() { return []; },
+      setAttribute() {}, focus() {}, scrollIntoView() {}, setSelectionRange(p) { el.selectionStart = p; },
+      dispatchEvent() { return true; },
+      before(r) { el._beforeRow = r; },
+    };
+    Object.defineProperty(el, 'nextSibling', { get() {
+      if (!el.parentNode) return null;
+      const sib = el.parentNode.children, i = sib.indexOf(el);
+      return i >= 0 && i + 1 < sib.length ? sib[i + 1] : null; } });
+    let _html = '';
+    Object.defineProperty(el, 'innerHTML', {
+      get() { return _html; },
+      set(v) { _html = String(v);
+        if (v === '') { for (const c of el.children) c.parentNode = null; el.children = []; } } });
+    return el;
+  };
+  const LONG_URL32 = 'https://example.com/' + 'a'.repeat(40);
+  const SHORT_URL32 = 'https://c.qql1.com/Ab3dEf';
+  const CID32 = '0x' + 'ab'.repeat(32);
+  const bootComp = ({ names, actingId, dirKick }) => {
+    const els = {}, captured = { confirms: [], submits: [], noted: [], inserted: [],
+      timelineCalls: 0, setActing: null, dirKicks: 0, indexItems: [] };
+    const $id = id => (els[id] = els[id] || mkCompEl());
+    const doc = { body: { classList: { toggle() {} } },
+      createElement: () => mkCompEl(), createTextNode: t => ({ textContent: t }) };
+    const acting = { current: names.find(n => n.id === actingId) || null };
+    const session = { address: ME32, keyBytes: new Uint8Array([1]) };
+    const loc = { href: '', search: '' };
+    const holder = { api: null };
+    const api = new Function('$', 'document', 'location', 'pageFile', 'esc', 'T',
+      'pwUnlocked', 'pwActing', 'pwSession', 'pwNames', 'pwActingId', 'pwSetActing', 'pwTouch', 'pwLoadNames',
+      'avatarFor', 'avatarHtml', 'resolveName', 'fmtQcaw', 'textBytes', 'postRefMarker', 'appendPostRef', 'parsePostText',
+      'composeCostRaw', 'draftLoad', 'draftSave', 'draftClear', 'ensureNameDirectory',
+      'mentionFragmentAt', 'searchNameDirectory', 'shortenUrlsInText', 'shortenViaCawl',
+      'openConfirmPanel', 'submitLocalAction', 'randomCawId', 'mediaAttach', 'mirrorResolveAfterPost',
+      'indexItem', 'noteOwnPost', 'insertOwnPostIntoFeed', 'hydrateAttachmentsIn',
+      'loadPostPage', 'loadProfile', 'loadBookmarksView',
+      'pendingComposeRef', 'composerRef', 'compDraft', 'compFiles', 'filesTx', 'filesCaw', 'mirrorNotice',
+      'compDraftFor', 'compDraftRestored', 'compDraftTimer', 'compPrepping', 'compFrag', 'compDirState', 'compNoteState', 'composeHomeSlot',
+      compSrc + '\nreturn { renderComposer, setComposerRef, paintMentions, openNamePicker, ' +
+      'openComposeModal, closeComposeModal, state: () => ({ draft: compDraft, ref: composerRef, ' +
+      'files: compFiles, restored: compDraftRestored, frag: compFrag }) };')(
+      $id, doc, loc, 'en.html', s => String(s),
+      { compHintLocked: 'HINT', compHintSetupBtn: 'SETUP', compHintNoName: 'NONAME',
+        compZeroBalance: 'ZERO', compReplyingTo: 'Replying to {name}', compQuoting: 'Quoting {name}',
+        compCancelRef: 'CANCELREF', compPh: 'PH', compPostBtn: 'POST', compBytes: '{n}',
+        attachLbl: 'ATTACH', attachSelected: '{n} selected', attachBusy: 'BUSY',
+        attachDone: 'DONE {n}', attachFail: 'FAIL',
+        draftRestored: 'Draft restored', draftDiscard: 'Throw away',
+        draftAutoSaved: 'Drafts save on this device as you type.',
+        dirBuilding: 'Reading the name list… {done} / {total}', compPostAs: 'Post as',
+        compCost: 'Post cost: {cost} qCAW',
+        compCostFrom: "Deducted from the name's deposited balance (balance: {balance} qCAW)",
+        confirmTitlePost: 'POSTTITLE', confirmAsLbl: 'AS', confirmTextLbl: 'TEXT',
+        confirmCostLbl: 'Cost', compTooLong: 'TOOLONG', unknownName: 'name #' },
+      () => true, () => acting.current, session, names, actingId,
+      id => { captured.setActing = id; acting.current = names.find(n => n.id === id) || null; holder.api.renderComposer(); },
+      () => {}, async () => {},
+      async () => null, () => '', async () => 'alice', fmtQ32, V.textBytes, V.postRefMarker,
+      V.appendPostRef, V.parsePostText, V.composeCostRaw, V.draftLoad, V.draftSave, V.draftClear,
+      async () => { captured.dirKicks++; if (dirKick) await dirKick(); return true; },
+      V.mentionFragmentAt, V.searchNameDirectory, V.shortenUrlsInText,
+      async url => url.includes('example.com') ? SHORT_URL32 : null,
+      opts => { captured.confirms.push(opts); },
+      async (kb, action) => { captured.submits.push(action); return { hash: '0x' + 'cd'.repeat(32) }; },
+      V.randomCawId, async () => {}, () => {},
+      it => captured.indexItems.push(it), it => captured.noted.push(it),
+      async it => { captured.inserted.push(it); }, async () => {},
+      () => {}, () => {}, () => {},
+      null, null, '', [], null, null, '',
+      null, false, null, false, null, null, '', null);
+    holder.api = api;
+    const homeParent = mkCompEl();
+    homeParent.appendChild($id('composerArea'));
+    $id('viewHome').style.display = '';
+    $id('viewPost').style.display = 'none';
+    return { api, els, captured, homeParent, loc };
+  };
+  const tick32 = ms => new Promise(r => setTimeout(r, ms));
+
+  /* D1 + D6: the stored draft restores with its notice, the
+     cost line shows the price and the balance, discard clears
+     the record, typing autosaves, and reply text never lands
+     in the plain draft. */
+  {
+    const store = new Map();
+    globalThis.localStorage = {
+      getItem: k => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, String(v)),
+      removeItem: k => store.delete(k),
+    };
+    try {
+      V.draftSave(ME32, 'hello draft', 7n);
+      const names = [{ id: 7n, username: 'neptune', balance: 100n * E18_32 }];
+      const c = bootComp({ names, actingId: 7n });
+      c.api.renderComposer();
+      ok(c.els.composerArea.innerHTML.includes('hello draft') &&
+         c.els.composerArea.innerHTML.includes('Post cost: 5,000 qCAW') &&
+         c.els.composerArea.innerHTML.includes('(balance: 100 qCAW)'),
+        'v32 behaviour: the stored draft restores into the composer with the app cost line');
+      ok(c.els.compDraftNote.innerHTML.includes('Draft restored') &&
+         c.els.compDraftNote.innerHTML.includes('compDraftDiscard'),
+        'v32 behaviour: a restored draft shows the restored notice with its discard button');
+      c.els.compDraftDiscard.onclick();
+      ok(V.draftLoad(ME32) === null && c.api.state().draft === '',
+        'v32 behaviour: discarding the draft clears the record and the composer');
+      c.els.compText.value = 'fresh text';
+      c.els.compText.listeners.input();
+      await tick32(600);
+      ok(V.draftLoad(ME32) && V.draftLoad(ME32).text === 'fresh text',
+        'v32 behaviour: plain-post typing autosaves after the 500 ms debounce');
+      c.api.setComposerRef('reply', { senderId: 9n, cawId: CID32, text: 'orig' });
+      ok(c.api.state().ref && c.api.state().ref.kind === 'reply' &&
+         c.els.composerArea.innerHTML.includes('Replying to'),
+        'v32 behaviour: reply mode opens with the reply context');
+      c.els.compText.value = 'reply text';
+      c.els.compText.listeners.input();
+      await tick32(600);
+      ok(V.draftLoad(ME32).text === 'fresh text',
+        'v32 behaviour: reply text never overwrites the plain-post draft');
+      ok(c.captured.dirKicks >= 1, 'v32 behaviour: rendering the composer warms the name directory');
+    } finally { delete globalThis.localStorage; }
+  }
+
+  /* D2: the name picker lists names with balances and switches. */
+  {
+    const names = [{ id: 7n, username: 'neptune', balance: 100n * E18_32 },
+                   { id: 8n, username: 'alice', balance: 2500n * E18_32 }];
+    const c = bootComp({ names, actingId: 7n });
+    c.api.renderComposer();
+    ok(typeof c.els.compNameChip.onclick === 'function', 'v32 behaviour: with two names the chip opens the picker');
+    c.els.compNameChip.onclick();
+    ok(c.els.namePickerOverlay.style.display === '' && c.els.namePickerList.children.length === 2,
+      'v32 behaviour: the picker lists every name');
+    c.els.namePickerList.children[1].onclick();
+    ok(c.captured.setActing === 8n && c.els.namePickerOverlay.style.display === 'none',
+      'v32 behaviour: picking a name switches the acting name and closes the picker');
+    const solo = bootComp({ names: names.slice(0, 1), actingId: 7n });
+    solo.api.renderComposer();
+    ok(!solo.els.compNameChip.onclick, 'v32 behaviour: with one name the chip stays a plain label');
+  }
+
+  /* D3: thumbnails paint, remove, and picking appends to the cap. */
+  {
+    const c = bootComp({ names: [{ id: 7n, username: 'neptune', balance: 100n * E18_32 }], actingId: 7n });
+    c.api.renderComposer();
+    const fi = c.els.compStatus._beforeRow.querySelector('#compFiles');
+    fi.files = [{ name: 'a.png' }, { name: 'b.png' }];
+    fi.onchange();
+    ok(c.api.state().files.length === 2 && c.els.compThumbs.children.length === 2 &&
+       c.els.compFilesLbl.textContent.includes('2'),
+      'v32 behaviour: picked images show as thumbnails with the count');
+    c.els.compThumbs.children[0].children[1].onclick();
+    ok(c.api.state().files.length === 1 && c.els.compThumbs.children.length === 1,
+      'v32 behaviour: the thumbnail remove button drops that image');
+    fi.files = [{ name: 'c.png' }, { name: 'd.png' }, { name: 'e.png' }];
+    fi.onchange();
+    ok(c.api.state().files.length === 4,
+      'v32 behaviour: re-picking appends to the selection, capped at 4');
+  }
+
+  /* M3: mention candidates from the directory, picked at the caret. */
+  {
+    V.nameDirSetForTest(['', 'neptune', 'neo', 'alice']);
+    const c = bootComp({ names: [{ id: 7n, username: 'neptune', balance: 100n * E18_32 }], actingId: 7n });
+    c.api.renderComposer();
+    c.els.compText.value = 'hi @ne';
+    c.els.compText.selectionStart = 6;
+    c.api.paintMentions();
+    ok(c.els.compMentions.children.length === 2,
+      'v32 behaviour: typing @ne offers the directory matches as chips');
+    c.els.compMentions.children[0].onclick();
+    ok(c.els.compText.value === 'hi @neptune ' && c.els.compText.selectionStart === 12,
+      'v32 behaviour: picking a chip inserts @name at the caret');
+    c.els.compText.value = 'hi a@b';
+    c.els.compText.selectionStart = 7;
+    c.api.paintMentions();
+    ok(c.els.compMentions.style.display === 'none',
+      'v32 behaviour: a glued @ offers no candidates');
+  }
+
+  /* M4 + D4 + D6: the URL is shortened and written back before
+     the confirm sheet, the post's cost line rides the panel, the
+     signed text is the reviewed text, and success inserts the
+     post at the head without reloading the timeline. */
+  {
+    const store = new Map();
+    globalThis.localStorage = {
+      getItem: k => (store.has(k) ? store.get(k) : null),
+      setItem: (k, v) => store.set(k, String(v)),
+      removeItem: k => store.delete(k),
+    };
+    try {
+      V.draftSave(ME32, 'old draft', 7n);
+      const c = bootComp({ names: [{ id: 7n, username: 'neptune', balance: 100n * E18_32 }], actingId: 7n });
+      c.api.renderComposer();
+      c.els.compText.value = 'look ' + LONG_URL32;
+      c.els.compText.listeners.input();
+      await c.els.compPostBtn.onclick();
+      ok(c.captured.confirms.length === 1, 'v32 behaviour: posting opens the confirm panel');
+      const lines = c.captured.confirms[0].lines;
+      const textLine = lines.find(l => l[0] === 'TEXT');
+      ok(textLine && textLine[1].includes(SHORT_URL32) && !textLine[1].includes(LONG_URL32),
+        'v32 behaviour: the confirm sheet shows the shortened URL, not the long one');
+      ok(c.els.compText.value.includes(SHORT_URL32),
+        'v32 behaviour: the shortened text is written back into the editor before the confirm');
+      ok(lines.some(l => l[0] === 'Cost' && l[1] === '5,000 qCAW'),
+        'v32 behaviour: the post confirm panel carries the 5,000 cost line');
+      await c.captured.confirms[0].onSign();
+      ok(c.captured.submits.length === 1 && c.captured.submits[0].text.includes(SHORT_URL32),
+        'v32 behaviour: the signed text is the reviewed, shortened text');
+      await c.captured.confirms[0].afterSuccess();
+      ok(c.captured.indexItems.length === 1 && c.captured.noted.length === 1 &&
+         c.captured.inserted.length === 1 && c.captured.timelineCalls === 0,
+        'v32 behaviour: success indexes and inserts the post at the head instead of reloading the timeline');
+      ok(V.draftLoad(ME32) === null, 'v32 behaviour: a landed plain post clears the wallet draft');
+    } finally { delete globalThis.localStorage; }
+  }
+
+  /* D7: reply from a non-home view opens the sheet in place
+     and closing returns the composer home. */
+  {
+    const c = bootComp({ names: [{ id: 7n, username: 'neptune', balance: 100n * E18_32 }], actingId: 7n });
+    c.els.viewHome.style.display = 'none';
+    c.els.viewPost.style.display = '';
+    c.api.setComposerRef('reply', { senderId: 9n, cawId: CID32, text: 'orig' });
+    ok(c.loc.href === '' && c.els.composeOverlay.style.display === '' &&
+       c.els.composerArea.parentNode === c.els.composeModalSlot &&
+       c.api.state().ref && c.api.state().ref.kind === 'reply',
+      'v32 behaviour: reply off the home view opens the in-place sheet, with no navigation');
+    c.api.closeComposeModal();
+    ok(c.els.composeOverlay.style.display === 'none' &&
+       c.els.composerArea.parentNode === c.homeParent,
+      'v32 behaviour: closing the sheet returns the composer to its home slot');
+    const h = bootComp({ names: [{ id: 7n, username: 'neptune', balance: 100n * E18_32 }], actingId: 7n });
+    h.api.setComposerRef('quote', { senderId: 9n, cawId: CID32, text: 'orig' });
+    ok(h.loc.href === '' && h.els.composerArea.parentNode === h.homeParent &&
+       h.api.state().ref && h.api.state().ref.kind === 'quote',
+      'v32 behaviour: on the home view reply/quote still renders the home composer');
+  }
+
+  /* behavioural: my-Recaw painting (the guarded optimistic bump). */
+  {
+    const pmSrc = VS.slice(VS.indexOf('function paintMyRecaw('), VS.indexOf('async function doSimpleAction('));
+    const mkCard = count => {
+      const rb = { dataset: {}, _added: null, classList: { add(c) { rb._on = c; } },
+        querySelector: () => count, appendChild(el) { rb._added = el; } };
+      return { querySelector: () => rb, _rb: rb };
+    };
+    const cnt = { dataset: { raw: '2' }, textContent: '2' };
+    const card1 = mkCard(cnt), card2 = mkCard(null);
+    const paint = new Function('document', 'fmtCount',
+      pmSrc + '\nreturn paintMyRecaw;')(
+      { querySelectorAll: () => [card1, card2],
+        createElement: () => ({ className: '', dataset: {}, textContent: '' }) },
+      n => String(n));
+    paint(CID32);
+    ok(card1._rb._on === 'on' && cnt.dataset.raw === '3' && cnt.textContent === '3' &&
+       card1._rb.dataset.myrecaw === '1' && card2._rb._added && card2._rb._added.textContent === '1',
+      'v32 behaviour: a Recaw lights the row and bumps the count once, even with no count span');
+    paint(CID32);
+    ok(cnt.dataset.raw === '3' && cnt.textContent === '3',
+      'v32 behaviour: painting twice never counts the same Recaw twice');
+  }
+
+  /* behavioural: own-post pending record + insertion. */
+  {
+    const d4Src = VS.slice(VS.indexOf('const pendingOwn'), VS.indexOf('async function loadTimeline('));
+    const tl = { children: [], _qs: null,
+      querySelector() { return tl._qs; },
+      insertBefore(c, ref) { const i = ref ? tl.children.indexOf(ref) : -1;
+        if (i >= 0) tl.children.splice(i, 0, c); else tl.children.unshift(c); },
+      get firstChild() { return tl.children[0] || null; } };
+    const api = new Function('$', 'tlMode', 'rowFor', 'hydrateAttachmentsIn',
+      d4Src + '\nreturn { noteOwnPost, reconcileOwnPosts, insertOwnPostIntoFeed, ' +
+      'pending: () => [...pendingOwn.keys()] };')(
+      id => (id === 'timeline' ? tl : null), 'latest',
+      async a => ({ _for: a.cawId }), async () => {});
+    const item = { hash: '0xAB', cawId: CID32, type: 0, text: 'mine' };
+    api.noteOwnPost(item);
+    ok(api.pending().length === 1 && api.pending()[0] === '0xab',
+      'v32 behaviour: a posted tx is held pending under its lowercase hash');
+    api.reconcileOwnPosts([{ hash: '0xab' }]);
+    ok(api.pending().length === 0,
+      'v32 behaviour: the scanned copy graduates the pending post');
+    api.noteOwnPost(item);
+    await api.insertOwnPostIntoFeed(item);
+    ok(tl.children.length === 1 && tl.children[0]._for === CID32,
+      'v32 behaviour: a just-posted item inserts at the head of the Latest feed');
+    tl._qs = {};
+    await api.insertOwnPostIntoFeed(item);
+    ok(tl.children.length === 1, 'v32 behaviour: an already-present post is never inserted twice');
   }
 }
 

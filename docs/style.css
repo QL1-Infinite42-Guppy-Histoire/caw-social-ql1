@@ -444,6 +444,9 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
 .x-like.on { color: var(--like); }
 .x-like.on .icring svg { fill: currentColor; }
 .x-like.on .like-count { font-weight: 700; }
+/* v32 (D5): a Recaw I have taken paints lit, like the app's. */
+.x-recaw.on { color: var(--recaw); }
+.x-recaw.on .recaw-count { font-weight: 700; }
 .x-bm.on { color: var(--accent); }
 .x-super.has { color: var(--gold); }
 .x-super.has .sl-count { font-weight: 700; }
@@ -885,3 +888,30 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .mset-lbl { min-width: 92px; font-weight: 700; }
 .mset-pick, .comp-attach-btn { cursor: pointer; }
 .comp-attach { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+
+/* v32: composer parity — cost line, draft note, mention
+   candidates, attachment thumbnails, the name picker and the
+   in-place compose sheet. */
+.comp-cost { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
+.comp-draft-note { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
+.comp-mentions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.mention-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 999px; padding: 4px 10px 4px 4px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
+.mention-chip:hover { border-color: var(--accent); }
+.mention-ava { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; }
+.mention-ava img { width: 100%; height: 100%; object-fit: cover; }
+.comp-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+.comp-thumb { position: relative; display: inline-block; width: 72px; height: 72px; }
+.comp-thumb img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
+.comp-thumb-x { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 12px; line-height: 1; cursor: pointer; padding: 0; }
+.name-pick-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+.name-pick-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 12px; padding: 8px 10px; cursor: pointer; }
+.name-pick-row.on { border-color: var(--accent); }
+.name-pick-main { display: flex; flex-direction: column; gap: 2px; flex: 1 1 auto; min-width: 0; }
+.name-pick-name { font-weight: 700; }
+.name-pick-check { color: var(--accent); font-weight: 700; }
+/* The compose sheet sits BELOW the standard sheets (z 80):
+   the confirm panel must open over it when posting from it. */
+#composeOverlay { z-index: 75; }
+.compose-sheet { position: relative; }
+.compose-close { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--text); cursor: pointer; z-index: 1; }
+.compose-sheet .composer-card { border-bottom: 0; padding-top: 20px; }

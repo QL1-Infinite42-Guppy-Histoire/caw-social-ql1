@@ -302,6 +302,18 @@ const T = {
     tipDone: 'Tip sent 🎁',
     tipSelf: "You can't tip your own post.",
     tipShortfall: 'Not enough PHOENIX. Get PHOENIX on QL1 (for example by swapping, or by burning HAWK with BurnHawk), then try again.',
+    /* v32: composer parity — costs, drafts, mentions, the name
+       picker (the app's compose.* / draft.* wording; the web
+       names the in-name token qCAW, as everywhere else here) */
+    compCost: 'Post cost: {cost} qCAW',
+    compCostFrom: "Deducted from the name's deposited balance (balance: {balance} qCAW)",
+    compPostAs: 'Post as',
+    draftRestored: 'Draft restored', draftDiscard: 'Throw away',
+    draftAutoSaved: 'Drafts save on this device as you type.',
+    confirmCostLbl: 'Cost',
+    slAuthorAddr: "Author's address",
+    dirBuilding: 'Reading the name list… {done} / {total}',
+    compCloseLbl: 'Close composer',
     /* v22: HuntersDEX + BurnHawk (the app's v0.7.0 screens) */
     navDex: 'HuntersDEX', navBurn: 'BurnHawk',
     tradeNeedUnlock: 'This signs inside this page with the built-in posting wallet — set it up or unlock it first (in the menu). It spends from that wallet, not from a wallet app.',
@@ -577,6 +589,16 @@ const T = {
     tipDone: 'チップを送りました 🎁',
     tipSelf: '自分の投稿にはチップできません。',
     tipShortfall: 'PHOENIX が足りません。QL1 で PHOENIX を用意して（交換や、BurnHawk で HAWK をバーンするなど）もう一度お試しください。',
+    /* v32: composer parity (the app's compose.* / draft.*) */
+    compCost: '投稿コスト： {cost} qCAW',
+    compCostFrom: '名前の預け入れ残高から差し引かれます（残高： {balance} qCAW）',
+    compPostAs: 'この名前で投稿',
+    draftRestored: '下書きを復元しました', draftDiscard: '捨てる',
+    draftAutoSaved: '下書きは入力中にこの端末へ自動で保存されます。',
+    confirmCostLbl: 'コスト',
+    slAuthorAddr: '投稿者のアドレス',
+    dirBuilding: '名前の一覧を読んでいます… {done} / {total}',
+    compCloseLbl: '投稿画面を閉じる',
     /* v22: HuntersDEX + BurnHawk (the app's v0.7.0 screens) */
     navDex: 'HuntersDEX', navBurn: 'BurnHawk',
     tradeNeedUnlock: 'これはこのページ内蔵の投稿用ウォレットで署名します — 先に（メニューから）用意するか開いてください。ウォレットアプリではなく、このウォレットから支払います。',
@@ -1815,6 +1837,302 @@ function tipBlockReason(args) {
 }
 /** A PHOENIX balance read on QL1 (throws on RPC failure). */
 const phoenixBalanceOf = async addr => readUint(PHOENIX_TOKEN, SEL.balanceOf + encAddr(addr));
+/* --- Composer parity (v32; the app's actionCosts.ts / linkify.ts /
+   nameDirectory.ts / drafts.ts / myActions.ts) ---
+   Ports of the Android app's composer-support modules, copied not
+   reinvented: the protocol action costs, the mention fragment
+   rule, the URL trimming + cawl shortening write-back, the
+   whole-name directory walk, the per-wallet plain-post draft and
+   the on-device my-actions record. Pure logic + the same
+   localStorage guards as the bookmark store, so the harness can
+   verify them in Node. Nothing secret is stored: a draft is the
+   user's own post text; a my-actions record is a public action. */
+/* Protocol action costs, in whole in-name CAW (the values were
+   recovered from the CawActions contract's own storage and are
+   the app's lib/actionCosts.ts table). */
+const ACTION_COST_CAW = { post: 5000n, like: 2000n, recaw: 4000n, follow: 30000n, unfollow: 0n };
+const POST_COST_RAW = ACTION_COST_CAW.post * 10n ** 18n;
+const LIKE_COST_RAW = ACTION_COST_CAW.like * 10n ** 18n;
+const RECAW_COST_RAW = ACTION_COST_CAW.recaw * 10n ** 18n;
+const FOLLOW_COST_RAW = ACTION_COST_CAW.follow * 10n ** 18n;
+/** The in-name cost of composing: a post, a reply and a quote
+ *  all cost the post price (the app's composeCostRaw). */
+const composeCostRaw = kind => POST_COST_RAW;
+/* The mention fragment at the caret (the app's
+   mentionFragmentAt): walk back over [A-Za-z0-9] from the caret;
+   the run must be preceded by '@', and the '@' must not be glued
+   to a preceding word character (an email-like a@b is not a
+   mention). Null when there is no active fragment. */
+function mentionFragmentAt(text, cursor) {
+  const s = String(text || '');
+  let i = Math.max(0, Math.min(cursor, s.length));
+  const start = i;
+  while (i > 0 && /[A-Za-z0-9]/.test(s[i - 1])) i--;
+  if (i === start) return null;                  // empty fragment
+  if (i === 0 || s[i - 1] !== '@') return null;
+  if (i >= 2 && /[A-Za-z0-9]/.test(s[i - 2])) return null; // glued @
+  return { partial: s.slice(i, start).toLowerCase(), atIndex: i - 1 };
+}
+/* URL extraction with the app's trim rule: a candidate runs to
+   whitespace; trailing sentence punctuation and unbalanced
+   closers are not part of the URL. */
+const URL_TRAILING_PUNCT = '.,;:!?…、。！？';
+function trimUrlCandidate(raw) {
+  let s = String(raw || '');
+  while (s.length) {
+    const last = s[s.length - 1];
+    if (URL_TRAILING_PUNCT.includes(last)) { s = s.slice(0, -1); continue; }
+    if (last === ')' || last === ']' || last === '}') {
+      const open = last === ')' ? '(' : last === ']' ? '[' : '{';
+      const opens = s.split(open).length - 1, closes = s.split(last).length - 1;
+      if (closes > opens) { s = s.slice(0, -1); continue; }
+    }
+    if (last === '）' || last === '】') { s = s.slice(0, -1); continue; }
+    break;
+  }
+  return s;
+}
+const URL_CANDIDATE_RE = /https?:\/\/[^\s]+/gi;
+function extractUrls(text) {
+  const out = [];
+  for (const m of String(text || '').matchAll(URL_CANDIDATE_RE)) {
+    const url = trimUrlCandidate(m[0]);
+    if (url && !out.includes(url)) out.push(url);
+  }
+  return out;
+}
+/* The cawl issuing base ('https://c.qql1.com' — the browser
+   section's CAWL_BASE names the same host; kept as a length here
+   so this pure section stays self-contained). */
+const CAWL_SHORT_BASE_LEN = 'https://c.qql1.com'.length;
+/* Shorten long URLs in a post body through cawl and RETURN the
+   rewritten text (the app's shortenUrlsInText rule: the composer
+   writes the result back into the editor before the confirm
+   sheet, so the text the user reviews is the text that gets
+   signed). `shortenFn(url)` resolves the short URL or null; a
+   failure keeps the original URL. Only URLs long enough to
+   possibly come back shorter are sent, longest first. */
+async function shortenUrlsInText(text, shortenFn) {
+  const threshold = CAWL_SHORT_BASE_LEN + 1 + 6;
+  const candidates = extractUrls(text).filter(u => u.length > threshold)
+    .sort((a, b) => b.length - a.length);
+  let out = String(text || '');
+  for (const url of candidates) {
+    let short = null;
+    try { short = await shortenFn(url); } catch (e) { short = null; }
+    if (short && short.length < url.length) out = out.split(url).join(short);
+  }
+  return out;
+}
+/* --- the name directory (the app's nameDirectory.ts) ---
+   A persistent, incrementally-built directory of every CawName
+   username, so @mention candidates answer from the whole
+   directory instead of just the names seen in the feed. names[i]
+   holds the username of token id i (the contract's usernames(id)
+   reads the SHIFTED slot, so usernames(id-1) is the name of id —
+   the off-by-one the rest of this viewer already honours). The
+   walk stops at the first failed read: a half-known directory is
+   never presented as complete, and the next ensure resumes from
+   the watermark. */
+const NAME_DIR_KEY = 'caw-name-directory-v1';
+const NAME_DIR_BATCH = 120;
+let nameDir = { names: [''], upTo: 0 };
+let nameDirPromise = null;
+function nameDirLoad() {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    const raw = localStorage.getItem(NAME_DIR_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d && Array.isArray(d.names) && typeof d.upTo === 'number') {
+      nameDir = { names: d.names, upTo: d.upTo };
+    }
+  } catch (e) {}
+}
+function nameDirSave() {
+  if (typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(NAME_DIR_KEY, JSON.stringify({ upTo: nameDir.upTo, names: nameDir.names }));
+  } catch (e) {}
+}
+nameDirLoad();
+async function ensureNameDirectory(onProgress) {
+  if (nameDirPromise) return nameDirPromise;
+  nameDirPromise = (async () => {
+    try {
+      const total = Number(await readUint(CAW_NAME, SEL.totalSupply));
+      if (onProgress) onProgress(nameDir.upTo, total);
+      while (nameDir.upTo < total) {
+        const from = nameDir.upTo + 1;
+        const to = Math.min(total, from + NAME_DIR_BATCH - 1);
+        /* One JSON-RPC batch per chunk (the app's ethCallBatch
+           shape): the whole chunk of name reads in a single
+           request, answered by id. */
+        const reqs = [];
+        for (let id = from; id <= to; id++) {
+          reqs.push({ jsonrpc: '2.0', id, method: 'eth_call',
+            params: [{ to: CAW_NAME, data: SEL.usernames + word(BigInt(id - 1)) }, 'latest'] });
+        }
+        let byId = null;
+        try {
+          const res = await fetchTimeout(RPC, {
+            method: 'POST', headers: { 'content-type': 'application/json' },
+            body: JSON.stringify(reqs),
+          });
+          const j = await res.json();
+          if (Array.isArray(j)) {
+            byId = new Map();
+            for (const r of j) if (r && typeof r.id === 'number') byId.set(r.id, r);
+          }
+        } catch (e) { byId = null; }
+        if (!byId) break; // stop the contiguous run (the app's rule)
+        const chunk = [];
+        let failed = false;
+        for (let id = from; id <= to; id++) {
+          const r = byId.get(id);
+          if (!r || r.error || typeof r.result !== 'string') { failed = true; break; }
+          chunk[id - from] = decStringRet(r.result) || '';
+        }
+        if (failed) break; // stop the contiguous run (the app's rule)
+        for (let id = from; id <= to; id++) nameDir.names[id] = chunk[id - from] || '';
+        nameDir.upTo = to;
+        nameDirSave();
+        if (onProgress) onProgress(nameDir.upTo, total);
+      }
+      return nameDir.upTo >= total;
+    } catch (e) { return false; }
+    finally { nameDirPromise = null; }
+  })();
+  return nameDirPromise;
+}
+/** Ranked directory search (the app's searchDirectory): exact
+ *  match, then prefix matches, then substring matches, each in
+ *  id order. Returns up to `limit` of {id, name}. */
+function searchNameDirectory(query, limit) {
+  const q = String(query || '').trim().toLowerCase();
+  const lim = limit || 6;
+  if (!q) return [];
+  const exact = [], prefix = [], substr = [];
+  for (let id = 1; id < nameDir.names.length; id++) {
+    const name = nameDir.names[id];
+    if (!name) continue;
+    const low = name.toLowerCase();
+    if (low === q) exact.push({ id, name });
+    else if (low.startsWith(q)) prefix.push({ id, name });
+    else if (low.includes(q)) substr.push({ id, name });
+  }
+  return [...exact, ...prefix, ...substr].slice(0, lim);
+}
+/** Harness hook: replace the in-memory directory. */
+function nameDirSetForTest(names, upTo) {
+  nameDir = { names: (names || ['']).slice(), upTo: upTo == null ? (names || ['']).length - 1 : upTo };
+}
+/* --- the plain-post draft (the app's drafts.ts) ---
+   ONE draft per wallet address, plain posts only: the reply and
+   quote composers never load it and never overwrite it. It is
+   the user's own post text on their own device — not a secret —
+   in localStorage under 'caw-draft-<address>'. Clearing removes
+   the record, so a cleared draft can never resurrect. The v19
+   mirror inbox writes its received text into the same composer
+   through compDraft; once adopted, that text is the composer's
+   text and is kept by THIS store like any typed draft, while the
+   mirror record itself still clears on the next successful post
+   (mirrorResolveAfterPost), exactly as before. */
+const DRAFT_KEY_PREFIX = 'caw-draft-';
+const draftKeyFor = address => DRAFT_KEY_PREFIX + String(address || '').toLowerCase();
+function draftLoad(address) {
+  if (!address || typeof localStorage === 'undefined') return null;
+  try {
+    const raw = localStorage.getItem(draftKeyFor(address));
+    if (!raw) return null;
+    const d = JSON.parse(raw);
+    if (!d || typeof d.text !== 'string') return null;
+    return {
+      text: d.text,
+      actingId: d.actingId == null ? null : String(d.actingId),
+      savedAt: Number(d.savedAt) || 0,
+    };
+  } catch (e) { return null; }
+}
+function draftSave(address, text, actingId) {
+  if (!address || typeof localStorage === 'undefined') return;
+  try {
+    localStorage.setItem(draftKeyFor(address), JSON.stringify({
+      text: String(text || ''),
+      actingId: actingId == null ? null : String(actingId),
+      savedAt: Date.now(),
+    }));
+  } catch (e) {}
+}
+function draftClear(address) {
+  if (!address || typeof localStorage === 'undefined') return;
+  try { localStorage.removeItem(draftKeyFor(address)); } catch (e) {}
+}
+/* --- my actions (the app's myActions.ts, kinds 1/2) ---
+   An on-device record of the actions THIS wallet has taken, so
+   like / Recaw icons render lit on every render, the way the app
+   paints them. Keyed by the acting name: an action counts as
+   mine only while the name that took it is the acting name.
+   Kinds keep the app's numbering (1 = like, 2 = recaw/share);
+   the app's kind 3 (follow) is NOT duplicated here — the web's
+   follow state already comes from the follow index. The store
+   is a painting hint: the contract's like count stays the
+   authority for numbers, and a feed observation only ever ADDS
+   records for actions the chain itself shows. */
+const MYACTIONS_KEY_PREFIX = 'caw-myactions-';
+const MY_KIND_LIKE = 1, MY_KIND_RECAW = 2;
+const myActionsKeyFor = address => MYACTIONS_KEY_PREFIX + String(address || '').toLowerCase();
+const myActionEntry = (kind, actingId, target) =>
+  kind + ':' + String(actingId) + ':' + String(target || '').toLowerCase();
+const myActionsCache = new Map(); // lowercase address -> Set of entries
+function myLoadSet(address) {
+  const addr = String(address || '').toLowerCase();
+  if (!addr) return new Set();
+  const hit = myActionsCache.get(addr);
+  if (hit) return hit;
+  const set = new Set();
+  if (typeof localStorage !== 'undefined') {
+    try {
+      const arr = JSON.parse(localStorage.getItem(myActionsKeyFor(addr)) || 'null');
+      if (Array.isArray(arr)) for (const v of arr) if (typeof v === 'string') set.add(v);
+    } catch (e) {}
+  }
+  myActionsCache.set(addr, set);
+  return set;
+}
+function myPersistSet(address, set) {
+  if (typeof localStorage === 'undefined') return;
+  try { localStorage.setItem(myActionsKeyFor(address), JSON.stringify([...set])); } catch (e) {}
+}
+function myHas(address, actingId, kind, target) {
+  if (!address || actingId == null) return false;
+  return myLoadSet(address).has(myActionEntry(kind, actingId, target));
+}
+function myMark(address, actingId, kind, target, on) {
+  if (!address || actingId == null) return;
+  const set = myLoadSet(address);
+  const entry = myActionEntry(kind, actingId, target);
+  const had = set.has(entry);
+  if (on) set.add(entry); else set.delete(entry);
+  if (set.has(entry) !== had) myPersistSet(address, set);
+}
+/** Learn from scanned feed actions (the app's observe): a like
+ *  or share whose sender is one of my names is mine. Items are
+ *  raw feed actions ({type, senderId, cawId}). */
+function myObserveItems(address, myNameIds, items) {
+  if (!address || !items || !items.length) return;
+  const mine = new Set((myNameIds || []).map(id => String(id)));
+  if (!mine.size) return;
+  const set = myLoadSet(address);
+  let changed = false;
+  for (const it of items) {
+    if (!it || (it.type !== MY_KIND_LIKE && it.type !== MY_KIND_RECAW)) continue;
+    if (!mine.has(String(it.senderId))) continue;
+    const entry = myActionEntry(it.type, it.senderId, it.cawId);
+    if (!set.has(entry)) { set.add(entry); changed = true; }
+  }
+  if (changed) myPersistSet(address, set);
+}
 /* --- BurnHawk money rules (the app's burnHawk.ts) --- */
 const burnUnit = dec => 10n ** BigInt(dec);
 const burnStepRaw = dec => BURN_RATIO * burnUnit(dec);
@@ -2998,14 +3316,25 @@ async function postCard(a, opts) {
     html += '<div class="detail-date">' + esc(fullTimeStr(a.ts)) + '</div>';
   }
   const replyCount = refChildren(a.cawId, 'reply').length;
-  const recawCount = refChildren(a.cawId, 'share').length;
+  const shares = refChildren(a.cawId, 'share');
+  /* v32 (D5): my like / Recaw state paints lit from the
+     on-device record, the way the app does. The Recaw count
+     includes my own Recaw when the scan has not indexed it yet;
+     data-myrecaw marks that optimistic +1 so a later re-render
+     or the action's own success handler never counts it twice. */
+  const mineLike = myHas(pwSession && pwSession.address, pwActingId, MY_KIND_LIKE, a.cawId);
+  const mineRecaw = myHas(pwSession && pwSession.address, pwActingId, MY_KIND_RECAW, a.cawId);
+  const myShareScanned = mineRecaw && pwActingId != null &&
+    shares.some(s => String(s.senderId) === String(pwActingId));
+  const recawCount = shares.length + (mineRecaw && !myShareScanned ? 1 : 0);
   const saved = pwSession ? bmHas(pwSession.address, a.cawId) : false;
   html += '<div class="pfoot">' +
     '<button type="button" class="xact x-reply" data-act="reply" aria-label="' + esc(T.actReply) + '"><span class="icring">' + IC_REPLY + '</span>' +
     (replyCount > 0 ? '<span class="xcount">' + fmtCount(replyCount) + '</span>' : '') + '</button>' +
-    '<button type="button" class="xact x-recaw" data-act="recaw" aria-label="' + esc(T.actRecaw) + '"><span class="icring">' + IC_REPEAT + '</span>' +
-    (recawCount > 0 ? '<span class="xcount">' + fmtCount(recawCount) + '</span>' : '') + '</button>' +
-    '<button type="button" class="xact x-like" data-act="like" aria-label="' + esc(T.actLike) + '"><span class="icring">' + IC_HEART + '</span><span class="like-count xcount"></span></button>' +
+    '<button type="button" class="xact x-recaw' + (mineRecaw ? ' on' : '') + '" data-act="recaw"' +
+    (mineRecaw && !myShareScanned ? ' data-myrecaw="1"' : '') + ' aria-label="' + esc(T.actRecaw) + '"><span class="icring">' + IC_REPEAT + '</span>' +
+    (recawCount > 0 ? '<span class="xcount recaw-count" data-raw="' + recawCount + '">' + fmtCount(recawCount) + '</span>' : '') + '</button>' +
+    '<button type="button" class="xact x-like' + (mineLike ? ' on' : '') + '" data-act="like" aria-label="' + esc(T.actLike) + '"><span class="icring">' + IC_HEART + '</span><span class="like-count xcount"></span></button>' +
     '<button type="button" class="xact x-super" data-act="super" aria-label="SuperLike"><span class="icring sl-ic">' + IC_STAR + '</span><span class="sl-count xcount"></span></button>' +
     /* v31: the Tip button, in the app's row order (after the
        SuperLike star, before bookmark/share) and labelled like
@@ -3116,6 +3445,35 @@ function skeletonHtml(n) {
   return s;
 }
 let tlCursor = null, tlDone = false, tlLoading = false, tlTopItem = null;
+/* ---------- own-post insertion (v32, D4; the app's feedSync) ----------
+   A post I just made joins the head of the Latest feed at once,
+   built from the exact action that was signed — no whole-feed
+   reload. It stays pending until a scanned page carries the
+   same tx hash; then the scanned copy takes over (the pending
+   one is dropped, never duplicated). Pending posts ride along
+   on every non-append Latest load, so refreshing the head does
+   not make my post vanish before the record shows it. The
+   Following feed gets no insertion (the app's rule). */
+const pendingOwn = new Map(); // lowercase tx hash -> feed item
+function noteOwnPost(item) {
+  if (item && item.hash) pendingOwn.set(String(item.hash).toLowerCase(), item);
+}
+function reconcileOwnPosts(items) {
+  for (const it of items || []) {
+    if (it && it.hash) pendingOwn.delete(String(it.hash).toLowerCase());
+  }
+}
+/* Insert a just-posted item into the visible Latest feed now. */
+async function insertOwnPostIntoFeed(item) {
+  const box = $('timeline');
+  if (!box || tlMode !== 'latest') return;
+  if (box.querySelector('[data-cawid="' + String(item.cawId).toLowerCase() + '"]')) return;
+  const row = await rowFor(item).catch(() => null);
+  if (!row) return;
+  if (box.querySelector('.post.skel')) box.innerHTML = '';
+  box.insertBefore(row, box.firstChild);
+  hydrateAttachmentsIn(box).catch(() => {});
+}
 async function loadTimeline(append) {
   if (tlLoading || (append && tlDone)) return;
   tlLoading = true;
@@ -3129,6 +3487,7 @@ async function loadTimeline(append) {
       if (!tlCursor) tlDone = true;
       pages++;
       ntTapItems(page.items); /* v17: a real scan feeds the notifications dot */
+      reconcileOwnPosts(page.items); /* v32: scanned copies graduate my pending posts */
       if (!append && tlTopItem === null && page.items.length) tlTopItem = page.items[0];
       /* Build the whole page's rows in parallel, append in order —
          never await one row at a time (v9 speed rule). */
@@ -3137,6 +3496,16 @@ async function loadTimeline(append) {
       for (const row of rows) if (row) { box.appendChild(row); rendered++; }
       hydrateAttachmentsIn(box).catch(() => {});
       if (!page.items.length) tlDone = true;
+    }
+    /* v32 (D4): my still-pending posts ride at the head of a
+       fresh Latest load until the scan graduates them. */
+    if (!append && pendingOwn.size) {
+      const pend = [...pendingOwn.values()].reverse();
+      const rows = await Promise.all(pend.map(a => rowFor(a).catch(() => null)));
+      for (let i = rows.length - 1; i >= 0; i--) {
+        if (rows[i]) box.insertBefore(rows[i], box.firstChild);
+      }
+      if (rows.some(r => r)) hydrateAttachmentsIn(box).catch(() => {});
     }
     if (!box.children.length && tlDone) box.innerHTML = '<p>' + T.empty + '</p>';
     $('moreBtn').style.display = tlDone ? 'none' : '';
@@ -3167,7 +3536,14 @@ function startNewPostPolling() {
     try {
       const page = await fetchPage(null);
       ntTapItems(page.items); /* v17: the head poll is a real scan too */
-      if (page.items.length && isNewerItem(page.items[0], tlTopItem)) {
+      /* v32 (D4): my own post reaching the head is not "new
+         posts" — it is already on screen; graduate it silently
+         and move the watermark past it. */
+      const headIsMine = page.items.length > 0 &&
+        pendingOwn.has(String(page.items[0].hash || '').toLowerCase());
+      reconcileOwnPosts(page.items);
+      if (headIsMine) tlTopItem = page.items[0];
+      else if (page.items.length && isNewerItem(page.items[0], tlTopItem)) {
         const pill = $('newPostsPill');
         if (pill) pill.style.display = '';
       }
@@ -3599,6 +3975,7 @@ async function loadProfilePosts() {
       profCursor = page.next;
       if (!profCursor) profDone = true;
       pages++;
+      ntTapItems(page.items); /* a real scan: notifications + my-actions (v32) */
       const mine = page.items.filter(a => a.senderId === profileState.id && a.type !== 1);
       const built = await Promise.all(mine.map(async a => {
         const row = await rowFor(a).catch(() => null);
@@ -5186,9 +5563,24 @@ let composerRef = null;        // {kind, post} for reply/quote mode
 let pendingComposeRef = null;  // resolved from the ?compose= link
 let compDraft = '';
 let compFiles = [], filesTx = null, filesCaw = null;
+let compDraftFor = null;        // v32 (D1): the wallet address the loaded draft belongs to
+let compDraftRestored = false;  // v32 (D1): the current text came from the stored draft
+let compDraftTimer = null;      // v32 (D1): the autosave debounce
+let compPrepping = false;       // v32 (M4): the shorten-before-confirm guard
+let compFrag = null;            // v32 (M3): the mention fragment at the caret
+let compDirState = null;        // v32 (M3): name-directory progress {done, total, complete}
+let compNoteState = '';         // v32 (D1): what the draft note currently shows
+let composeHomeSlot = null;     // v32 (D7): #composerArea's home position
 function setComposerRef(kind, post) {
   const homeVisible = $('viewHome') && $('viewHome').style.display !== 'none';
   if (!homeVisible) {
+    /* v32 (D7): reply/quote in place — the composer opens as a
+       sheet over the current view (the app's behaviour) instead
+       of navigating home. The ?compose= navigation remains as
+       the fallback for shells without the sheet. */
+    composerRef = { kind, post };
+    if (openComposeModal()) return;
+    composerRef = null;
     location.href = pageFile + '?compose=' + kind + ':' + post.cawId;
     return;
   }
@@ -5220,16 +5612,34 @@ function renderComposer() {
     area.innerHTML = '<div class="composer-hint"><span>' + esc(T.compHintNoName) + '</span></div>';
     return;
   }
+  /* v32 (D1): the plain-post draft. Only the plain composer
+     loads it — a reply/quote composer never touches it — and
+     only while the composer holds no text, so a mirror text
+     adopted at boot (v19) always wins and is never overwritten
+     by a stored draft. Once loaded, the draft is this wallet's
+     until it is posted or discarded. */
+  if (typeof draftLoad === 'function' && !composerRef && !compDraft &&
+      pwSession && compDraftFor !== pwSession.address) {
+    compDraftFor = pwSession.address;
+    const stored = draftLoad(pwSession.address);
+    if (stored && stored.text) { compDraft = stored.text; compDraftRestored = true; }
+  }
   const ref = composerRef;
+  /* v32 (D6): the app's cost line — the post price and the
+     acting name's in-name balance it is deducted from. It is
+     part of the card, so a name switch re-renders it. */
+  const costLineHtml = typeof composeCostRaw === 'function'
+    ? esc(T.compCost.replace('{cost}', fmtQcaw(composeCostRaw(ref ? ref.kind : 'post')))) + '<br>' +
+      esc(T.compCostFrom.replace('{balance}', fmtQcaw(acting.balance)))
+    : '';
   /* v13: the app's compose row — the acting name's avatar, its
-     name as a chip that jumps to the wallet (where names are
-     switched), then the input. The cost line, the reply/quote
-     context and every control keep their v12 ids and wiring. */
+     name as a chip, then the input. v32 (D2): the chip opens
+     the in-composer name picker instead of leaving for the
+     wallet view; the balance moved to the cost line (D6). */
   let html = '<div class="composer-card"><div class="composer-row">' +
     '<span class="comp-ava" id="compAva"></span>' +
     '<div class="composer-main">' +
-    '<div class="composer-top"><button type="button" class="name-chip-btn" id="compNameChip">@' + esc(acting.username) + ' ▾</button>' +
-    '<span class="small">' + esc(T.pwNameBalanceLbl) + ': ' + esc(fmtQcaw(acting.balance)) + ' qCAW</span></div>';
+    '<div class="composer-top"><button type="button" class="name-chip-btn" id="compNameChip">@' + esc(acting.username) + ' ▾</button></div>';
   if (acting.balance === 0n) html += '<p class="warn">' + esc(T.compZeroBalance) + '</p>';
   if (ref) {
     const lbl = ref.kind === 'reply' ? T.compReplyingTo : T.compQuoting;
@@ -5237,8 +5647,12 @@ function renderComposer() {
       ' <button type="button" class="actbtn" id="compRefCancel">' + esc(T.compCancelRef) + '</button></div>';
   }
   html += '<textarea id="compText" rows="3" placeholder="' + esc(T.compPh) + '">' + esc(compDraft) + '</textarea>' +
+    '<div class="comp-mentions" id="compMentions" style="display:none"></div>' +
+    '<div class="comp-thumbs" id="compThumbs" style="display:none"></div>' +
     '<div class="composer-foot"><span class="charcount" id="compCount"></span>' +
     '<button type="button" class="comp-post" id="compPostBtn">' + esc(T.compPostBtn) + '</button></div>' +
+    '<p class="comp-draft-note" id="compDraftNote" style="display:none"></p>' +
+    '<p class="comp-cost" id="compCostLine">' + costLineHtml + '</p>' +
     '<p id="compStatus"></p></div></div></div>';
   area.innerHTML = html;
   (async () => {
@@ -5248,7 +5662,10 @@ function renderComposer() {
     if ($('compAva') === slot) slot.innerHTML = avatarHtml(im, acting.username);
   })();
   const chipBtn = $('compNameChip');
-  if (chipBtn) chipBtn.onclick = () => { location.href = pageFile + '?wallet=1'; };
+  /* v32 (D2): with more than one name, the chip opens the
+     in-composer picker; with a single name there is nothing to
+     pick, so it stays a plain label (the app's behaviour). */
+  if (chipBtn && pwNames.length > 1) chipBtn.onclick = () => openNamePicker();
   if (ref) {
     (async () => {
       const nm = await resolveName(ref.post.senderId).catch(() => null);
@@ -5260,7 +5677,8 @@ function renderComposer() {
     })();
     $('compRefCancel').onclick = () => { composerRef = null; renderComposer(); };
   }
-  compFiles = [];
+  /* v32 (D3): the selection SURVIVES re-renders (name switches,
+     reply-mode changes) — it is only cleared after a post. */
   const statusP = $('compStatus');
   if (statusP) {
     const row = document.createElement('div');
@@ -5271,11 +5689,14 @@ function renderComposer() {
     statusP.before(row);
     const fi = row.querySelector('#compFiles');
     fi.onchange = () => {
-      compFiles = [...(fi.files || [])].slice(0, 4);
-      const lbl = $('compFilesLbl');
-      if (lbl) lbl.textContent = compFiles.length ? T.attachSelected.replace('{n}', String(compFiles.length)) : '';
+      /* Picking ADDS to the current selection (the app's
+         behaviour), capped at 4 in total. */
+      compFiles = [...compFiles, ...(fi.files || [])].slice(0, 4);
+      try { fi.value = ''; } catch (e) {}
+      paintCompFiles();
     };
   }
+  paintCompFiles();
   const ta = $('compText'), count = $('compCount'), postBtn = $('compPostBtn');
   const overhead = ref ? 1 + postRefMarker(ref.kind, ref.post.cawId).length : 0;
   const update = () => {
@@ -5284,69 +5705,348 @@ function renderComposer() {
     count.textContent = T.compBytes.replace('{n}', String(bytes));
     count.classList.toggle('err', bytes > 420);
     postBtn.disabled = !ta.value.trim() || bytes > 420;
+    /* v32 (D1): autosave the plain-post draft as the user
+       types (500 ms debounce — the app's rule). Reply/quote
+       text is never saved, and a locked wallet saves nothing. */
+    if (!composerRef && pwSession && typeof draftSave === 'function') {
+      if (compDraftTimer) clearTimeout(compDraftTimer);
+      const v = ta.value, aid = acting.id, addr = pwSession.address;
+      compDraftTimer = setTimeout(() => draftSave(addr, v, aid), 500);
+    }
+    paintDraftNote();
   };
   ta.addEventListener('input', update);
+  /* v32 (M3): mention candidates follow the caret. */
+  ta.addEventListener('keyup', () => paintMentions());
+  ta.addEventListener('click', () => paintMentions());
   update();
+  paintMentions();
+  /* v32 (M3): keep the name directory warm while the composer
+     is up; candidates repaint as it grows. */
+  if (typeof ensureNameDirectory === 'function') {
+    ensureNameDirectory((done, total) => {
+      compDirState = { done, total, complete: total > 0 && done >= total };
+      paintMentions();
+    }).then(complete => {
+      compDirState = { done: compDirState ? compDirState.done : 0, total: compDirState ? compDirState.total : 0, complete: !!complete };
+      paintMentions();
+    }).catch(() => {});
+  }
   /* v19: a one-shot note rides the composer's status line —
      e.g. a mirrored text that was shortened to the byte limit. */
   if (mirrorNotice) {
     const st = $('compStatus');
     if (st) { st.innerHTML = '<span class="small">' + esc(mirrorNotice) + '</span>'; mirrorNotice = ''; }
   }
-  postBtn.onclick = () => {
-    const filesAtPost = compFiles;
-    const body = ta.value.trim();
-    const finalText = ref ? appendPostRef(body, ref.kind, ref.post.cawId) : body;
-    if (textBytes(finalText) > 420) {
-      $('compStatus').innerHTML = '<span class="err">' + esc(T.compTooLong) + '</span>';
-      return;
-    }
-    const actingNow = pwActing();
-    openConfirmPanel({
-      title: T.confirmTitlePost,
-      lines: [
-        [T.confirmAsLbl, '@' + actingNow.username],
-        [T.confirmTextLbl, parsePostText(finalText).body],
-      ],
-      onSign: async () => {
-        pwTouch();
-        const action = {
-          type: 0, senderId: actingNow.id, receiverId: 0n,
-          ts: Math.floor(Date.now() / 1000), sender: pwSession.address,
-          cawId: randomCawId(), text: finalText,
-        };
-        const res = await submitLocalAction(pwSession.keyBytes, action);
-        filesTx = (res && res.hash) || null;
-        filesCaw = action.cawId;
-      },
-      afterSuccess: async () => {
-        mirrorResolveAfterPost(); /* v19: a mirrored post that landed resolves its inbox item */
-        compDraft = ''; composerRef = null;
-        await pwLoadNames(); /* the action spent a little of the name's qCAW */
-        renderComposer();
-        loadTimeline(false);
-        /* v26: upload the composer's images against the post that
-           just landed. A failure here never touches the post — it
-           is already on-chain; only the attachment is missing. */
-        if (filesAtPost.length && filesTx && filesCaw) {
-          const st = $('compStatus');
-          if (st) st.textContent = T.attachBusy;
-          let okCount = 0;
-          for (const f of filesAtPost) {
-            try { await mediaAttach(filesCaw, filesTx, f); okCount++; } catch (e) { /* reported below */ }
+  postBtn.onclick = async () => {
+    /* v32 (M4): shorten long URLs in the body through cawl and
+       WRITE THE RESULT BACK into the editor before the confirm
+       sheet opens — the text the user reviews is the text that
+       gets signed (the app's prepareAndConfirm rule). The
+       reply/quote marker is appended afterwards, untouched. On
+       any shortening failure the original text stands. */
+    if (compPrepping) return;
+    compPrepping = true;
+    postBtn.disabled = true;
+    try {
+      const rawBody = ta.value.trim();
+      let body = rawBody;
+      if (typeof shortenUrlsInText === 'function') {
+        try { body = await shortenUrlsInText(rawBody, shortenViaCawl); } catch (e) { body = rawBody; }
+      }
+      if (body !== rawBody) { ta.value = body; compDraft = body; update(); }
+      const filesAtPost = compFiles.slice();
+      const refNow = composerRef;
+      const finalText = refNow ? appendPostRef(body, refNow.kind, refNow.post.cawId) : body;
+      if (textBytes(finalText) > 420) {
+        $('compStatus').innerHTML = '<span class="err">' + esc(T.compTooLong) + '</span>';
+        return;
+      }
+      const actingNow = pwActing();
+      let postedItem = null;
+      openConfirmPanel({
+        title: T.confirmTitlePost,
+        lines: [
+          [T.confirmAsLbl, '@' + actingNow.username],
+          [T.confirmTextLbl, parsePostText(finalText).body],
+          /* v32 (D6): the protocol cost of the post. */
+          [T.confirmCostLbl, fmtQcaw(composeCostRaw(refNow ? refNow.kind : 'post')) + ' qCAW'],
+        ],
+        onSign: async () => {
+          pwTouch();
+          const action = {
+            type: 0, senderId: actingNow.id, receiverId: 0n,
+            ts: Math.floor(Date.now() / 1000), sender: pwSession.address,
+            cawId: randomCawId(), text: finalText,
+          };
+          const res = await submitLocalAction(pwSession.keyBytes, action);
+          filesTx = (res && res.hash) || null;
+          filesCaw = action.cawId;
+          /* v32 (D4): the exact signed action becomes the item
+             inserted at the head of the feed. */
+          postedItem = { ...action, hash: filesTx, blockTs: new Date(action.ts * 1000).toISOString() };
+        },
+        afterSuccess: async () => {
+          mirrorResolveAfterPost(); /* v19: a mirrored post that landed resolves its inbox item */
+          const wasRef = !!refNow;
+          const inModal = composerInModal();
+          compDraft = ''; composerRef = null; compDraftRestored = false;
+          /* v32 (D1): a landed PLAIN post clears the wallet's
+             draft (the app's rule); a reply/quote never had one
+             loaded and leaves it untouched. */
+          if (!wasRef && pwSession && typeof draftClear === 'function') draftClear(pwSession.address);
+          if (postedItem) { indexItem(postedItem); noteOwnPost(postedItem); }
+          compFiles = [];
+          await pwLoadNames(); /* the action spent a little of the name's qCAW */
+          renderComposer();
+          if (inModal) { closeComposeModal(); refreshUnderlyingView(); }
+          /* v32 (D4): the new post joins the Latest head at once
+             instead of reloading the whole timeline. */
+          if (postedItem) await insertOwnPostIntoFeed(postedItem);
+          /* v26: upload the composer's images against the post that
+             just landed. A failure here never touches the post — it
+             is already on-chain; only the attachment is missing. */
+          if (filesAtPost.length && filesTx && filesCaw) {
+            const st = $('compStatus');
+            if (st) st.textContent = T.attachBusy;
+            let okCount = 0;
+            for (const f of filesAtPost) {
+              try { await mediaAttach(filesCaw, filesTx, f); okCount++; } catch (e) { /* reported below */ }
+            }
+            const st2 = $('compStatus');
+            if (st2) st2.innerHTML = okCount === filesAtPost.length
+              ? esc(T.attachDone.replace('{n}', String(okCount)))
+              : '<span class="err">' + esc(T.attachFail) + '</span>';
+            if (okCount) hydrateAttachmentsIn($('timeline')).catch(() => {});
           }
-          const st2 = $('compStatus');
-          if (st2) st2.innerHTML = okCount === filesAtPost.length
-            ? esc(T.attachDone.replace('{n}', String(okCount)))
-            : '<span class="err">' + esc(T.attachFail) + '</span>';
-          if (okCount) loadTimeline(false);
-        }
-      },
-    });
+        },
+      });
+    } finally {
+      compPrepping = false;
+      update();
+    }
   };
 }
 
+/* v32 (D3): the chosen images as thumbnails, each with a
+   remove button; the label keeps the running count. */
+function paintCompFiles() {
+  const lbl = $('compFilesLbl');
+  if (lbl) lbl.textContent = compFiles.length ? T.attachSelected.replace('{n}', String(compFiles.length)) : '';
+  const box = $('compThumbs');
+  if (!box) return;
+  box.innerHTML = '';
+  box.style.display = compFiles.length ? '' : 'none';
+  compFiles.forEach((f, i) => {
+    const cell = document.createElement('span');
+    cell.className = 'comp-thumb';
+    const img = document.createElement('img');
+    img.alt = '';
+    try { img.src = URL.createObjectURL(f); } catch (e) { /* the label still counts it */ }
+    const rm = document.createElement('button');
+    rm.type = 'button';
+    rm.className = 'comp-thumb-x';
+    rm.textContent = '✕';
+    rm.setAttribute('aria-label', f && f.name ? f.name : ('image ' + (i + 1)));
+    rm.onclick = () => {
+      try { URL.revokeObjectURL(img.src); } catch (e) {}
+      compFiles.splice(i, 1);
+      paintCompFiles();
+    };
+    cell.appendChild(img);
+    cell.appendChild(rm);
+    box.appendChild(cell);
+  });
+}
+/* v32 (D1): the draft note under the textarea — the restored
+   notice with its discard button, or the auto-saved note while
+   typing (the app's two states). Repaints only on a state
+   change, so the discard button is never rebuilt mid-tap. */
+function paintDraftNote() {
+  const note = $('compDraftNote');
+  if (!note) return;
+  let state = 'hide';
+  if (!composerRef && compDraftRestored) state = 'restored';
+  else if (!composerRef && compDraft) state = 'auto';
+  if (state === compNoteState && note.dataset.st === state) return;
+  compNoteState = state;
+  note.dataset.st = state;
+  if (state === 'hide') { note.innerHTML = ''; note.style.display = 'none'; return; }
+  note.style.display = '';
+  if (state === 'restored') {
+    note.innerHTML = '<span>' + esc(T.draftRestored) + '</span> ' +
+      '<button type="button" class="actbtn" id="compDraftDiscard">' + esc(T.draftDiscard) + '</button>';
+    const b = $('compDraftDiscard');
+    if (b) b.onclick = () => {
+      if (pwSession && typeof draftClear === 'function') draftClear(pwSession.address);
+      compDraft = ''; compDraftRestored = false;
+      renderComposer();
+    };
+  } else {
+    note.innerHTML = '<span>' + esc(T.draftAutoSaved) + '</span>';
+  }
+}
+/* v32 (M3): @mention candidates under the textarea — up to 6
+   chips from the name directory, matched on the fragment at
+   the caret (the app's rule). While the directory is still
+   building and nothing matches yet, the row says so honestly
+   instead of pretending there are no names. */
+function paintMentions() {
+  const box = $('compMentions'), ta = $('compText');
+  if (!box || !ta) return;
+  if (typeof mentionFragmentAt !== 'function' || typeof searchNameDirectory !== 'function') {
+    compFrag = null;
+    return;
+  }
+  const frag = mentionFragmentAt(ta.value, ta.selectionStart == null ? ta.value.length : ta.selectionStart);
+  compFrag = frag;
+  if (!frag) { box.style.display = 'none'; box.innerHTML = ''; return; }
+  const hits = searchNameDirectory(frag.partial, 6);
+  if (!hits.length) {
+    if (compDirState && !compDirState.complete && compDirState.total > 0) {
+      box.innerHTML = '<span class="small">' + esc(T.dirBuilding
+        .replace('{done}', String(compDirState.done))
+        .replace('{total}', String(compDirState.total))) + '</span>';
+      box.style.display = '';
+    } else { box.style.display = 'none'; box.innerHTML = ''; }
+    return;
+  }
+  box.innerHTML = '';
+  for (const h of hits) {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'mention-chip';
+    const av = document.createElement('span');
+    av.className = 'mention-ava';
+    chip.appendChild(av);
+    chip.appendChild(document.createTextNode('@' + h.name));
+    avatarFor(BigInt(h.id)).then(im => { av.innerHTML = avatarHtml(im, h.name); }).catch(() => {});
+    chip.onclick = () => pickMention(h, frag);
+    box.appendChild(chip);
+  }
+  box.style.display = '';
+}
+/* v32 (M3): picking a candidate replaces the fragment at the
+   caret with the full @name (the app's insertion rule). */
+function pickMention(h, frag) {
+  const ta = $('compText');
+  if (!ta || !frag) return;
+  const cur = ta.selectionStart == null ? ta.value.length : ta.selectionStart;
+  const before = ta.value.slice(0, frag.atIndex);
+  const insert = '@' + h.name + ' ';
+  ta.value = before + insert + ta.value.slice(cur);
+  compDraft = ta.value;
+  const pos = before.length + insert.length;
+  ta.focus();
+  try { ta.setSelectionRange(pos, pos); } catch (e) {}
+  try { ta.dispatchEvent(new Event('input', { bubbles: true })); } catch (e) {}
+  paintMentions();
+}
+/* v32 (D2): the in-composer name picker — the app's compose
+   name switch: avatar, name and per-name in-name balance per
+   row, a check on the acting name. Picking one goes through
+   the same pwSetActing the wallet view uses, which re-renders
+   the composer (cost line included) for the new name. */
+function openNamePicker() {
+  const ov = $('namePickerOverlay'), list = $('namePickerList');
+  if (!ov || !list) { location.href = pageFile + '?wallet=1'; return; }
+  const title = $('namePickerTitle');
+  if (title) title.textContent = T.compPostAs;
+  list.innerHTML = '';
+  for (const t of pwNames) {
+    const row = document.createElement('button');
+    row.type = 'button';
+    row.className = 'name-pick-row' + (pwActingId != null && t.id === pwActingId ? ' on' : '');
+    const av = document.createElement('span');
+    av.className = 'mention-ava';
+    row.appendChild(av);
+    avatarFor(t.id).then(im => { av.innerHTML = avatarHtml(im, t.username); }).catch(() => {});
+    const main = document.createElement('span');
+    main.className = 'name-pick-main';
+    main.innerHTML = '<span class="name-pick-name">@' + esc(t.username) + '</span>' +
+      '<span class="small">' + esc(fmtQcaw(t.balance)) + ' qCAW</span>';
+    row.appendChild(main);
+    if (pwActingId != null && t.id === pwActingId) {
+      const ck = document.createElement('span');
+      ck.className = 'name-pick-check';
+      ck.textContent = '✓';
+      row.appendChild(ck);
+    }
+    row.onclick = () => { ov.style.display = 'none'; pwSetActing(t.id); };
+    list.appendChild(row);
+  }
+  const cancel = $('namePickerCancel');
+  if (cancel) cancel.onclick = () => { ov.style.display = 'none'; };
+  ov.style.display = '';
+}
+/* v32 (D7): the in-place composer sheet. The sheet MOVES the
+   one #composerArea node — there is never a second composer,
+   so ids and wiring stay single. Closing moves it back home
+   and re-renders, so the home composer is as it was. */
+function composerInModal() {
+  const area = $('composerArea'), slot = $('composeModalSlot'), ov = $('composeOverlay');
+  return !!(area && slot && ov && ov.style.display !== 'none' && area.parentNode === slot);
+}
+function openComposeModal() {
+  const area = $('composerArea'), slot = $('composeModalSlot'), ov = $('composeOverlay');
+  if (!area || !slot || !ov) return false;
+  if (!composeHomeSlot) composeHomeSlot = { parent: area.parentNode, next: area.nextSibling };
+  slot.appendChild(area);
+  ov.style.display = '';
+  const closeBtn = $('composeModalClose');
+  if (closeBtn) closeBtn.onclick = () => closeComposeModal();
+  renderComposer();
+  const ta = $('compText');
+  if (ta) ta.focus();
+  return true;
+}
+function closeComposeModal() {
+  const area = $('composerArea'), ov = $('composeOverlay');
+  if (ov) ov.style.display = 'none';
+  if (area && composeHomeSlot && composeHomeSlot.parent) {
+    composeHomeSlot.parent.insertBefore(area, composeHomeSlot.next);
+  }
+  renderComposer();
+}
+/* v32 (D7): after a post lands from the sheet, the view
+   underneath refreshes so the new reply/quote shows in place. */
+function refreshUnderlyingView() {
+  const q = new URLSearchParams(location.search);
+  if ($('viewPost') && $('viewPost').style.display !== 'none' && q.get('post')) {
+    loadPostPage(q.get('post'));
+  } else if ($('viewProfile') && $('viewProfile').style.display !== 'none') {
+    loadProfile();
+  } else if ($('viewBookmarks') && $('viewBookmarks').style.display !== 'none') {
+    loadBookmarksView();
+  }
+}
+
 /* ----- action buttons on post cards + profile follow ----- */
+/* v32 (D5): paint my Recaw lit on every card of a post, with
+   the optimistic +1 — unless the card already paints it
+   (data-myrecaw), so it is never counted twice. Shared by the
+   plain Recaw and the SuperRecaw flows. */
+function paintMyRecaw(cawId) {
+  document.querySelectorAll('[data-cawid="' + String(cawId).toLowerCase() + '"]').forEach(card => {
+    const rb = card.querySelector('.x-recaw');
+    if (!rb) return;
+    rb.classList.add('on');
+    if (rb.dataset.myrecaw) return;
+    rb.dataset.myrecaw = '1';
+    let n = rb.querySelector('.recaw-count');
+    if (n) {
+      const cur = parseInt(n.dataset.raw || '0', 10) || 0;
+      n.dataset.raw = String(cur + 1);
+      n.textContent = fmtCount(cur + 1);
+    } else {
+      n = document.createElement('span');
+      n.className = 'xcount recaw-count';
+      n.dataset.raw = '1';
+      n.textContent = '1';
+      rb.appendChild(n);
+    }
+  });
+}
 async function doSimpleAction(kind, target) {
   const acting = pwActing();
   if (!pwSession || !acting) return;
@@ -5358,16 +6058,26 @@ async function doSimpleAction(kind, target) {
     lines: [
       [T.confirmAsLbl, '@' + acting.username],
       [T.confirmTargetLbl, targetLabel],
+      /* v32 (D6): the protocol cost, shown the way the composer
+         shows the post cost. */
+      [T.confirmCostLbl, fmtQcaw(kind === 1 ? LIKE_COST_RAW : RECAW_COST_RAW) + ' qCAW'],
     ],
     onSign: async () => {
       pwTouch();
+      /* v32 (D5): record the action as mine BEFORE the send (the
+         app's confirmAction rule); a failed send unmarks it. */
+      myMark(pwSession.address, acting.id, kind, target.cawId, true);
       const action = {
         type: kind, senderId: acting.id, receiverId: target.senderId,
         ts: Math.floor(Date.now() / 1000), sender: pwSession.address,
         cawId: target.cawId, text: kind === 1 ? 'LIKE' : 'REPOST',
       };
-      const res = await submitLocalAction(pwSession.keyBytes, action);
-      return res;
+      try {
+        return await submitLocalAction(pwSession.keyBytes, action);
+      } catch (e) {
+        myMark(pwSession.address, acting.id, kind, target.cawId, false);
+        throw e;
+      }
     },
     afterSuccess: kind === 1 ? (() => {
       const el = document.querySelector('[data-cawid="' + target.cawId.toLowerCase() + '"] .like-count');
@@ -5379,7 +6089,10 @@ async function doSimpleAction(kind, target) {
         if (row) row.classList.add('on');
       }
       pwLoadNames().then(() => renderComposer()).catch(() => {});
-    }) : undefined,
+    }) : (() => {
+      paintMyRecaw(target.cawId);
+      pwLoadNames().then(() => renderComposer()).catch(() => {});
+    }),
   });
 }
 /* ----- the X action row's taps (v13) -----
@@ -5534,6 +6247,10 @@ async function performSuperRecaw(a) {
     cawId: a.cawId, text: 'REPOST',
   };
   await submitLocalAction(pwSession.keyBytes, action);
+  /* v32 (D5): the Recaw itself has landed — record it as mine,
+     and keep the record even if a later leg ends as a pending
+     debt (the app's rule); only a failed Recaw leaves no mark. */
+  myMark(pwSession.address, acting.id, MY_KIND_RECAW, a.cawId, true);
   /* Step 2 — the marked O burn. Its failure leaves an honest
      debt, never a second Recaw. */
   try {
@@ -5608,9 +6325,15 @@ async function openSuperlikeFlow(a) {
   const acting = pwActing();
   if (!acting || !pwSession) return;
   const targetLabel = await postTargetLabel(a);
+  /* v32 (D6): the author's owner short address rides in the
+     sheet, the way the app embeds it in its SuperLike body text
+     (the audit's SAME-5 minor point). */
+  let authorOwner = '';
+  try { authorOwner = await nameOwnerOf(a.senderId); } catch (e) {}
   const lines = [
     [T.confirmAsLbl, '@' + acting.username],
     [T.slTarget, targetLabel],
+    [T.slAuthorAddr, authorOwner ? shortAddr(authorOwner) : '—'],
     [T.slTotal, fmtO(SUPERLIKE_TOTAL_RAW) + ' O'],
     [T.slToAuthor, fmtO(SUPERLIKE_AUTHOR_RAW) + ' O'],
     [T.slBurned, fmtO(SUPERLIKE_BURN_RAW) + ' O'],
@@ -5667,7 +6390,7 @@ async function openSuperRecawFlow(a) {
     statusHtml: selfPay ? '<span class="small">' + esc(T.srcSelfNote) + '</span>' : '',
     signLabel: T.srcConfirm, doneText: T.srcDone,
     onSign: async () => { pwTouch(); await performSuperRecaw(a); },
-    afterSuccess: () => { repaintSuperCounts(); },
+    afterSuccess: () => { repaintSuperCounts(); paintMyRecaw(a.cawId); },
   });
 }
 async function openSrcBurnFlow(a, pending) {
@@ -5948,6 +6671,8 @@ async function renderProfFollow() {
       lines: [
         [T.confirmAsLbl, '@' + actingNow.username],
         [T.confirmTargetLbl, '@' + targetName],
+        /* v32 (D6): the protocol cost (follow 30,000 / unfollow 0). */
+        [T.confirmCostLbl, fmtQcaw(isFollowing ? 0n : FOLLOW_COST_RAW) + ' qCAW'],
       ],
       onSign: async () => {
         pwTouch();
@@ -6104,6 +6829,12 @@ function ntCheckDot() {
 /* Feed one real page load into the tap: register my posts,
    buffer the candidates, re-evaluate the dot. */
 function ntTapItems(items) {
+  /* v32 (D5): every scanned page also teaches the my-actions
+     record (likes / Recaws by any of my names) — the app's
+     observe; icons then paint lit on every render. */
+  if (pwSession && items && items.length) {
+    myObserveItems(pwSession.address, pwNames.map(t => t.id), items);
+  }
   const acting = pwSession ? pwActing() : null;
   if (!acting || !items || !items.length) return;
   if (ntForId !== acting.id.toString()) ntResetFor(acting.id.toString());
@@ -6905,6 +7636,11 @@ if (typeof module !== 'undefined' && module.exports) {
     FOLLOW_CHUNK_PAGES, followBuildState, folFeedItem,
     TIP_PRESETS, tipPresetRaw, parseTipAmount, tipChipAmount,
     tipShortfall, tipBlockReason, phoenixBalanceOf,
+    ACTION_COST_CAW, POST_COST_RAW, LIKE_COST_RAW, RECAW_COST_RAW, FOLLOW_COST_RAW, composeCostRaw,
+    mentionFragmentAt, trimUrlCandidate, extractUrls, shortenUrlsInText,
+    NAME_DIR_KEY, ensureNameDirectory, searchNameDirectory, nameDirSetForTest,
+    DRAFT_KEY_PREFIX, draftKeyFor, draftLoad, draftSave, draftClear,
+    MYACTIONS_KEY_PREFIX, MY_KIND_LIKE, MY_KIND_RECAW, myActionEntry, myHas, myMark, myObserveItems,
     fetchPage, findPostByCawId, findPostDeep, collectPostContext,
     postIndex, refIndex, refChildren, indexItem, likesOf, isVisibleRow,
     rpc, readUint, readStr, readAddr, encStr, encAddr,
