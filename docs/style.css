@@ -250,7 +250,6 @@ body:not(.can-compose) .side-post, body:not(.can-compose) .fab { display: none; 
   display: flex; align-items: center; justify-content: center; gap: 6px;
   pointer-events: none;
 }
-.mt-mark img { width: 24px; height: 24px; border-radius: 6px; }
 .mt-mark .word { font-size: 17px; font-weight: 800; letter-spacing: .5px; }
 
 /* ---- X-style drawer (mobile; the app v0.6.2 form) ---- */
@@ -600,6 +599,11 @@ a.plink:hover { text-decoration: underline; }
   padding: 8px 10px; font-weight: 600;
 }
 .phrase-word .pw-num { color: var(--muted); font-weight: 400; margin-right: 6px; font-size: .85rem; }
+.pw-key {
+  font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px;
+  word-break: break-all; background: var(--surface2); border: 1px solid var(--line2);
+  border-radius: 10px; padding: 10px 12px; margin: 8px 0;
+}
 .checkrow { display: flex; gap: 8px; align-items: flex-start; margin: 10px 0; font-size: .95rem; }
 .checkrow input { margin-top: 3px; width: 18px; height: 18px; flex: none; }
 .pw-remove { border: 1px solid var(--warn); border-radius: 12px; padding: 12px 14px; margin-top: 12px; }

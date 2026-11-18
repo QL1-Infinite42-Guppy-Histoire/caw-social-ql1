@@ -140,9 +140,9 @@ const T = {
     pwSafetyLose: 'If you clear this browser’s data, the wallet here is gone — it only comes back if you saved the recovery phrase.',
     pwSafetyPhrase: 'Anyone who sees your recovery phrase owns this wallet. Keep it written down, offline, and private.',
     pwCreateBtn: 'Create a new wallet', pwImportBtn: 'Import a wallet',
-    pwCreateExplain: 'We will make a fresh wallet and show its 12-word recovery phrase once. That phrase is the only way back in if this browser’s data is cleared.',
+    pwCreateExplain: 'We will make a fresh wallet and show its 12-word recovery phrase. That phrase is the only way back in if this browser’s data is cleared.',
     pwShowPhraseTitle: 'Your recovery phrase — write it down now',
-    pwPhraseWarn: 'Write these 12 words on paper, in order, and keep the paper somewhere safe and offline. This is shown once — after you continue, it cannot be shown again.',
+    pwPhraseWarn: 'Write these 12 words on paper, in order, and keep the paper somewhere safe and offline. You can view them again later from the wallet screen (it asks for your password first) — but if this browser’s data is ever cleared, the paper is the only way back in.',
     pwWroteIt: 'I wrote it down and will keep it offline',
     pwContinueBtn: 'Continue', pwBackBtn: 'Back', pwCancelBtn: 'Cancel',
     pwSetPasswordTitle: 'Set a password for this browser',
@@ -158,6 +158,11 @@ const T = {
     pwNextProfile: 'You came here from Profile — once unlocked, you will be taken straight to your profile.',
     pwNextDex: 'You came here from HuntersDEX — once unlocked, you will be taken straight to the swap panel.',
     pwNextBurn: 'You came here from BurnHawk — once unlocked, you will be taken straight to the burn panel.',
+    pwRevealBtn: 'Show the recovery phrase / private key',
+    pwRevealTitle: 'Recovery phrase / private key',
+    pwRevealWarn: 'Anyone who sees this can take everything in this wallet. Never share it, never type it into another site, and only look at it when nobody can see your screen.',
+    pwRevealHide: 'Hide',
+    pwRevealKeyLbl: 'Private key',
     mediaAudio: 'Profile audio', mediaLbl: 'Profile media',
     mediaIcon: 'Icon', mediaHeader: 'Header image', mediaAudioLbl: 'Audio',
     mediaPick: 'Choose a file', mediaSet: 'Save', mediaClear: 'Remove',
@@ -393,9 +398,9 @@ const T = {
     pwSafetyLose: 'このブラウザのデータを消すと、ここにあるウォレットは消えます。復元フレーズを控えておかないと、元に戻せません。',
     pwSafetyPhrase: '復元フレーズを見た人は、そのウォレットを使えてしまいます。紙に書いて、オフラインで、大切に保管してください。',
     pwCreateBtn: '新しいウォレットを作る', pwImportBtn: 'ウォレットを取り込む',
-    pwCreateExplain: '新しいウォレットを作り、12語の復元フレーズを1回だけ表示します。ブラウザのデータを消したときに元に戻す手段は、そのフレーズだけです。',
+    pwCreateExplain: '新しいウォレットを作り、12語の復元フレーズを表示します。ブラウザのデータを消したときに元に戻す手段は、そのフレーズだけです。',
     pwShowPhraseTitle: 'あなたの復元フレーズ — 今すぐ書き留めてください',
-    pwPhraseWarn: 'この12語を、順番どおりに紙に書いて、安全な場所にオフラインで保管してください。表示はこの1回だけです。進んだあとは、もう表示できません。',
+    pwPhraseWarn: 'この12語を、順番どおりに紙に書いて、安全な場所にオフラインで保管してください。あとからウォレットの画面で、パスワードを入れればまた表示できます。ただし、ブラウザのデータを消してしまったときに戻す手段は、その紙だけです。',
     pwWroteIt: '紙に書き留めました。オフラインで保管します',
     pwContinueBtn: '進む', pwBackBtn: '戻る', pwCancelBtn: 'やめる',
     pwSetPasswordTitle: 'このブラウザ用のパスワードを決めてください',
@@ -411,6 +416,11 @@ const T = {
     pwNextProfile: 'プロフィールから来ています。解除すると、そのままあなたのプロフィールへ進みます。',
     pwNextDex: 'HuntersDEXから来ています。解除すると、そのまま交換の画面へ進みます。',
     pwNextBurn: 'BurnHawkから来ています。解除すると、そのままバーンの画面へ進みます。',
+    pwRevealBtn: '復元フレーズ・秘密鍵を表示する',
+    pwRevealTitle: '復元フレーズ／秘密鍵',
+    pwRevealWarn: 'これを見た人は、このウォレットの中身をすべて使えてしまいます。誰にも見せず、他のサイトには絶対に入力せず、周りに人がいないときだけ表示してください。',
+    pwRevealHide: '隠す',
+    pwRevealKeyLbl: '秘密鍵',
     mediaAudio: 'プロフィールの音声', mediaLbl: 'プロフィールのメディア',
     mediaIcon: 'アイコン', mediaHeader: 'ヘッダー画像', mediaAudioLbl: '音声',
     mediaPick: 'ファイルを選ぶ', mediaSet: '保存', mediaClear: '削除',
@@ -2372,8 +2382,10 @@ function privateKeyToAddress(keyHex) {
    {salt, iv, ciphertext} — all base64 — ever touches storage,
    under the key caw-vault-v1. A wrong password fails the GCM
    check, which is exactly the "wrong password" signal. The
-   decrypted secret lives in page memory only (see the wallet
-   UI further down); nothing here logs or transmits it. */
+   decrypted secret never touches storage in this section (the
+   wallet UI further down holds the live session — see its
+   header comment for exactly where); nothing here logs or
+   transmits it. */
 const VAULT_STORE_KEY = 'caw-vault-v1';
 const VAULT_ITERATIONS = 210000;
 const b64enc = bytes => {
@@ -3896,13 +3908,19 @@ async function renderMyNames() {
 }
 
 /* ---------- v12: the built-in posting wallet (browser side) ----------
-   The decrypted secret and the derived private key live in this
-   module state ONLY — never in any storage. Locking (manual, or
-   after 15 idle minutes) overwrites and drops them. The vault in
-   localStorage holds only the AES-GCM ciphertext (see the vault
-   section above). Nothing in this section logs or transmits the
-   phrase or the key; the only network calls are public chain
-   reads and the wallet's own signed broadcasts. */
+   The vault in localStorage holds only the AES-GCM ciphertext
+   (see the vault section above); the password itself is never
+   stored anywhere. While the wallet is unlocked, the decrypted
+   secret ALSO lives in tab-scoped sessionStorage (v30 — the
+   owner's call: the app stays unlocked while it is open, and
+   every web navigation is a full page load, so the v12–v29
+   memory-only session re-locked on every screen change and
+   posting from the web was effectively impossible). The stored
+   copy is wiped on lock (manual, or after 15 idle minutes) and
+   the browser drops sessionStorage when the tab closes.
+   Nothing in this section logs or transmits the phrase or the
+   key; the only network calls are public chain reads and the
+   wallet's own signed broadcasts. */
 let pwSession = null;      // {kind, secret, keyBytes, address}
 let pwNames = [];          // [{id, balance, username}] for the session address
 let pwActingId = null;     // bigint
@@ -3911,8 +3929,40 @@ let pwView = 'auto';       // auto | create-show | create-password | import | im
 let pwDraft = null;        // {kind, secret} while a create/import flow is mid-way
 let pwLoadSeq = 0;
 const PW_ACTING_KEY = addr => 'caw-acting-' + String(addr).toLowerCase();
+/* v30: the live session also persists in TAB-SCOPED
+   sessionStorage under this one key, so it survives moving
+   between views (every navigation is a full page load). Only
+   {kind, secret, address, touch} is stored. Every access is
+   exception-safe: if sessionStorage is unavailable the
+   in-memory session works exactly as it did before v30. The
+   secret is NEVER written to localStorage — localStorage
+   keeps only the AES-GCM vault ciphertext and small
+   non-secret preferences. */
+const PW_SESSION_KEY = 'caw-pw-session';
+function pwPersistSession() {
+  if (!pwSession) return;
+  try {
+    if (typeof sessionStorage === 'undefined') return;
+    sessionStorage.setItem(PW_SESSION_KEY, JSON.stringify({
+      kind: pwSession.kind, secret: pwSession.secret,
+      address: pwSession.address, touch: pwLastTouch,
+    }));
+  } catch (e) {}
+}
+function pwStoredSession() {
+  try {
+    if (typeof sessionStorage === 'undefined') return null;
+    const j = JSON.parse(sessionStorage.getItem(PW_SESSION_KEY) || 'null');
+    return (j && (j.kind === 'key' || j.kind === 'phrase') &&
+      typeof j.secret === 'string' && typeof j.address === 'string' &&
+      typeof j.touch === 'number') ? j : null;
+  } catch (e) { return null; }
+}
+function pwForgetStoredSession() {
+  try { if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(PW_SESSION_KEY); } catch (e) {}
+}
 const pwUnlocked = () => !!pwSession;
-const pwTouch = () => { pwLastTouch = Date.now(); };
+const pwTouch = () => { pwLastTouch = Date.now(); pwPersistSession(); };
 function pwActing() {
   if (!pwNames.length) return null;
   return pwNames.find(t => t.id === pwActingId) || pwNames[0];
@@ -3920,6 +3970,7 @@ function pwActing() {
 function pwWipeSession() {
   if (pwSession && pwSession.keyBytes) pwSession.keyBytes.fill(0);
   pwSession = null; pwNames = []; pwActingId = null;
+  pwForgetStoredSession();
 }
 function pwLock() {
   pwWipeSession();
@@ -4093,7 +4144,7 @@ function renderPwLocked(area) {
   $('pwRemoveBtn1').onclick = () => renderPwRemove($('pwRemoveArea'));
   syncChrome();
 }
-async function pwStartSession(secretObj) {
+async function pwStartSession(secretObj, opts) {
   let keyBytes, address;
   if (secretObj.kind === 'key') {
     keyBytes = hexToBytesU(secretObj.secret);
@@ -4106,6 +4157,11 @@ async function pwStartSession(secretObj) {
   pwSession = { kind: secretObj.kind, secret: secretObj.secret, keyBytes, address };
   pwTouch();
   await pwLoadNames();
+  /* v30: a session RESTORED from this tab's storage (see
+     pwRestoreSession) is not an unlock — it must not take the
+     ?next= continuations below, which belong to the explicit
+     password actions only. */
+  if (opts && opts.restored) return;
   /* v25: a Profile tap made while locked lands on the wallet
      view with ?next=profile. Once the session starts, continue
      straight to the own profile — or to the name desk when the
@@ -4123,6 +4179,24 @@ async function pwStartSession(secretObj) {
      flow has no dead end. */
   else if (nextQuery === 'dex') location.replace(pageFile + '?dex=1');
   else if (nextQuery === 'burnhawk') location.replace(pageFile + '?burnhawk=1');
+}
+/* v30: revive the tab-scoped session pwPersistSession saved
+   when this tab last unlocked (or last acted), so moving
+   between views keeps the wallet open like the app. Restoring
+   is NOT an unlock: it never takes the ?next= continuations,
+   and it only runs while the vault still exists and the saved
+   touch is inside the same 15 idle minutes the in-page lock
+   enforces. Anything stale or unverifiable is forgotten and
+   the tab simply stays locked. */
+async function pwRestoreSession() {
+  const stored = pwStoredSession();
+  if (!stored) return;
+  if (!vaultLoad() || Date.now() - stored.touch > 15 * 60 * 1000) { pwForgetStoredSession(); return; }
+  try {
+    await pwStartSession({ kind: stored.kind, secret: stored.secret }, { restored: true });
+  } catch (e) { pwForgetStoredSession(); return; }
+  if (!pwSession || pwSession.address !== stored.address) { pwWipeSession(); return; }
+  syncChrome(); renderPw(); renderComposer(); refreshViewsForWallet();
 }
 function renderPwRemove(box) {
   if (!box) return;
@@ -4142,6 +4216,54 @@ function renderPwRemove(box) {
     pwDraft = null; pwView = 'auto';
     renderPw(); renderComposer(); refreshViewsForWallet();
   };
+}
+/* v30: view the recovery phrase / private key again. The
+   password is asked again and the VAULT is decrypted fresh —
+   what is shown comes from that decryption, never from the
+   live session — so seeing it also proves the password still
+   opens the vault, and anyone who merely finds this tab
+   unlocked cannot get it without the password. Hide clears
+   it, and any lock re-renders the whole wallet area, so no
+   reveal survives a lock. */
+function renderPwReveal(box) {
+  if (!box) return;
+  box.innerHTML = '<div class="pw-reveal">' +
+    '<h3 class="detail-h">' + esc(T.pwRevealTitle) + '</h3>' +
+    '<p class="warn">' + esc(T.pwRevealWarn) + '</p>' +
+    '<input type="password" id="pwRevealPass" autocomplete="current-password" placeholder="' + esc(T.pwPasswordPh) + '">' +
+    '<p id="pwRevealErr"></p>' +
+    '<div class="row"><button id="pwRevealGo" type="button">' + esc(T.pwRevealBtn) + '</button>' +
+    '<button id="pwRevealCancel" class="ghost" type="button">' + esc(T.pwCancelBtn) + '</button></div></div>';
+  const go = async () => {
+    const pw = $('pwRevealPass').value;
+    const err = $('pwRevealErr');
+    const btn = $('pwRevealGo'); btn.disabled = true;
+    let obj = null;
+    try { obj = await vaultDecrypt(pw, vaultLoad()); }
+    catch (e) {
+      err.innerHTML = '<span class="err">' + esc(T.pwUnlockWrong) + '</span>';
+      btn.disabled = false;
+      return;
+    }
+    $('pwRevealPass').value = '';
+    let inner = '<div class="pw-reveal">' +
+      '<h3 class="detail-h">' + esc(T.pwRevealTitle) + '</h3>' +
+      '<p class="warn">' + esc(T.pwRevealWarn) + '</p>';
+    if (obj.kind === 'phrase') {
+      const words = obj.secret.split(' ');
+      inner += '<div class="phrase-grid">' + words.map((w, i) =>
+        '<span class="phrase-word"><span class="pw-num">' + (i + 1) + '</span>' + esc(w) + '</span>').join('') + '</div>';
+    } else {
+      inner += '<p class="small">' + esc(T.pwRevealKeyLbl) + '</p>' +
+        '<p class="pw-key">' + esc(obj.secret) + '</p>';
+    }
+    inner += '<div class="row"><button id="pwRevealHide" class="ghost" type="button">' + esc(T.pwRevealHide) + '</button></div></div>';
+    box.innerHTML = inner;
+    $('pwRevealHide').onclick = () => { box.innerHTML = ''; };
+  };
+  $('pwRevealGo').onclick = go;
+  $('pwRevealPass').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+  $('pwRevealCancel').onclick = () => { box.innerHTML = ''; };
 }
 function renderPwUnlocked(area) {
   const s = pwSession;
@@ -4204,9 +4326,10 @@ function renderPwUnlocked(area) {
     '<p class="small">' + esc(T.pwSendGasNote) + '</p>' +
     '<p id="pwSendStatus"></p></div>';
   html += '<div class="menu-list">' +
+    '<button id="pwRevealBtn" class="menu-row" type="button">' + esc(T.pwRevealBtn) + '</button>' +
     '<button id="pwLockBtn" class="menu-row" type="button">' + esc(T.pwLockBtn) + '</button>' +
     '<button id="pwRemoveBtn2" class="menu-row" type="button">' + esc(T.pwRemoveBtn) + '</button></div>' +
-    '<div id="pwRemoveArea"></div><p id="pwStatus"></p>';
+    '<div id="pwRevealArea"></div><div id="pwRemoveArea"></div><p id="pwStatus"></p>';
   area.innerHTML = html;
   $('pwCopyAddr').onclick = async ev => {
     try { await navigator.clipboard.writeText(s.address); ev.target.textContent = T.copied; setTimeout(() => { const b = $('pwCopyAddr'); if (b) b.textContent = shortAddr(s.address) + ' ⧉'; }, 1600); } catch (e) {}
@@ -4243,6 +4366,7 @@ function renderPwUnlocked(area) {
   const wd = $('pwWdBtn'); if (wd) wd.onclick = () => pwDoDepWd('withdraw');
   const sendBtn = $('pwSendBtn'); if (sendBtn) sendBtn.onclick = () => pwDoSend();
   const sendMax = $('pwSendMaxBtn'); if (sendMax) sendMax.onclick = () => pwSendMax();
+  $('pwRevealBtn').onclick = () => renderPwReveal($('pwRevealArea'));
   $('pwLockBtn').onclick = () => pwLock();
   $('pwRemoveBtn2').onclick = () => renderPwRemove($('pwRemoveArea'));
   /* balances fill in async */
@@ -4433,13 +4557,13 @@ function confirmErrHtml(e) {
    with the posting wallet through sendLocalTx (its one
    broadcast path) and show the wallet page's gas warning,
    reworded for a page with no address on it, when the
-   posting wallet holds no QOM. Locked: an in-place unlock
-   wall when this browser holds a vault (v29 — the session is
-   page-memory only, so routing the unlock through the wallet
-   view could never work: every navigation re-locks), else
-   the guide plus a wallet link carrying ?next= so a fresh
-   create/import lands back here. Quotes are live
-   getAmountsOut reads only — nothing here invents a number. */
+   posting wallet holds no QOM. Locked (no live or restored
+   session in this tab): an in-place unlock wall when this
+   browser holds a vault (v29 — the unlock happens on this
+   view, not via a wallet-view round trip), else the guide
+   plus a wallet link carrying ?next= so a fresh create/import
+   lands back here. Quotes are live getAmountsOut reads only —
+   nothing here invents a number. */
 function renderTradeWall(area, kind) {
   if (!vaultLoad()) {
     area.innerHTML =
@@ -6345,6 +6469,7 @@ refreshWallet();
 renderPw();
 mirrorAdoptDraft(); /* v19: a pending mirror draft becomes the composer draft */
 renderComposer();
+pwRestoreSession(); /* v30: revive this tab's saved session, if it is still fresh */
 /* v13 chrome wiring: the mobile drawer (avatar button, scrim,
    close, Escape), the floating compose button and the sidebar
    Post button (both jump to the home composer — on other views

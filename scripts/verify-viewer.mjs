@@ -49,6 +49,21 @@
    round trip re-locked forever); without one, the wallet
    link carries ?next= and pwStartSession continues back.
    The wall renderer itself is run against a stub DOM below.
+   v30 adds: the session persists in tab-scoped sessionStorage
+   (the owner's call — the memory-only session re-locked on
+   every navigation, which also made posting from the web
+   impossible: composer on home, unlock on the wallet view,
+   and moving between them killed the session). Boot restore
+   respects the vault + the 15 idle minutes and never takes
+   the ?next= jumps; lock forgets the stored copy; the secret
+   never reaches localStorage. Also: the recovery phrase /
+   private key can be viewed again from the unlocked wallet
+   (fresh vault decryption behind a password re-entry, never
+   the live session secret), and the mobile topbar keeps ONE
+   logo (the drawer button's avatar; the .mt-mark img is gone).
+   The wallet cluster + composer are run against a stub DOM
+   below: a restored session on the home view must render the
+   real composer card with can-compose set.
    Run: node scripts/verify-viewer.mjs */
 import { createRequire } from 'node:module';
 import fs from 'node:fs';
@@ -291,8 +306,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=29') && jaHtml.includes('?v=29'), 'shells reference ?v=29 assets');
-ok(swSrc.includes("caw-view-v29"), 'sw.js cache name is caw-view-v29');
+ok(enHtml.includes('?v=30') && jaHtml.includes('?v=30'), 'shells reference ?v=30 assets');
+ok(swSrc.includes("caw-view-v30"), 'sw.js cache name is caw-view-v30');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1201,7 +1216,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v29'), 'sw cache is caw-view-v29');
+  ok(swJs.includes('caw-view-v30'), 'sw cache is caw-view-v30');
 }
 
 /* ---- v28: plain send out of the posting wallet ---- */
@@ -1251,7 +1266,9 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok(VS.includes("nextQuery === 'dex' ? '<p class=\"pw-next-hint\">' + esc(T.pwNextDex)") &&
      VS.includes("nextQuery === 'burnhawk' ? '<p class=\"pw-next-hint\">' + esc(T.pwNextBurn)"),
     'v29: the locked wallet view shows the dex/burn continuation hints');
-  ok(!/sessionStorage/.test(VS), 'v29: no sessionStorage anywhere — the session stays page-memory only');
+  /* v30 supersedes the v29 "no sessionStorage anywhere" pin:
+     the owner asked for the tab-scoped stored session — its
+     pins live in the v30 block below. */
 
   /* behavioural: run the real wall renderer against a stub DOM */
   const mkEl = () => ({ innerHTML: '', value: '', disabled: false, listeners: {},
@@ -1307,6 +1324,207 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     await new Promise(r => setTimeout(r, 10));
     ok(w.calls.join(',') === 'session,composer,burn',
       'v29 behaviour: Enter submits, and the burn panel replaces the wall');
+  }
+}
+
+/* ---- v30: tab-scoped session, reveal, one topbar logo ---- */
+{
+  const VS = read('../docs/viewer.js');
+  const cssV30 = read('../docs/style.css');
+
+  /* static pins: the stored-session model */
+  ok(VS.includes("const PW_SESSION_KEY = 'caw-pw-session';"), 'v30: the one sessionStorage key exists');
+  const persistBody = VS.slice(VS.indexOf('function pwPersistSession()'), VS.indexOf('function pwStoredSession()'));
+  ok(persistBody.includes('sessionStorage.setItem(PW_SESSION_KEY') && persistBody.includes('touch: pwLastTouch'),
+    'v30: the session persists to sessionStorage with its touch time');
+  ok(!persistBody.includes('localStorage'), 'v30: the session persist never touches localStorage');
+  ok(!VS.includes('localStorage.setItem(PW_SESSION_KEY'), 'v30: the session key is never written to localStorage');
+  ok(VS.includes('const pwTouch = () => { pwLastTouch = Date.now(); pwPersistSession(); };'),
+    'v30: every touch refreshes the stored session');
+  const wipeBody = VS.slice(VS.indexOf('function pwWipeSession()'), VS.indexOf('function pwLock()'));
+  ok(wipeBody.includes('pwForgetStoredSession();'), 'v30: wiping the session (any lock) forgets the stored copy');
+  const startBody = VS.slice(VS.indexOf('async function pwStartSession('), VS.indexOf('async function pwRestoreSession()'));
+  ok(startBody.includes('if (opts && opts.restored) return;') &&
+     startBody.indexOf('if (opts && opts.restored) return;') < startBody.indexOf("nextQuery === 'profile'"),
+    'v30: a restored session skips the ?next= continuations');
+  const restoreBody = VS.slice(VS.indexOf('async function pwRestoreSession()'), VS.indexOf('function renderPwRemove'));
+  ok(restoreBody.includes('vaultLoad()') && restoreBody.includes('Date.now() - stored.touch > 15 * 60 * 1000') &&
+     restoreBody.includes('{ restored: true }') && restoreBody.includes('pwForgetStoredSession()'),
+    'v30: restore requires the vault + the 15-minute window, marks itself restored, forgets the stale');
+  ok(VS.includes('pwRestoreSession(); /* v30'), 'v30: boot attempts the restore');
+
+  /* static pins: the reveal */
+  const unlockedBody = VS.slice(VS.indexOf('function renderPwUnlocked(area)'), VS.indexOf('async function pwDoDepWd'));
+  ok(unlockedBody.includes('id="pwRevealBtn"') && unlockedBody.includes('id="pwRevealArea"') &&
+     unlockedBody.includes("renderPwReveal($('pwRevealArea'))"),
+    'v30: the unlocked wallet carries the reveal button, its area and the wiring');
+  const revealBody = VS.slice(VS.indexOf('function renderPwReveal(box)'), VS.indexOf('function renderPwUnlocked'));
+  ok(revealBody.includes('vaultDecrypt(pw, vaultLoad())'), 'v30: the reveal decrypts the vault fresh');
+  ok(!revealBody.includes('pwSession'), 'v30: the reveal never reads the live session');
+  for (const k of ['pwRevealBtn', 'pwRevealTitle', 'pwRevealWarn', 'pwRevealHide', 'pwRevealKeyLbl']) {
+    ok((VS.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v30: ' + k + ' exists in both languages');
+  }
+
+  /* static pins: one logo in the mobile topbar */
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    const mark = (html.match(/<div class="mt-mark">([\s\S]*?)<\/div>/) || [])[1] || '';
+    ok(!mark.includes('<img') && mark.includes('>CAW<'),
+      'v30: ' + label + ' topbar mark is the CAW wordmark only — one logo, not two');
+    ok(html.includes('id="mtAvatar"><img'), 'v30: ' + label + ' drawer button keeps its avatar image');
+  }
+  ok(!cssV30.includes('.mt-mark img'), 'v30: the unused .mt-mark img rule is gone');
+
+  /* behavioural: run the real wallet cluster + the real composer
+     against a stub DOM, sharing one sessionStorage across boots
+     (a boot = one full page load = one navigation). */
+  const mkEl = () => ({ innerHTML: '', value: '', textContent: '', disabled: false, className: '',
+    dataset: {}, listeners: {},
+    classList: { toggle() {}, add() {}, remove() {} },
+    addEventListener(k, f) { this.listeners[k] = f; },
+    before() {}, focus() {}, scrollIntoView() {},
+    querySelector() { return mkEl(); }, querySelectorAll() { return []; } });
+  const mkStorage = () => {
+    const m = new Map();
+    return { getItem: k => (m.has(k) ? m.get(k) : null),
+      setItem: (k, v) => m.set(k, String(v)), removeItem: k => m.delete(k) };
+  };
+  const clusterSrc =
+    VS.slice(VS.indexOf('let pwSession = null;'), VS.indexOf('function renderPwRemove')) +
+    VS.slice(VS.indexOf('function renderComposer() {'), VS.indexOf('/* ----- action buttons on post cards'));
+  const HK_ADDR = (await V.deriveFromPhrase(HK_PHRASE)).address;
+  const HK_KEY = '0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80';
+  const bootCluster = ({ sessionStore, vault, next = null, dex = null }) => {
+    const els = {}, calls = [], bodyCls = {}, probe = {}, holder = { api: null };
+    const $id = id => (els[id] = els[id] || mkEl());
+    const doc = { body: { classList: { toggle: (c, on) => { bodyCls[c] = !!on; } } },
+      createElement: () => mkEl() };
+    const T = { pwLockedTitle: 'LT', pwLockedText: 'LX', pwPasswordPh: 'PW', pwUnlockBtn: 'UNLOCK',
+      pwRemoveBtn: 'RM', pwUnlockWrong: 'WRONG', compHintLocked: 'HINT', compHintSetupBtn: 'SETUP',
+      compHintNoName: 'NONAME', pwNameBalanceLbl: 'BAL', compZeroBalance: 'ZERO', compPh: 'PH',
+      compPostBtn: 'POST', compBytes: '{n}', attachLbl: 'ATTACH' };
+    const api = new Function('$', 'document', 'localStorage', 'sessionStorage', 'location',
+      'pageFile', 'profUrl', 'esc', 'T', 'nextQuery', 'postQuery', 'profileQuery', 'bmQuery',
+      'reactionsQuery', 'mirrorQuery', 'searchQuery', 'dexQuery', 'burnQuery',
+      'vaultLoad', 'vaultDecrypt', 'vaultEncrypt', 'vaultSave', 'hexToBytesU', 'deriveFromPhrase',
+      'addressOfPriv', 'tokensOf', 'ownerTokensCache', 'syncChrome', 'renderPwUnlocked', 'ntCheckDot',
+      'loadPostPage', 'loadProfile', 'loadBookmarksView', 'loadReactionsView', 'loadMirrorView',
+      'loadDexView', 'loadBurnView', 'loadTimeline', 'avatarFor', 'avatarHtml', 'fmtQcaw', 'textBytes',
+      'pendingComposeRef', 'composerRef', 'compDraft', 'compFiles', 'mirrorNotice',
+      clusterSrc + '\nreturn { pwStartSession, pwRestoreSession, pwLock, pwUnlocked };')(
+      $id, doc, mkStorage(), sessionStore,
+      { replace: u => calls.push('replace:' + u), href: '' },
+      'en.html', n => 'en.html?name=' + n, s => String(s), T,
+      next, undefined, undefined, undefined, undefined, undefined, undefined, dex, undefined,
+      () => vault, async () => { throw new Error('unused'); }, async () => ({}), () => {},
+      h => new Uint8Array((String(h).replace(/^0x/, '').match(/../g) || []).map(x => parseInt(x, 16))),
+      V.deriveFromPhrase, V.addressOfPriv,
+      async () => [{ id: 7n, balance: 100n, username: 'neptune' }], new Map(),
+      () => calls.push('chrome'), () => calls.push('pwUnlocked'), () => {},
+      () => calls.push('post'), () => calls.push('profile'), () => calls.push('bm'),
+      () => calls.push('reactions'), () => calls.push('mirror'),
+      () => { calls.push('dex'); probe.unlockedAtDex = holder.api ? holder.api.pwUnlocked() : null; },
+      () => calls.push('burn'), () => calls.push('timeline'),
+      async () => null, () => '', x => String(x), V.textBytes,
+      null, null, '', [], '');
+    holder.api = api;
+    return { api, els, calls, bodyCls, probe };
+  };
+  {
+    const ss = mkStorage();
+    const b1 = bootCluster({ sessionStore: ss, vault: { v: 1 } });
+    await b1.api.pwStartSession({ kind: 'phrase', secret: HK_PHRASE });
+    ok(b1.api.pwUnlocked(), 'v30 behaviour: the unlock starts the session');
+    const saved = JSON.parse(ss.getItem('caw-pw-session') || 'null');
+    ok(saved && saved.kind === 'phrase' && saved.secret === HK_PHRASE &&
+       saved.address === HK_ADDR && typeof saved.touch === 'number',
+      'v30 behaviour: the session is saved to sessionStorage with a touch timestamp');
+    /* the reported bug, fixed: unlock on the wallet view, then
+       navigate home — the composer must be the real card */
+    const b2 = bootCluster({ sessionStore: ss, vault: { v: 1 }, next: 'profile' });
+    await b2.api.pwRestoreSession();
+    ok(b2.api.pwUnlocked(), 'v30 behaviour: a fresh boot restores the session without a password');
+    ok(!b2.calls.some(c => c.startsWith('replace:')),
+      'v30 behaviour: restore never takes the ?next= continuation');
+    ok(b2.els.composerArea.innerHTML.includes('composer-card') &&
+       b2.els.composerArea.innerHTML.includes('id="compText"') &&
+       !b2.els.composerArea.innerHTML.includes('composer-hint'),
+      'v30 behaviour: the restored home view renders the real composer card, not the locked hint');
+    ok(b2.bodyCls['can-compose'] === true, 'v30 behaviour: body carries can-compose after restore');
+    /* and on the DEX view the loader re-runs with the session
+       live, so the panel (not the wall) renders */
+    const b3 = bootCluster({ sessionStore: ss, vault: { v: 1 }, dex: '1' });
+    await b3.api.pwRestoreSession();
+    ok(b3.calls.includes('dex') && b3.probe.unlockedAtDex === true,
+      'v30 behaviour: on the DEX view the restored session re-runs the loader unlocked (panel, not wall)');
+  }
+  {
+    const ssK = mkStorage();
+    ssK.setItem('caw-pw-session', JSON.stringify({ kind: 'key', secret: HK_KEY, address: HK_ADDR, touch: Date.now() }));
+    const bK = bootCluster({ sessionStore: ssK, vault: { v: 1 } });
+    await bK.api.pwRestoreSession();
+    ok(bK.api.pwUnlocked(), 'v30 behaviour: a stored private-key session restores too');
+  }
+  {
+    const ss2 = mkStorage();
+    ss2.setItem('caw-pw-session', JSON.stringify({ kind: 'phrase', secret: HK_PHRASE, address: HK_ADDR, touch: Date.now() - 16 * 60 * 1000 }));
+    const b4 = bootCluster({ sessionStore: ss2, vault: { v: 1 } });
+    await b4.api.pwRestoreSession();
+    ok(!b4.api.pwUnlocked() && ss2.getItem('caw-pw-session') === null,
+      'v30 behaviour: a session older than 15 idle minutes is dropped');
+    const ss3 = mkStorage();
+    ss3.setItem('caw-pw-session', JSON.stringify({ kind: 'phrase', secret: HK_PHRASE, address: HK_ADDR, touch: Date.now() }));
+    const b5 = bootCluster({ sessionStore: ss3, vault: null });
+    await b5.api.pwRestoreSession();
+    ok(!b5.api.pwUnlocked() && ss3.getItem('caw-pw-session') === null,
+      'v30 behaviour: a stored session is dropped when the vault is gone');
+  }
+  {
+    const ss4 = mkStorage();
+    const b6 = bootCluster({ sessionStore: ss4, vault: { v: 1 } });
+    await b6.api.pwStartSession({ kind: 'phrase', secret: HK_PHRASE });
+    ok(ss4.getItem('caw-pw-session') !== null, 'v30 behaviour: the session is stored before the lock');
+    b6.api.pwLock();
+    ok(!b6.api.pwUnlocked() && ss4.getItem('caw-pw-session') === null,
+      'v30 behaviour: locking clears the stored session');
+  }
+
+  /* behavioural: the reveal, run against a stub DOM */
+  const mkReveal = ret => {
+    const els = {};
+    const $id = id => (els[id] = els[id] || mkEl());
+    const renderPwReveal = new Function('$', 'esc', 'T', 'vaultLoad', 'vaultDecrypt',
+      revealBody + '\nreturn renderPwReveal;')(
+      $id, s => String(s),
+      { pwRevealTitle: 'TITLE', pwRevealWarn: 'WARN', pwRevealBtn: 'SHOW', pwRevealHide: 'HIDE',
+        pwRevealKeyLbl: 'KEYLBL', pwPasswordPh: 'PWPH', pwUnlockWrong: 'WRONG', pwCancelBtn: 'CANCEL' },
+      () => ({ v: 1 }),
+      async pw => { if (pw !== 'hunter2') throw new Error('bad password'); return ret; });
+    return { els, renderPwReveal, box: mkEl() };
+  };
+  {
+    const r = mkReveal({ kind: 'phrase', secret: 'alpha bravo charlie' });
+    r.renderPwReveal(r.box);
+    ok(r.box.innerHTML.includes('id="pwRevealPass"'), 'v30 behaviour: the reveal asks for the password first');
+    r.els.pwRevealPass.value = 'nope';
+    await r.els.pwRevealGo.onclick();
+    ok(r.els.pwRevealErr.innerHTML.includes('WRONG') && !r.box.innerHTML.includes('alpha'),
+      'v30 behaviour: a wrong password reveals nothing');
+    r.els.pwRevealPass.value = 'hunter2';
+    await r.els.pwRevealGo.onclick();
+    ok(r.box.innerHTML.includes('phrase-grid') && r.box.innerHTML.includes('alpha') &&
+       r.box.innerHTML.includes('charlie'),
+      'v30 behaviour: the right password shows the freshly decrypted phrase');
+    r.els.pwRevealHide.onclick();
+    ok(r.box.innerHTML === '', 'v30 behaviour: Hide clears the reveal');
+  }
+  {
+    const r = mkReveal({ kind: 'key', secret: '0x' + 'ab'.repeat(32) });
+    r.renderPwReveal(r.box);
+    r.els.pwRevealPass.value = 'hunter2';
+    await r.els.pwRevealGo.onclick();
+    ok(r.box.innerHTML.includes('pw-key') && r.box.innerHTML.includes('KEYLBL') &&
+       r.box.innerHTML.includes('0x' + 'ab'.repeat(32)),
+      'v30 behaviour: a key wallet reveals the private key, labelled');
   }
 }
 
