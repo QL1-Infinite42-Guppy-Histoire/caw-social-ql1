@@ -284,9 +284,9 @@ console.log('— v9: linkify + relative time —');
   ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
 }
 
-console.log('— v24: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=24') && jaHtml.includes('?v=24'), 'shells reference ?v=24 assets');
-ok(swSrc.includes("caw-view-v24"), 'sw.js cache name is caw-view-v24');
+console.log('— v25: version guards (v10 checks, updated values) —');
+ok(enHtml.includes('?v=25') && jaHtml.includes('?v=25'), 'shells reference ?v=25 assets');
+ok(swSrc.includes("caw-view-v25"), 'sw.js cache name is caw-view-v25');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -302,9 +302,11 @@ console.log('— v24: menu destinations audit (profile must not land on the wall
       const href = (tag.match(/href="([^"]*)"/) || [])[1] || '';
       if (nav === 'lang') continue;
       if (nav === 'profile' || nav === 'mynames') {
-        // state-dependent rows: static placeholder is the wallet view,
-        // syncChrome rewrites them when an acting name exists
-        if (href !== file + '?wallet=1') bad.push(nav + ' placeholder ' + href);
+        // state-dependent rows: static placeholders are the wallet view
+        // (profile carries ?next=profile since v25), syncChrome rewrites
+        // them per session state
+        const want = nav === 'profile' ? file + '?wallet=1&next=profile' : file + '?wallet=1';
+        if (href !== want) bad.push(nav + ' placeholder ' + href);
         continue;
       }
       if (!(nav in expect)) { bad.push('unknown nav ' + nav); continue; }
@@ -312,10 +314,22 @@ console.log('— v24: menu destinations audit (profile must not land on the wall
     }
     ok(anchors.length >= 20 && bad.length === 0, label + ' every menu item points at its own view' + (bad.length ? ' (bad: ' + bad.join('; ') + ')' : ''));
   }
-  ok(viewerSrc.includes("sumEl.setAttribute('href', acting ? profUrl(acting.username) : pageFile + '?wallet=1')"),
-    'syncChrome rewrites the summary header href (profile when acting, wallet when locked)');
+  ok(viewerSrc.includes("sumEl.setAttribute('href', profTarget)"),
+    'syncChrome rewrites the summary header href with the shared profile target');
   ok(viewerSrc.includes("'sideSummary'") && viewerSrc.includes("'drawerSummary'"),
     'both summary headers (sidebar + drawer) are passed to setSummary');
+  ok(viewerSrc.includes('const profTarget = acting ? profUrl(acting.username)') &&
+     viewerSrc.includes("pwSession ? pageFile + '?getname=1'") &&
+     viewerSrc.includes("pageFile + '?wallet=1&next=profile'"),
+    'v25: profile target is three-way (own profile / name desk / wallet with ?next=profile)');
+  ok(viewerSrc.includes("if (nextQuery === 'profile')") &&
+     viewerSrc.includes("location.replace(a ? profUrl(a.username) : pageFile + '?getname=1')"),
+    'v25: after unlock, ?next=profile continues to the own profile (name desk when nameless)');
+  ok((viewerSrc.match(/pwNextProfile:/g) || []).length === 2 &&
+     viewerSrc.includes("nextQuery === 'profile' ? '<p class=\"pw-next-hint\">'"),
+    'v25: the locked wallet view explains the profile continuation (both languages)');
+  ok((enHtml.match(/next=profile/g) || []).length >= 4 && (jaHtml.match(/next=profile/g) || []).length >= 4,
+    'v25: static placeholders carry ?next=profile on the profile rows + summary headers');
 }
 
 console.log('— v20: the 入れる／出す jump button never dead-ends —');
@@ -837,8 +851,8 @@ console.log('— v16: post-row anatomy fixes (action pills, record link, recaw s
        !segOf('themeToggleDrawer').includes('nav-ic') && segOf('themeToggleDrawer').includes('themeLabelDrawer'),
        label + ': theme rows are 🌙/☀️ + label only (no second gear)');
   }
-  ok(viewerSrc.includes("acting ? profUrl(acting.username) : pageFile + '?wallet=1'"),
-     'profile rows route by state: acting → own profile, locked → the wallet view');
+  ok(viewerSrc.includes('const profTarget = acting ? profUrl(acting.username)'),
+     'profile rows route by state (v25): acting → own profile, nameless → name desk, locked → wallet + ?next=profile');
   ok(viewerSrc.includes("acting ? pageFile + '?getname=1#myNames' : pageFile + '?wallet=1'"),
      'my-names rows route by state: acting → the names list, locked → the wallet view');
   ok(!viewerSrc.includes('prow.style.display') && !viewerSrc.includes("el.style.display = acting"),

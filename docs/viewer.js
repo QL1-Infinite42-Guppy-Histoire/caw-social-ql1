@@ -155,6 +155,7 @@ const T = {
     pwImportInvalid: 'That does not look right — check the words (or the key) and try again.',
     pwLockedTitle: 'This browser’s posting wallet is locked',
     pwLockedText: 'Type the password you set for it to unlock. Unlocking stays on for 15 minutes at a time.',
+    pwNextProfile: 'You came here from Profile — once unlocked, you will be taken straight to your profile.',
     pwUnlockBtn: 'Unlock', pwUnlockWrong: 'That password did not open this wallet. Please try again.',
     pwAddressLbl: 'Posting wallet', pwCopyBtn: 'Copy address',
     pwQomLbl: 'QOM (for the small fees)', pwQcawLbl: 'qCAW in this wallet',
@@ -390,6 +391,7 @@ const T = {
     pwImportInvalid: 'うまく読み取れませんでした。語句（または鍵）を確認してもう一度どうぞ。',
     pwLockedTitle: 'このブラウザの投稿用ウォレットはロック中です',
     pwLockedText: '設定したパスワードを入力すると開きます。開いた状態は15分まで続きます。',
+    pwNextProfile: 'プロフィールから来ています。解除すると、そのままあなたのプロフィールへ進みます。',
     pwUnlockBtn: '開く', pwUnlockWrong: 'そのパスワードでは開けませんでした。もう一度どうぞ。',
     pwAddressLbl: '投稿用ウォレット', pwCopyBtn: 'アドレスをコピー',
     pwQomLbl: 'QOM（手数料用）', pwQcawLbl: 'このウォレットの qCAW',
@@ -3833,6 +3835,7 @@ function renderPwPassword(area, mode) {
 function renderPwLocked(area) {
   area.innerHTML = '<h3>' + esc(T.pwLockedTitle) + '</h3>' +
     '<p>' + esc(T.pwLockedText) + '</p>' +
+    (nextQuery === 'profile' ? '<p class="pw-next-hint">' + esc(T.pwNextProfile) + '</p>' : '') +
     '<input type="password" id="pwUnlockPass" autocomplete="current-password" placeholder="' + esc(T.pwPasswordPh) + '">' +
     '<p id="pwUnlockErr"></p>' +
     '<div class="row"><button id="pwUnlockBtn" type="button">' + esc(T.pwUnlockBtn) + '</button>' +
@@ -3870,6 +3873,16 @@ async function pwStartSession(secretObj) {
   pwSession = { kind: secretObj.kind, secret: secretObj.secret, keyBytes, address };
   pwTouch();
   await pwLoadNames();
+  /* v25: a Profile tap made while locked lands on the wallet
+     view with ?next=profile. Once the session starts, continue
+     straight to the own profile — or to the name desk when the
+     wallet holds no name yet — instead of staying on the wallet
+     view. (v24 kept the locked -> wallet landing as designed;
+     the owner reported it as a bug, so the flow changed.) */
+  if (nextQuery === 'profile') {
+    const a = pwActing();
+    location.replace(a ? profUrl(a.username) : pageFile + '?getname=1');
+  }
 }
 function renderPwRemove(box) {
   if (!box) return;
@@ -5670,14 +5683,21 @@ async function syncChrome() {
        target is what changes: acting → the own profile;
        locked / nameless → the wallet view, where a wallet can
        be made, imported or unlocked and a name chosen. */
-    if (prow) prow.setAttribute('href', acting ? profUrl(acting.username) : pageFile + '?wallet=1');
+    /* v25: three-way target — acting name -> the own profile;
+       unlocked but nameless -> the name desk; locked -> the
+       wallet view WITH ?next=profile, so a successful unlock
+       continues to the profile on its own (see pwStartSession). */
+    const profTarget = acting ? profUrl(acting.username)
+      : pwSession ? pageFile + '?getname=1'
+      : pageFile + '?wallet=1&next=profile';
+    if (prow) prow.setAttribute('href', profTarget);
     /* v24: the summary header (avatar + name at the top of the
        sidebar / drawer) follows the same rule — it is the most
        profile-looking element in the menu, but its href was a
        static ?wallet=1 that nothing ever rewrote, so tapping
        your own name always landed on the wallet, even with an
        acting name. */
-    if (sumEl) sumEl.setAttribute('href', acting ? profUrl(acting.username) : pageFile + '?wallet=1');
+    if (sumEl) sumEl.setAttribute('href', profTarget);
     if (acting) {
       if (nm) nm.textContent = acting.username || '';
       if (sub) sub.textContent = '@' + acting.username + ' · #' + acting.id.toString();
@@ -5769,6 +5789,7 @@ const burnQuery = new URLSearchParams(location.search).get('burnhawk');
    as the matching view so old bookmarks still land right. */
 const hashView = (!postQuery && !profileQuery && !bmQuery && !searchQuery && !mirrorQuery)
   ? { '#pwallet': 'wallet', '#lookup': 'lookup', '#getname': 'getname' }[location.hash] : null;
+const nextQuery = new URLSearchParams(location.search).get('next');
 const walletQuery = new URLSearchParams(location.search).get('wallet') || (hashView === 'wallet' ? '1' : null);
 const getnameQuery = new URLSearchParams(location.search).get('getname') || (hashView === 'getname' ? '1' : null);
 const lookupQuery = new URLSearchParams(location.search).get('lookup') || (hashView === 'lookup' ? '1' : null);
