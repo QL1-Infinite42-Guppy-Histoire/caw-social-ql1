@@ -156,6 +156,14 @@ const T = {
     pwLockedTitle: 'This browser’s posting wallet is locked',
     pwLockedText: 'Type the password you set for it to unlock. Unlocking stays on for 15 minutes at a time.',
     pwNextProfile: 'You came here from Profile — once unlocked, you will be taken straight to your profile.',
+    mediaAudio: 'Profile audio', mediaLbl: 'Profile media',
+    mediaIcon: 'Icon', mediaHeader: 'Header image', mediaAudioLbl: 'Audio',
+    mediaPick: 'Choose a file', mediaSet: 'Save', mediaClear: 'Remove',
+    mediaBusy: 'Uploading…', mediaDone: 'Saved.', mediaFail: 'Could not save. Please try again later.',
+    mediaNote: 'Icons, header images and audio live on a separate media server, signed by your posting wallet. If that server is down, the NFT image is shown instead and everything else keeps working.',
+    attachLbl: 'Add images (up to 4)', attachSelected: '{n} image(s) selected',
+    attachBusy: 'Attaching images…', attachDone: 'Attached {n} image(s).',
+    attachFail: 'Your post is up, but the image upload failed.',
     pwUnlockBtn: 'Unlock', pwUnlockWrong: 'That password did not open this wallet. Please try again.',
     pwAddressLbl: 'Posting wallet', pwCopyBtn: 'Copy address',
     pwQomLbl: 'QOM (for the small fees)', pwQcawLbl: 'qCAW in this wallet',
@@ -392,6 +400,14 @@ const T = {
     pwLockedTitle: 'このブラウザの投稿用ウォレットはロック中です',
     pwLockedText: '設定したパスワードを入力すると開きます。開いた状態は15分まで続きます。',
     pwNextProfile: 'プロフィールから来ています。解除すると、そのままあなたのプロフィールへ進みます。',
+    mediaAudio: 'プロフィールの音声', mediaLbl: 'プロフィールのメディア',
+    mediaIcon: 'アイコン', mediaHeader: 'ヘッダー画像', mediaAudioLbl: '音声',
+    mediaPick: 'ファイルを選ぶ', mediaSet: '保存', mediaClear: '削除',
+    mediaBusy: 'アップロード中…', mediaDone: '保存しました。', mediaFail: '保存できませんでした。時間をおいて再度お試しください。',
+    mediaNote: 'アイコン・ヘッダー・音声は専用のメディアサーバーに置かれ、投稿用ウォレットの署名で保存されます。サーバーが落ちている間はNFTの画像が表示され、他の機能はそのまま使えます。',
+    attachLbl: '画像を追加（最大4枚）', attachSelected: '{n}枚選択中',
+    attachBusy: '画像を添付しています…', attachDone: '画像を{n}枚添付しました。',
+    attachFail: '投稿は完了しましたが、画像の添付に失敗しました。',
     pwUnlockBtn: '開く', pwUnlockWrong: 'そのパスワードでは開けませんでした。もう一度どうぞ。',
     pwAddressLbl: '投稿用ウォレット', pwCopyBtn: 'アドレスをコピー',
     pwQomLbl: 'QOM（手数料用）', pwQcawLbl: 'このウォレットの qCAW',
@@ -944,7 +960,11 @@ async function resolveNameId(rawName) {
 /* avatar image for a name id — the picture half of the same single
    card read that resolveName uses (see cardFor above). */
 function avatarFor(idIn) {
-  return cardFor(idIn).then(c => c.image);
+  /* v26: a custom icon on the media server wins over the NFT card
+     image; when the media server is unreachable or has no icon,
+     mediaFor resolves null and the card image shows, as before. */
+  return Promise.all([cardFor(idIn), mediaFor(idIn)])
+    .then(([c, m]) => (m && m.icon && m.icon.url) ? m.icon.url : c.image);
 }
 
 /* ---------- getting a name: the check + the calldata (v11) ----------
@@ -2512,6 +2532,24 @@ function randomCawId() {
   return '0x' + bytesToHexU(b);
 }
 
+const MEDIA_API = 'https://vps-2026-11-12-16-49-27.tail303bfa.ts.net:10000';
+const MEDIA_EMPTY_SHA256 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+const mediaCache = new Map();
+function mediaFor(idIn) {
+  const key = String(idIn);
+  if (!mediaCache.has(key)) {
+    const p = fetchTimeout(MEDIA_API + '/v1/profile/' + key, null, 4000)
+      .then(r => (r.ok ? r.json() : null))
+      .then(j => (j && (j.icon || j.header || j.audio)) ? j : null)
+      .catch(() => null);
+    mediaCache.set(key, p);
+  }
+  return mediaCache.get(key);
+}
+function buildMediaMessage(o) {
+  return ['CAW Media v1', 'action: ' + o.action, 'name: ' + o.nameId, 'sha256: ' + o.sha256,
+    'caw: ' + (o.caw || '-'), 'tx: ' + (o.tx || '-'), 'ts: ' + o.ts].join('\n');
+}
 /* ================= browser UI (skipped under Node) ================= */
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
 
@@ -2592,6 +2630,167 @@ function originalFrame(cawId) {
    Returns the short URL, or null on any failure — callers
    then fall back to the full URL. */
 const CAWL_BASE = 'https://c.qql1.com'; // cawl custom domain (2026-11-18; the original workers.dev host still serves the same worker)
+
+/* ---------- v26: profile media + post attachments (media server) ----------
+   A small server on the community VPS holds profile icons, header
+   images, profile audio and post image attachments. It is a pure
+   sidecar: every write is authorised by an EIP-191 message signature
+   from the name's posting wallet and verified against the chain by
+   the server; reads are public. If it is down, icons fall back to
+   the NFT card image and posts render text-only — the on-chain CAW
+   itself never depends on it. The signed message format is shared
+   byte for byte with the server and the Android app:
+     CAW Media v1 / action: ... / name: ... / sha256: ... /
+     caw: ... / tx: ... / ts: ...   (one field per line) */
+async function sha256HexOf(buf) {
+  const d = await crypto.subtle.digest('SHA-256', buf);
+  return [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+/* EIP-191 message signing with the posting wallet's key (EIP-191 digest,
+   signed by the same raw ECDSA the CAW actions use). */
+async function pwSignMediaMsg(message) {
+  const body = utf8ToBytes(message);
+  const prefix = utf8ToBytes('\x19Ethereum Signed Message:\n' + body.length);
+  const digest = '0x' + keccakHex(concatBytes([prefix, body]));
+  const sig = await signDigestRaw(pwSession.keyBytes, digest);
+  return sig.r + sig.s.replace(/^0x/, '') + Number(sig.v).toString(16).padStart(2, '0');
+}
+async function mediaSetProfile(kind, file) {
+  const acting = pwActing();
+  if (!pwSession || !acting) throw new Error('locked');
+  const hash = await sha256HexOf(await file.arrayBuffer());
+  const ts = Math.floor(Date.now() / 1000);
+  const sig = await pwSignMediaMsg(buildMediaMessage({ action: 'set-' + kind, nameId: String(acting.id), sha256: hash, ts }));
+  const fd = new FormData();
+  fd.append('nameId', String(acting.id)); fd.append('kind', kind);
+  fd.append('ts', String(ts)); fd.append('sig', sig); fd.append('file', file);
+  const res = await fetchTimeout(MEDIA_API + '/v1/profile-media', { method: 'POST', body: fd }, 30000);
+  if (!res.ok) throw new Error('media ' + res.status);
+  mediaCache.delete(String(acting.id));
+  return res.json();
+}
+async function mediaClearProfile(kind) {
+  const acting = pwActing();
+  if (!pwSession || !acting) throw new Error('locked');
+  const ts = Math.floor(Date.now() / 1000);
+  const sig = await pwSignMediaMsg(buildMediaMessage({ action: 'clear-' + kind, nameId: String(acting.id), sha256: MEDIA_EMPTY_SHA256, ts }));
+  const res = await fetchTimeout(MEDIA_API + '/v1/clear', {
+    method: 'POST', headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ nameId: String(acting.id), kind, ts, sig }),
+  }, 15000);
+  if (!res.ok) throw new Error('media ' + res.status);
+  mediaCache.delete(String(acting.id));
+  return res.json();
+}
+async function mediaAttach(cawId, txHash, file) {
+  const acting = pwActing();
+  if (!pwSession || !acting) throw new Error('locked');
+  const hash = await sha256HexOf(await file.arrayBuffer());
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const ts = Math.floor(Date.now() / 1000);
+    const sig = await pwSignMediaMsg(buildMediaMessage({
+      action: 'attach', nameId: String(acting.id), sha256: hash,
+      caw: cawId.toLowerCase(), tx: txHash.toLowerCase(), ts,
+    }));
+    const fd = new FormData();
+    fd.append('nameId', String(acting.id)); fd.append('cawId', cawId); fd.append('txHash', txHash);
+    fd.append('ts', String(ts)); fd.append('sig', sig); fd.append('file', file);
+    const res = await fetchTimeout(MEDIA_API + '/v1/attach', { method: 'POST', body: fd }, 30000);
+    if (res.ok) return res.json();
+    if (res.status !== 404 || attempt === 1) throw new Error('media ' + res.status);
+    await new Promise(r => setTimeout(r, 4000)); // the post tx may need a moment to be readable
+  }
+  throw new Error('media 404');
+}
+/* Fill in attachment images for every rendered post row under root
+   that does not have them yet. Silent on any failure. */
+async function hydrateAttachmentsIn(root) {
+  if (!root || !root.querySelectorAll) return;
+  const els = [...root.querySelectorAll('[data-cawid]')].filter(el => !el.querySelector('.post-media'));
+  const ids = [...new Set(els.map(el => el.dataset.cawid.toLowerCase()))].slice(0, 50);
+  if (!ids.length) return;
+  let j = null;
+  try {
+    const res = await fetchTimeout(MEDIA_API + '/v1/posts?caw=' + ids.join(','), null, 5000);
+    if (res.ok) j = await res.json();
+  } catch (e) { return; }
+  if (!j || !j.media) return;
+  for (const el of els) {
+    const list = j.media[el.dataset.cawid.toLowerCase()];
+    if (!list || !list.length || el.querySelector('.post-media')) continue;
+    const div = document.createElement('div');
+    div.className = 'post-media n' + Math.min(list.length, 4);
+    div.innerHTML = list.map(m => '<a href="' + esc(m.url) + '" target="_blank" rel="noopener"><img loading="lazy" src="' + esc(m.url) + '" alt=""></a>').join('');
+    const foot = el.querySelector('.pfoot');
+    if (foot) el.insertBefore(div, foot); else el.appendChild(div);
+  }
+}
+function mediaSettingRow(kind, label, has, accept) {
+  return '<div class="mset-row"><span class="mset-lbl">' + esc(label) + '</span>' +
+    '<label class="ghost mset-pick">' + esc(T.mediaPick) + '<input type="file" id="msetFile-' + kind + '" accept="' + accept + '" hidden></label>' +
+    '<button type="button" class="ghost" id="msetSet-' + kind + '" disabled>' + esc(T.mediaSet) + '</button>' +
+    (has ? '<button type="button" class="ghost" id="msetClear-' + kind + '">' + esc(T.mediaClear) + '</button>' : '') +
+    '<span class="small" id="msetName-' + kind + '"></span></div>';
+}
+function wireMediaSettings() {
+  for (const kind of ['icon', 'header', 'audio']) {
+    const input = $('msetFile-' + kind), setBtn = $('msetSet-' + kind),
+      clearBtn = $('msetClear-' + kind), nameEl = $('msetName-' + kind);
+    if (input) input.onchange = () => {
+      const f = input.files && input.files[0];
+      if (nameEl) nameEl.textContent = f ? f.name : '';
+      if (setBtn) setBtn.disabled = !f;
+    };
+    if (setBtn) setBtn.onclick = async () => {
+      const f = input && input.files && input.files[0];
+      if (!f) return;
+      const st = $('msetStatus');
+      if (st) st.textContent = T.mediaBusy;
+      setBtn.disabled = true;
+      try { await mediaSetProfile(kind, f); if (st) st.textContent = T.mediaDone; loadProfile(); }
+      catch (e) { if (st) st.innerHTML = '<span class="err">' + esc(T.mediaFail) + '</span>'; setBtn.disabled = false; }
+    };
+    if (clearBtn) clearBtn.onclick = async () => {
+      const st = $('msetStatus');
+      if (st) st.textContent = T.mediaBusy;
+      try { await mediaClearProfile(kind); if (st) st.textContent = T.mediaDone; loadProfile(); }
+      catch (e) { if (st) st.innerHTML = '<span class="err">' + esc(T.mediaFail) + '</span>'; }
+    };
+  }
+}
+/* Profile header image, audio player and (for the owner) the media
+   settings panel. Runs after the profile head renders; every
+   failure leaves the plain profile untouched. */
+async function applyProfileMedia(id) {
+  const m = await mediaFor(id);
+  const head = $('profileHead');
+  if (!head || !profileState || String(profileState.id) !== String(id)) return;
+  if (m && m.header && m.header.url) {
+    const band = head.querySelector('.pband');
+    if (band) band.innerHTML = '<img class="pband-img" src="' + esc(m.header.url) + '" alt="">';
+  }
+  const chips = head.querySelector('.chips');
+  if (!chips) return;
+  let html = '';
+  if (m && m.audio && m.audio.url) {
+    html += '<div class="prof-audio"><span class="small">' + esc(T.mediaAudio) + '</span><audio controls preload="none" src="' + esc(m.audio.url) + '"></audio></div>';
+  }
+  const acting = pwUnlocked() ? pwActing() : null;
+  const own = !!(acting && String(acting.id) === String(id));
+  if (own) {
+    html += '<div class="media-settings"><h4>' + esc(T.mediaLbl) + '</h4>' +
+      mediaSettingRow('icon', T.mediaIcon, !!(m && m.icon), 'image/jpeg,image/png,image/webp') +
+      mediaSettingRow('header', T.mediaHeader, !!(m && m.header), 'image/jpeg,image/png,image/webp') +
+      mediaSettingRow('audio', T.mediaAudioLbl, !!(m && m.audio), 'audio/mpeg,audio/mp4,audio/ogg') +
+      '<p class="small">' + esc(T.mediaNote) + '</p><p id="msetStatus"></p></div>';
+  }
+  if (!html) return;
+  const slot = document.createElement('div');
+  slot.id = 'profMedia';
+  slot.innerHTML = html;
+  chips.after(slot);
+  if (own) wireMediaSettings();
+}
 async function shortenViaCawl(url) {
   try {
     const res = await fetch(CAWL_BASE + '/api/shorten', {
@@ -2822,6 +3021,7 @@ async function loadTimeline(append) {
       const rows = await Promise.all(page.items.map(a => rowFor(a).catch(() => null)));
       if (!cleared) { box.innerHTML = ''; cleared = true; }
       for (const row of rows) if (row) { box.appendChild(row); rendered++; }
+      hydrateAttachmentsIn(box).catch(() => {});
       if (!page.items.length) tlDone = true;
     }
     if (!box.children.length && tlDone) box.innerHTML = '<p>' + T.empty + '</p>';
@@ -3008,6 +3208,7 @@ async function loadPostPage(cawId) {
     };
     fillPeople('postLikedBy', 'likedByBlock', ctx.likeSenders);
     fillPeople('postSharedBy', 'sharedByBlock', ctx.shareSenders);
+    hydrateAttachmentsIn(document).catch(() => {});
   } else {
     note.textContent = T.loadFail;
   }
@@ -3097,6 +3298,7 @@ async function loadProfile() {
   if (fb) fb.onclick = () => openFollowList('following');
   if (rb2) rb2.onclick = () => openFollowList('followers');
   renderProfFollow();
+  applyProfileMedia(id).catch(() => {});
   profCursor = undefined; profDone = false;
   profBuckets = { posts: [], recaws: [] };
   profTab = 'posts';
@@ -3125,6 +3327,7 @@ function renderProfBucket() {
     return;
   }
   for (const r of rows) box.appendChild(r);
+  hydrateAttachmentsIn(box).catch(() => {});
 }
 function switchProfTab(tab) {
   if (tab !== 'posts' && tab !== 'recaws') return;
@@ -4458,6 +4661,7 @@ function openConfirmPanel(opts) {
 let composerRef = null;        // {kind, post} for reply/quote mode
 let pendingComposeRef = null;  // resolved from the ?compose= link
 let compDraft = '';
+let compFiles = [], filesTx = null, filesCaw = null;
 function setComposerRef(kind, post) {
   const homeVisible = $('viewHome') && $('viewHome').style.display !== 'none';
   if (!homeVisible) {
@@ -4532,6 +4736,22 @@ function renderComposer() {
     })();
     $('compRefCancel').onclick = () => { composerRef = null; renderComposer(); };
   }
+  compFiles = [];
+  const statusP = $('compStatus');
+  if (statusP) {
+    const row = document.createElement('div');
+    row.className = 'comp-attach';
+    row.innerHTML = '<label class="ghost comp-attach-btn">' + esc(T.attachLbl) +
+      '<input type="file" id="compFiles" accept="image/jpeg,image/png,image/webp,image/gif" multiple hidden></label>' +
+      '<span class="small" id="compFilesLbl"></span>';
+    statusP.before(row);
+    const fi = row.querySelector('#compFiles');
+    fi.onchange = () => {
+      compFiles = [...(fi.files || [])].slice(0, 4);
+      const lbl = $('compFilesLbl');
+      if (lbl) lbl.textContent = compFiles.length ? T.attachSelected.replace('{n}', String(compFiles.length)) : '';
+    };
+  }
   const ta = $('compText'), count = $('compCount'), postBtn = $('compPostBtn');
   const overhead = ref ? 1 + postRefMarker(ref.kind, ref.post.cawId).length : 0;
   const update = () => {
@@ -4550,6 +4770,7 @@ function renderComposer() {
     if (st) { st.innerHTML = '<span class="small">' + esc(mirrorNotice) + '</span>'; mirrorNotice = ''; }
   }
   postBtn.onclick = () => {
+    const filesAtPost = compFiles;
     const body = ta.value.trim();
     const finalText = ref ? appendPostRef(body, ref.kind, ref.post.cawId) : body;
     if (textBytes(finalText) > 420) {
@@ -4570,7 +4791,9 @@ function renderComposer() {
           ts: Math.floor(Date.now() / 1000), sender: pwSession.address,
           cawId: randomCawId(), text: finalText,
         };
-        await submitLocalAction(pwSession.keyBytes, action);
+        const res = await submitLocalAction(pwSession.keyBytes, action);
+        filesTx = (res && res.hash) || null;
+        filesCaw = action.cawId;
       },
       afterSuccess: async () => {
         mirrorResolveAfterPost(); /* v19: a mirrored post that landed resolves its inbox item */
@@ -4578,6 +4801,22 @@ function renderComposer() {
         await pwLoadNames(); /* the action spent a little of the name's qCAW */
         renderComposer();
         loadTimeline(false);
+        /* v26: upload the composer's images against the post that
+           just landed. A failure here never touches the post — it
+           is already on-chain; only the attachment is missing. */
+        if (filesAtPost.length && filesTx && filesCaw) {
+          const st = $('compStatus');
+          if (st) st.textContent = T.attachBusy;
+          let okCount = 0;
+          for (const f of filesAtPost) {
+            try { await mediaAttach(filesCaw, filesTx, f); okCount++; } catch (e) { /* reported below */ }
+          }
+          const st2 = $('compStatus');
+          if (st2) st2.innerHTML = okCount === filesAtPost.length
+            ? esc(T.attachDone.replace('{n}', String(okCount)))
+            : '<span class="err">' + esc(T.attachFail) + '</span>';
+          if (okCount) loadTimeline(false);
+        }
       },
     });
   };
@@ -5994,7 +6233,7 @@ if (typeof module !== 'undefined' && module.exports) {
     signLegacyTx, rlpEncode, sendLocalTx,
     buildDepositCalldata, buildWithdrawCalldata, buildApproveToCalldata,
     parseAmount, hexToB64Url, postRefMarker, appendPostRef, textBytes,
-    randomCawId, submitLocalAction,
+    randomCawId, submitLocalAction, buildMediaMessage, MEDIA_API,
     bmList, bmHas, bmToggle, BOOKMARKS_KEY_PREFIX,
     O_TOKEN, BURN_ADDRESS,
     HAWK_TOKEN, PHOENIX_TOKEN, KET_TOKEN, WQOM_TOKEN, DEX_ROUTER,

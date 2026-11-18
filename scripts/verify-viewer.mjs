@@ -285,8 +285,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=25') && jaHtml.includes('?v=25'), 'shells reference ?v=25 assets');
-ok(swSrc.includes("caw-view-v25"), 'sw.js cache name is caw-view-v25');
+ok(enHtml.includes('?v=26') && jaHtml.includes('?v=26'), 'shells reference ?v=26 assets');
+ok(swSrc.includes("caw-view-v26"), 'sw.js cache name is caw-view-v26');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1175,6 +1175,27 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     ok(amounts2 && amounts2.length === 3 && amounts2[2] > 0n,
       'live quote: KET -> O routes two-hop via QOM', amounts2 ? amounts2[2].toString() : 'none');
   }
+}
+
+/* ---- v26: media server (profile media + post attachments) ---- */
+{
+  const VS = read('../docs/viewer.js');
+  const swJs = read('../docs/sw.js');
+  ok(V.MEDIA_API === 'https://vps-2026-11-12-16-49-27.tail303bfa.ts.net:10000', 'MEDIA_API points at the VPS Funnel :10000');
+  ok(V.buildMediaMessage({ action: 'set-icon', nameId: '7', sha256: 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855', ts: 1760000000 }) ===
+    'CAW Media v1\naction: set-icon\nname: 7\nsha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855\ncaw: -\ntx: -\nts: 1760000000',
+    'buildMediaMessage matches the server format byte for byte');
+  ok(V.buildMediaMessage({ action: 'attach', nameId: '7', sha256: 'ab', caw: '0xCC', tx: '0xDD', ts: 5 }) ===
+    'CAW Media v1\naction: attach\nname: 7\nsha256: ab\ncaw: 0xCC\ntx: 0xDD\nts: 5',
+    'buildMediaMessage attach form carries caw + tx');
+  ok(/Promise\.all\(\[cardFor\(idIn\), mediaFor\(idIn\)\]\)/.test(VS), 'avatarFor prefers the media icon over the NFT image');
+  ok(VS.includes('pwSignMediaMsg') && VS.includes('Ethereum Signed Message'), 'EIP-191 media signing exists for media writes');
+  ok(VS.includes('applyProfileMedia(id).catch(() => {})'), 'profile media applied after the head renders');
+  ok(VS.includes("mediaSettingRow('icon'") && VS.includes("mediaSettingRow('header'") && VS.includes("mediaSettingRow('audio'"), 'media settings rows for icon/header/audio');
+  ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
+  ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
+  ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
+  ok(swJs.includes('caw-view-v26'), 'sw cache is caw-view-v26');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
