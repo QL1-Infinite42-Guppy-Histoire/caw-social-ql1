@@ -285,8 +285,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=26') && jaHtml.includes('?v=26'), 'shells reference ?v=26 assets');
-ok(swSrc.includes("caw-view-v26"), 'sw.js cache name is caw-view-v26');
+ok(enHtml.includes('?v=27') && jaHtml.includes('?v=27'), 'shells reference ?v=27 assets');
+ok(swSrc.includes("caw-view-v27"), 'sw.js cache name is caw-view-v27');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1195,7 +1195,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v26'), 'sw cache is caw-view-v26');
+  ok(swJs.includes('caw-view-v27'), 'sw cache is caw-view-v27');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

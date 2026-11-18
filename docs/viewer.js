@@ -2538,7 +2538,7 @@ const mediaCache = new Map();
 function mediaFor(idIn) {
   const key = String(idIn);
   if (!mediaCache.has(key)) {
-    const p = fetchTimeout(MEDIA_API + '/v1/profile/' + key, null, 4000)
+    const p = fetchTimeout(MEDIA_API + '/v1/profile/' + key, null, 15000)
       .then(r => (r.ok ? r.json() : null))
       .then(j => (j && (j.icon || j.header || j.audio)) ? j : null)
       .catch(() => null);
@@ -2704,6 +2704,11 @@ async function mediaAttach(cawId, txHash, file) {
 }
 /* Fill in attachment images for every rendered post row under root
    that does not have them yet. Silent on any failure. */
+/* Attachments can be wiped when a view re-renders (a wallet-state
+   change rebuilds the visible rows). Re-hydrate the whole document
+   periodically: the pass is idempotent (rows already carrying
+   .post-media are skipped) and costs one small GET. */
+setInterval(() => { hydrateAttachmentsIn(document).catch(() => {}); }, 20000);
 async function hydrateAttachmentsIn(root) {
   if (!root || !root.querySelectorAll) return;
   const els = [...root.querySelectorAll('[data-cawid]')].filter(el => !el.querySelector('.post-media'));
@@ -2711,7 +2716,7 @@ async function hydrateAttachmentsIn(root) {
   if (!ids.length) return;
   let j = null;
   try {
-    const res = await fetchTimeout(MEDIA_API + '/v1/posts?caw=' + ids.join(','), null, 5000);
+    const res = await fetchTimeout(MEDIA_API + '/v1/posts?caw=' + ids.join(','), null, 15000);
     if (res.ok) j = await res.json();
   } catch (e) { return; }
   if (!j || !j.media) return;
@@ -3165,6 +3170,11 @@ async function loadPostPage(cawId) {
   }
   main.innerHTML = '';
   main.appendChild(await postCard(post, { detail: true }));
+  /* Attachments hydrate NOW, not only after the context scan:
+     the scan is slow and can fail, and a wallet-state re-render
+     rebuilds this row — gating the image on the scan meant the
+     detail page could lose it for good. */
+  hydrateAttachmentsIn(document).catch(() => {});
   note.textContent = T.stillLooking;
   let ctx = null;
   try { ctx = await collectPostContext(post, 80); } catch (e) {}
