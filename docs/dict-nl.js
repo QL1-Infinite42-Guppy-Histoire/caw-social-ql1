@@ -154,7 +154,7 @@ window.__CAW_T = {
  "setAboutTitle": "Over deze app",
  "setAboutBody": "CAW is a social app on QL1, a chain that runs without a central operator. Posts and follows are written to the public record — nobody can quietly rewrite them. Names are NFTs: yours stays yours.",
  "setViewsNote": "View counts are not public. Nobody — not the app, not this page — can see how many people looked at a post. Only on-chain actions (posts, likes, follows) are public.",
- "setVersionLbl": "CAW Social — web v40",
+ "setVersionLbl": "CAW Social — web v41",
  "setDangerTitle": "Gevarenzone",
  "setNoWallet": "No posting wallet in this browser yet.",
  "setSetupBtn": "Stel je wallet in",

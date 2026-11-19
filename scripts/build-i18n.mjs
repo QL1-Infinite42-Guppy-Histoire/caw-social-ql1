@@ -354,8 +354,8 @@ export function buildShell(lang, enHtml, jaHtml, app) {
     '  render();\n' +
     '})();\n</script>');
   /* load this language's dict before viewer.js */
-  html = html.replace('<script src="viewer.js?v=40"></script>',
-    '<script src="dict-' + lang + '.js?v=40"></script>\n<script src="viewer.js?v=40"></script>');
+  html = html.replace('<script src="viewer.js?v=41"></script>',
+    '<script src="dict-' + lang + '.js?v=41"></script>\n<script src="viewer.js?v=41"></script>');
   if (rtl) html = html.split('>←<').join('>→<');
   /* v37 (B-PR1): the profile text-back label ("← Back") leads
      with its arrow inside the text chunk, so flip that one too. */

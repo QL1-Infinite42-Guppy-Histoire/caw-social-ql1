@@ -204,7 +204,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'About',
     setAboutBody: 'CAW is a social app on QL1, a chain that runs without a central operator. Posts and follows are written to the public record — nobody can quietly rewrite them. Names are NFTs: yours stays yours.',
     setViewsNote: 'View counts are not public. Nobody — not the app, not this page — can see how many people looked at a post. Only on-chain actions (posts, likes, follows) are public.',
-    setVersionLbl: 'CAW Social — web v40',
+    setVersionLbl: 'CAW Social — web v41',
     setDangerTitle: 'Danger zone',
     setNoWallet: 'No posting wallet in this browser yet.',
     setSetupBtn: 'Set up the posting wallet',
@@ -600,7 +600,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'このアプリについて',
     setAboutBody: 'CAW は QL1 上のソーシャルアプリです。QL1 は中央の運営者なしに動くチェーンで、投稿やフォローは公開記録に書かれ、誰もこっそり書き換えられません。名前は NFT で、あなたの名前はあなたのものです。',
     setViewsNote: '閲覧数は公開されません。アプリにもこのページにも、投稿が何回見られたかを知る方法はありません。公開されるのはオンチェーンの操作（投稿・いいね・フォロー）だけです。',
-    setVersionLbl: 'CAW Social — web v40',
+    setVersionLbl: 'CAW Social — web v41',
     setDangerTitle: '危険ゾーン',
     setNoWallet: 'このブラウザには、まだ投稿用ウォレットがありません。',
     setSetupBtn: '投稿用ウォレットを作る',
@@ -2076,10 +2076,15 @@ const SWAP_ETH_FOR_TOKENS_SELECTOR = '0x7ff36ab5';
 const SWAP_TOKENS_FOR_ETH_SELECTOR = '0x18cbafe5';
 const BURN_RATIO = 100n;
 const DEX_SLIPPAGE_PCT = 1;
-/* The six tradable tokens (the app's HuntersDEX set). QOM is
-   the native coin; in router paths it is its wrapped form. */
+/* The tradable tokens (the app's HuntersDEX set, plus WQOM
+   since v41). QOM is the native coin; in router paths it is
+   its wrapped form — QOM and WQOM are two entries over the
+   ONE WQOM contract address, exactly as the app models them.
+   This list is the DEX's alone: the wallet's token display
+   keeps its own six. */
 const DEX_TOKENS = [
   { id: 'qom', sym: 'QOM', address: WQOM_TOKEN, native: true },
+  { id: 'wqom', sym: 'WQOM', address: WQOM_TOKEN, native: false },
   { id: 'qcaw', sym: 'qCAW', address: QCAW, native: false },
   { id: 'o', sym: 'O', address: O_TOKEN, native: false },
   { id: 'ket', sym: 'KET', address: KET_TOKEN, native: false },
@@ -2585,6 +2590,22 @@ function dexBestRoute(amountIn, quoted) {
 const dexMinOut = (amountOut, slippagePct) =>
   (BigInt(amountOut) * BigInt(10000 - Math.round(Number(slippagePct) * 100))) / 10000n;
 const dexDeadline = nowSec => BigInt(nowSec) + 1200n;
+/* v41: QOM <-> WQOM is not a swap at all — the WQOM contract
+   wraps native QOM and unwraps it back 1:1 (the app's
+   buildWrapTx / buildUnwrapTx; both selectors verified live
+   in the contract's bytecode, and the app verified withdraw
+   by estimateGas from a real holder). No router, no pool,
+   no slippage, no approval. */
+const WQOM_WRAP_SELECTOR = '0xd0e30db0';
+const WQOM_UNWRAP_SELECTOR = '0x2e1a7d4d';
+function buildWrapCalldata(amountIn) {
+  return { data: WQOM_WRAP_SELECTOR, value: BigInt(amountIn) };
+}
+function buildUnwrapCalldata(amountIn) {
+  return { data: WQOM_UNWRAP_SELECTOR + word(BigInt(amountIn)), value: 0n };
+}
+const dexIsWrapPair = (fromTok, toTok) => !!fromTok && !!toTok &&
+  ((fromTok.id === 'qom' && toTok.id === 'wqom') || (fromTok.id === 'wqom' && toTok.id === 'qom'));
 /* The router swap calldata, byte-for-byte the app's
    buildSwapTx layout for the three shapes. Returns
    {data, value} — value is the amountIn for a native-from
@@ -7766,6 +7787,15 @@ function dexScheduleQuote() {
   dexQuoteTimer = setTimeout(dexRefreshQuote, 700);
 }
 async function dexQuoteOnce(fromTok, toTok, amountIn) {
+  /* v41: the wrap pair never touches the router — the
+     candidate paths for it are [WQOM, WQOM] (no such pair;
+     the read reverts) and [WQOM, O, WQOM] (a real quote, but
+     a lossy round trip through the O pool). The pair is the
+     contract's own 1:1 wrap/unwrap instead. */
+  if (dexIsWrapPair(fromTok, toTok)) {
+    return { path: [fromTok.address, toTok.address], amounts: [amountIn, amountIn],
+      amountOut: amountIn, amountIn: BigInt(amountIn), wrap: true };
+  }
   const paths = dexCandidatePaths(fromTok.address, toTok.address);
   const quoted = await Promise.all(paths.map(async p => {
     try {
@@ -7802,7 +7832,7 @@ async function dexRefreshQuote() {
      against. Optional by design: any failure just leaves the
      impact unknown and the line unshown. */
   let impactPct = null;
-  if (best) {
+  if (best && !best.wrap) {
     try {
       const dustIn = amountIn / 100n;
       if (dustIn > 0n) {
@@ -7820,8 +7850,17 @@ async function dexRefreshQuote() {
   dexState.quoteState = best ? 'ok' : 'none';
   paintDexQuote();
 }
-const dexPathSyms = path => path.map(a => {
-  const t = DEX_TOKENS.find(x => x.address.toLowerCase() === a.toLowerCase());
+const dexPathSyms = (path, fromTok, toTok) => path.map((a, i) => {
+  const low = a.toLowerCase();
+  /* v41: QOM and WQOM share one contract address, so an
+     endpoint's symbol comes from the SELECTED token — the
+     first address match in DEX_TOKENS is always the QOM
+     entry, which mislabels a WQOM endpoint as QOM. Middle
+     hops keep the address match (a WQOM hop reads as QOM,
+     as it always has). */
+  if (i === 0 && fromTok && fromTok.address.toLowerCase() === low) return fromTok.sym;
+  if (i === path.length - 1 && toTok && toTok.address.toLowerCase() === low) return toTok.sym;
+  const t = DEX_TOKENS.find(x => x.address.toLowerCase() === low);
   return t ? t.sym : a;
 }).join(' → ');
 function paintDexQuote() {
@@ -7840,12 +7879,12 @@ function paintDexQuote() {
     const q = dexState.quote;
     qa.innerHTML =
       '<p>' + esc(T.dexYouGet) + ': <b>' + esc(fmtAmt(q.amountOut, toDec)) + ' ' + esc(toTok.sym) + '</b></p>' +
-      '<p class="small">' + esc(T.dexRoute) + ': ' + esc(dexPathSyms(q.path)) + '</p>' +
+      '<p class="small">' + esc(T.dexRoute) + ': ' + esc(dexPathSyms(q.path, dexTokenById(dexState.fromId), dexTokenById(dexState.toId))) + '</p>' +
       /* v35 (D10): the impact line shows only at >= 1%, the
          app's rule. */
       (q.impactPct !== null && q.impactPct !== undefined && q.impactPct >= 1
         ? '<p class="small">' + esc(T.dexImpact) + ': ' + q.impactPct.toFixed(1) + '%</p>' : '') +
-      '<p class="small">' + esc(T.dexMin) + ': ' + esc(fmtAmt(dexMinOut(q.amountOut, DEX_SLIPPAGE_PCT), toDec)) + ' ' + esc(toTok.sym) + '</p>';
+      '<p class="small">' + esc(T.dexMin) + ': ' + esc(fmtAmt(q.wrap ? q.amountOut : dexMinOut(q.amountOut, DEX_SLIPPAGE_PCT), toDec)) + ' ' + esc(toTok.sym) + '</p>';
     btn.disabled = false;
   } else {
     qa.innerHTML = '';
@@ -7863,8 +7902,8 @@ function onDexGo() {
     lines: [
       [T.dexFrom, fmtAmt(amountIn, fromDec) + ' ' + fromTok.sym],
       [T.dexYouGet, fmtAmt(shown.amountOut, toDec) + ' ' + toTok.sym],
-      [T.dexMin, fmtAmt(dexMinOut(shown.amountOut, DEX_SLIPPAGE_PCT), toDec) + ' ' + toTok.sym],
-      [T.dexRoute, dexPathSyms(shown.path)],
+      [T.dexMin, fmtAmt(shown.wrap ? shown.amountOut : dexMinOut(shown.amountOut, DEX_SLIPPAGE_PCT), toDec) + ' ' + toTok.sym],
+      [T.dexRoute, dexPathSyms(shown.path, fromTok, toTok)],
     ],
     signLabel: T.dexCta,
     doneText: T.dexDone,
@@ -7876,6 +7915,17 @@ function onDexGo() {
       const fresh = await dexQuoteOnce(fromTok, toTok, amountIn);
       if (!fresh) throw new Error('dex-noroute');
       if (fresh.amountOut * 100n < shown.amountOut * 95n) throw new Error('dex-moved');
+      if (fresh.wrap) {
+        /* v41: wrap/unwrap — one call to the WQOM contract
+           itself. No router, no approval (deposit carries the
+           amount as the tx value; withdraw burns the caller's
+           own WQOM), no slippage: the rate is exactly 1:1. */
+        setStatus('<span class="small">' + esc(T.dexSwapStep) + '</span>');
+        const builtW = fromTok.native ? buildWrapCalldata(amountIn) : buildUnwrapCalldata(amountIn);
+        return await sendLocalTx(pwSession.keyBytes, {
+          to: WQOM_TOKEN, data: builtW.data, value: builtW.value, gasFallback: 100000,
+        });
+      }
       if (!fromTok.native) {
         const allowance = await readUint(fromTok.address,
           SEL.allowance + encAddr(pwSession.address) + encAddr(DEX_ROUTER));
@@ -10359,6 +10409,7 @@ if (typeof module !== 'undefined' && module.exports) {
     SWAP_TOKENS_FOR_TOKENS_SELECTOR, SWAP_ETH_FOR_TOKENS_SELECTOR,
     SWAP_TOKENS_FOR_ETH_SELECTOR, BURN_RATIO, DEX_SLIPPAGE_PCT,
     DEX_TOKENS, dexTokenById, fmtAmt, parseAmountDec,
+    WQOM_WRAP_SELECTOR, WQOM_UNWRAP_SELECTOR, buildWrapCalldata, buildUnwrapCalldata, dexIsWrapPair,
     burnUnit, burnStepRaw, roundDownBurnRaw, burnReceiveRaw,
     buildBurnToMintData, encodeGetAmountsOut, decodeAmountsOut,
     dexCandidatePaths, dexBestRoute, dexMinOut, dexDeadline,

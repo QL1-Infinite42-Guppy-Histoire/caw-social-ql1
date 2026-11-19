@@ -16,7 +16,7 @@
    users on 2026-11-08). viewer.js is in no old cache and matches no
    stub rule, so it reaches the network untouched; once this worker
    installs (skipWaiting + clients.claim) it takes over cleanly. */
-const CACHE = 'caw-view-v40';
+const CACHE = 'caw-view-v41';
 const SHELL = [
   './', 'index.html', 'en.html', 'ja.html',
   /* v36: the eighteen further language shells + their dict

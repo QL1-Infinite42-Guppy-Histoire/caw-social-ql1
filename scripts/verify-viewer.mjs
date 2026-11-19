@@ -411,8 +411,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=40') && jaHtml.includes('?v=40'), 'shells reference ?v=40 assets');
-ok(swSrc.includes("caw-view-v40"), 'sw.js cache name is caw-view-v40');
+ok(enHtml.includes('?v=41') && jaHtml.includes('?v=41'), 'shells reference ?v=41 assets');
+ok(swSrc.includes("caw-view-v41"), 'sw.js cache name is caw-view-v41');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1210,9 +1210,13 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     'KET address is the QL1 one from the app (not the 42 Chain one)', V.KET_TOKEN);
   ok(V.WQOM_TOKEN === '0xa26dfbf98dd1a32fae56a3d2b2d60a8a41b0bdf0' && inApp(appAgg, V.WQOM_TOKEN),
     'WQOM address matches the app', V.WQOM_TOKEN);
-  ok(V.DEX_TOKENS.length === 6 &&
-     JSON.stringify(V.DEX_TOKENS.map(t => t.sym)) === JSON.stringify(['QOM', 'qCAW', 'O', 'KET', 'HAWK', 'PHOENIX']),
-    'the DEX trades exactly the six app tokens');
+  /* v41 supersedes the count: the DEX trades the six app
+     tokens PLUS WQOM (user decision 2026-11-19) — a second
+     entry over the WQOM contract address, DEX list only.
+     The full ordered shape is pinned in the v41 block. */
+  ok(V.DEX_TOKENS.length === 7 &&
+     JSON.stringify(V.DEX_TOKENS.map(t => t.sym)) === JSON.stringify(['QOM', 'WQOM', 'qCAW', 'O', 'KET', 'HAWK', 'PHOENIX']),
+    'the DEX trades the six app tokens + WQOM (v41)');
 
   /* BurnHawk money rules (offline, exact) */
   ok(V.BURN_TO_MINT_SELECTOR === '0x05737aae' && appBurn.includes('0x05737aae'),
@@ -1344,7 +1348,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v40'), 'sw cache is caw-view-v40');
+  ok(swJs.includes('caw-view-v41'), 'sw cache is caw-view-v41');
 }
 
 /* ---- v28: plain send out of the posting wallet ----
@@ -3077,8 +3081,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     const rtl = B.RTL_LANGS.includes(code);
     ok(html.includes('<html lang="' + code + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">'),
       'v36 M14: ' + code + '.html declares lang=' + code + ' dir=' + (rtl ? 'rtl' : 'ltr'));
-    ok(html.includes('viewer.js?v=40') && html.includes('style.css?v=40') && html.includes('__cawViewerBooted'),
-      'v36 M14: ' + code + '.html loads the v40 assets + watchdog');
+    ok(html.includes('viewer.js?v=41') && html.includes('style.css?v=41') && html.includes('__cawViewerBooted'),
+      'v36 M14: ' + code + '.html loads the v41 assets + watchdog');
     ok([...html.matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',') === enNavSeq,
       'v36 M14: ' + code + '.html nav rows match the en shell, row for row');
     ok((html.match(/class="lang-slot"/g) || []).length === 2,
@@ -3088,8 +3092,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     if (rtl) ok(html.includes('>→<') && !html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point forward (RTL)');
     else ok(html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point back');
     if (code !== 'en' && code !== 'ja') {
-      const at = html.indexOf('dict-' + code + '.js?v=40');
-      ok(at >= 0 && at < html.indexOf('viewer.js?v=40'),
+      const at = html.indexOf('dict-' + code + '.js?v=41');
+      ok(at >= 0 && at < html.indexOf('viewer.js?v=41'),
         'v36 M14: ' + code + '.html loads its dict before viewer.js');
       ok(!html.includes('var ja ='), 'v36 M14: ' + code + '.html theme script has its labels baked in');
     }
@@ -3147,7 +3151,7 @@ console.log('— v36: twenty languages + RTL (M14) —');
      viewerSrc.includes("return h + 'h'") && viewerSrc.includes("return d + 'd'") &&
      !viewerSrc.includes('m + T.relMin'),
     'v37: relTime uses the app\u2019s compact literals, not the localised suffixes');
-  ok((viewerSrc.match(/CAW Social — web v40/g) || []).length === 2, 'v40: the version label reads web v40 in both embedded languages');
+  ok((viewerSrc.match(/CAW Social — web v41/g) || []).length === 2, 'v41: the version label reads web v41 in both embedded languages');
 
   /* stub-DOM boots: es and ar render from their dicts */
   const headSrc = viewerSrc.slice(0, viewerSrc.indexOf('/* ---------- minimal ABI helpers'));
@@ -3668,6 +3672,100 @@ console.log('— v40: attachment images never rendered (nested .pfoot insertBefo
   fi40.files = []; fi40.onchange();
   ok(sb40.disabled === true && nm40.textContent === '',
     'v40: clearing the pick disables Save again (no stuck state)');
+}
+
+console.log('— v41: WQOM joins HuntersDEX (wrap pair is 1:1, not a swap) —');
+{
+  /* The token list: WQOM is a second entry over the ONE WQOM
+     contract address (the app's model) — the DEX's list only;
+     the send/wallet asset tables do not gain it. */
+  ok(JSON.stringify(V.DEX_TOKENS.map(t => t.id)) ===
+     JSON.stringify(['qom', 'wqom', 'qcaw', 'o', 'ket', 'hawk', 'phoenix']),
+    'v41: DEX_TOKENS is qom, wqom, then the existing five, in order');
+  const wq41 = V.dexTokenById('wqom');
+  ok(!!wq41 && wq41.sym === 'WQOM' && wq41.address === V.WQOM_TOKEN && wq41.native === false &&
+     V.dexTokenById('qom').address === V.WQOM_TOKEN && V.dexTokenById('qom').native === true,
+    'v41: qom (native) and wqom (ERC-20) are two entries over the WQOM contract address');
+  ok((viewerSrc.match(/id: 'wqom'/g) || []).length === 1 &&
+     !JSON.stringify(V.SEND_ASSETS).includes('wqom'),
+    'v41: the wqom entry exists only in the DEX token list (wallet/send assets untouched)');
+  ok(V.dexIsWrapPair(V.dexTokenById('qom'), wq41) && V.dexIsWrapPair(wq41, V.dexTokenById('qom')) &&
+     !V.dexIsWrapPair(V.dexTokenById('qom'), V.dexTokenById('o')) &&
+     !V.dexIsWrapPair(wq41, V.dexTokenById('o')) && !V.dexIsWrapPair(null, wq41),
+    'v41: dexIsWrapPair is exactly the qom<->wqom pair');
+
+  /* The wrap/unwrap calldata, byte-for-byte the app's
+     buildWrapTx / buildUnwrapTx (cross-read from hunters.ts,
+     whose selectors were verified live from a real holder). */
+  const hunters41 = fs.readFileSync(new URL('../../caw-social-app/src/lib/hunters.ts', import.meta.url), 'utf8');
+  ok(hunters41.includes("data: '0x2e1a7d4d'") && hunters41.includes("data: '0xd0e30db0'") &&
+     V.WQOM_WRAP_SELECTOR === '0xd0e30db0' && V.WQOM_UNWRAP_SELECTOR === '0x2e1a7d4d',
+    'v41: wrap/unwrap selectors match the app\u2019s live-verified builders');
+  ok(V.buildWrapCalldata(123n).data === '0xd0e30db0' && V.buildWrapCalldata(123n).value === 123n &&
+     V.buildUnwrapCalldata(123n).data === '0x2e1a7d4d' + '0'.repeat(62) + '7b' &&
+     V.buildUnwrapCalldata(123n).value === 0n,
+    'v41: wrap carries the amount as the tx value; unwrap encodes it as the withdraw argument');
+
+  /* The quote path, behaviourally: with the router UNREACHABLE
+     (ethCall always throws), the wrap pair still quotes —
+     exactly 1:1, marked wrap, without a single router call —
+     while any real pair honestly reports no route. */
+  const slice41 = (a, b) => {
+    const i = viewerSrc.indexOf(a); if (i < 0) throw new Error('v41 slice start missing: ' + a);
+    const j = viewerSrc.indexOf(b, i); if (j < 0) throw new Error('v41 slice end missing: ' + b);
+    return viewerSrc.slice(i, j);
+  };
+  let ethCalls41 = 0;
+  const quote41 = new Function('ethCall', 'DEX_ROUTER', 'encodeGetAmountsOut', 'decodeAmountsOut',
+    'dexCandidatePaths', 'dexBestRoute', 'dexIsWrapPair',
+    slice41('async function dexQuoteOnce', '\nfunction dexAmountIn') +
+    '\nreturn { dexQuoteOnce };')(
+    async () => { ethCalls41++; throw new Error('router down'); },
+    V.DEX_ROUTER, V.encodeGetAmountsOut, V.decodeAmountsOut,
+    V.dexCandidatePaths, V.dexBestRoute, V.dexIsWrapPair);
+  const amt41 = 100n * 10n ** 18n;
+  const wrapQ41 = await quote41.dexQuoteOnce(V.dexTokenById('qom'), wq41, amt41);
+  const unwrapQ41 = await quote41.dexQuoteOnce(wq41, V.dexTokenById('qom'), amt41);
+  ok(!!wrapQ41 && wrapQ41.wrap === true && wrapQ41.amountOut === amt41 && ethCalls41 === 0 &&
+     !!unwrapQ41 && unwrapQ41.wrap === true && unwrapQ41.amountOut === amt41,
+    'v41: the wrap pair quotes exactly 1:1 with zero router calls');
+  const noRoute41 = await quote41.dexQuoteOnce(wq41, V.dexTokenById('o'), amt41);
+  ok(noRoute41 === null && ethCalls41 > 0,
+    'v41: a real pair with a silent router still quotes as no-route (never invented)');
+
+  /* Path labels: endpoints take the SELECTED token's symbol
+     (a WQOM endpoint no longer mislabels as QOM); middle hops
+     keep the historical address match. */
+  const syms41 = new Function('DEX_TOKENS',
+    slice41('const dexPathSyms = ', '\nfunction paintDexQuote') +
+    '\nreturn { dexPathSyms };')(V.DEX_TOKENS).dexPathSyms;
+  ok(syms41([V.WQOM_TOKEN, V.O_TOKEN], wq41, V.dexTokenById('o')) === 'WQOM → O' &&
+     syms41([V.WQOM_TOKEN, V.O_TOKEN], V.dexTokenById('qom'), V.dexTokenById('o')) === 'QOM → O' &&
+     syms41([V.O_TOKEN, V.WQOM_TOKEN], V.dexTokenById('o'), wq41) === 'O → WQOM' &&
+     syms41([V.KET_TOKEN, V.WQOM_TOKEN, V.O_TOKEN], V.dexTokenById('ket'), V.dexTokenById('o')) === 'KET → QOM → O',
+    'v41: path labels name the endpoints from the selection; a WQOM hop still reads QOM');
+
+  /* Send-flow wiring (source pins over the browser section). */
+  const go41 = viewerSrc.slice(viewerSrc.indexOf('function onDexGo()'), viewerSrc.indexOf('function openConfirmPanel'));
+  ok(go41.includes('fresh.wrap') && go41.includes('buildWrapCalldata(amountIn)') &&
+     go41.includes('buildUnwrapCalldata(amountIn)') && go41.includes('to: WQOM_TOKEN'),
+    'v41: the send flow branches wrap pairs to the WQOM contract (no router, no approval)');
+  ok(viewerSrc.slice(viewerSrc.indexOf('async function dexRefreshQuote'), viewerSrc.indexOf('const dexPathSyms'))
+      .includes('!best.wrap'),
+    'v41: the price-impact dust quote is skipped for the wrap pair');
+  ok(viewerSrc.slice(viewerSrc.indexOf('function paintDexQuote()'), viewerSrc.indexOf('function onDexGo()'))
+      .includes('q.wrap ? q.amountOut'),
+    'v41: the wrap quote\u2019s minimum line is the exact 1:1 amount, not a slippage floor');
+
+  /* Live: every WQOM pair quotes direct, both directions
+     (the same pools the native-QOM routes already used). */
+  const E18_41 = 10n ** 18n;
+  for (const [sym41, addr41] of [['O', V.O_TOKEN], ['qCAW', V.QCAW], ['KET', V.KET_TOKEN], ['HAWK', V.HAWK_TOKEN], ['PHOENIX', V.PHOENIX_TOKEN]]) {
+    const fwd = V.decodeAmountsOut(await rawCall(V.DEX_ROUTER, V.encodeGetAmountsOut(100n * E18_41, [V.WQOM_TOKEN, addr41])));
+    const rev = V.decodeAmountsOut(await rawCall(V.DEX_ROUTER, V.encodeGetAmountsOut(100n * E18_41, [addr41, V.WQOM_TOKEN])));
+    ok(!!fwd && fwd[fwd.length - 1] > 0n && !!rev && rev[rev.length - 1] > 0n,
+      'v41 live quote: 100 WQOM <-> ' + sym41 + ' via the direct pair, both directions');
+  }
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
