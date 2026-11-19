@@ -28,6 +28,14 @@
  * print it raw); per language, an app translation that breaks
  * that rule falls back to English for that key.
  *
+ * v42: the strings the app table cannot supply are translated in
+ * scripts/l10n-overrides.mjs (KEY_L10N for dict keys, CHUNK_L10N
+ * for shell static chunks, THEME_LABELS for the shells' theme
+ * toggle) — consulted after the app mapping, before the English
+ * fallback, which is now expected to stay at zero. A KEY_L10N
+ * string whose placeholders differ from the English string's
+ * fails the build outright.
+ *
  * Run: node scripts/build-i18n.mjs   (re-run after editing the
  * en/ja dicts in viewer.js or the en/ja shells; en.html/ja.html
  * themselves are maintained by hand and never overwritten.)
@@ -35,6 +43,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { KEY_L10N, CHUNK_L10N, THEME_LABELS } from './l10n-overrides.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS = path.join(ROOT, 'docs');
@@ -212,8 +221,18 @@ export function buildDict(lang, web, app, mapping) {
   for (const k of Object.keys(web.en)) {
     const ak = mapping[k];
     const av = ak ? app[lang][ak] : undefined;
-    if (av !== undefined && tokensFit(av, web.en[k])) dict[k] = av;
-    else { dict[k] = web.en[k]; fallbacks.push(k); }
+    if (av !== undefined && tokensFit(av, web.en[k])) { dict[k] = av; continue; }
+    /* v42: the web-only translations. Placeholders must match the
+       English string's exactly (both directions) — a mismatch is
+       a broken translation, so fail the build rather than ship
+       a string that would print a raw {placeholder} or drop one. */
+    const ov = KEY_L10N[k] && KEY_L10N[k][lang];
+    if (ov !== undefined) {
+      if (!tokensFit(ov, web.en[k]) || !tokensFit(web.en[k], ov))
+        throw new Error('l10n override placeholder mismatch: ' + lang + ' ' + k);
+      dict[k] = ov; continue;
+    }
+    dict[k] = web.en[k]; fallbacks.push(k);
   }
   return { dict, fallbacks };
 }
@@ -262,7 +281,7 @@ export function lineChunks(a, b) {
   return chunks;
 }
 
-export function lookupChunk(enChunk, jaChunk, app, lang) {
+function lookupChunkApp(enChunk, jaChunk, app, lang) {
   const core = enChunk.trim(), jaCore = (jaChunk || '').trim();
   if (!core) return null;
   let cands = Object.keys(app.en).filter(k => app.en[k] === core);
@@ -287,6 +306,23 @@ export function lookupChunk(enChunk, jaChunk, app, lang) {
   const lead = enChunk.slice(0, enChunk.indexOf(core));
   const trail = enChunk.slice(enChunk.indexOf(core) + core.length);
   return lead + v + trail;
+}
+
+/* v42: app lookup first (unchanged semantics); when it cannot
+   resolve the chunk, the hand-written CHUNK_L10N table — keyed
+   by the trimmed English chunk, with the same lead/trail
+   whitespace preservation — gets its turn before the chunk is
+   left in English. */
+export function lookupChunk(enChunk, jaChunk, app, lang) {
+  const r = lookupChunkApp(enChunk, jaChunk, app, lang);
+  if (r !== null) return r;
+  const core = enChunk.trim();
+  if (!core) return null;
+  const ov = CHUNK_L10N[core] && CHUNK_L10N[core][lang];
+  if (ov === undefined) return null;
+  const lead = enChunk.slice(0, enChunk.indexOf(core));
+  const trail = enChunk.slice(enChunk.indexOf(core) + core.length);
+  return lead + ov + trail;
 }
 
 export function buildShell(lang, enHtml, jaHtml, app) {
@@ -325,15 +361,18 @@ export function buildShell(lang, enHtml, jaHtml, app) {
   });
   let html = out.join('\n');
   /* the theme script: bake this language's labels in directly
-     (the en/ja shells branch on a `ja` boolean instead). The
-     labels are web-only strings: English fallback, counted. */
-  fallbacks += 2;
+     (the en/ja shells branch on a `ja` boolean instead). v42:
+     the labels come from THEME_LABELS in l10n-overrides.mjs —
+     translated for all eighteen, no longer counted as
+     fallbacks. */
+  const themeLbl = THEME_LABELS[lang];
+  if (!themeLbl) throw new Error('no theme labels for ' + lang);
   html = html.replace(/<script>\n\(function \(\) \{\n  var ja =[\s\S]*?<\/script>/, () =>
     '<script>\n(function () {\n' +
     '  function isDark() { return document.documentElement.dataset.theme === \'dark\'; }\n' +
     '  function render() {\n' +
     '    var d = isDark();\n' +
-    '    var label = d ? \'☀️ Light\' : \'🌙 Dark\';\n' +
+    '    var label = d ? \'' + themeLbl.light + '\' : \'' + themeLbl.dark + '\';\n' +
     '    var a = document.getElementById(\'themeLabel\');\n' +
     '    if (a) a.textContent = label;\n' +
     '    var b = document.getElementById(\'themeLabelDrawer\');\n' +
@@ -354,8 +393,8 @@ export function buildShell(lang, enHtml, jaHtml, app) {
     '  render();\n' +
     '})();\n</script>');
   /* load this language's dict before viewer.js */
-  html = html.replace('<script src="viewer.js?v=41"></script>',
-    '<script src="dict-' + lang + '.js?v=41"></script>\n<script src="viewer.js?v=41"></script>');
+  html = html.replace('<script src="viewer.js?v=42"></script>',
+    '<script src="dict-' + lang + '.js?v=42"></script>\n<script src="viewer.js?v=42"></script>');
   if (rtl) html = html.split('>←<').join('>→<');
   /* v37 (B-PR1): the profile text-back label ("← Back") leads
      with its arrow inside the text chunk, so flip that one too. */
@@ -378,8 +417,8 @@ function main() {
     if (code === 'en' || code === 'ja') continue;
     const { dict, fallbacks } = buildDict(code, web, app, mapping);
     const body = '/* CAW Social web viewer — ' + code + ' strings, generated by\n' +
-      '   scripts/build-i18n.mjs from the Android app\'s i18n table\n' +
-      '   (unmapped web-only keys keep the English string: ' + fallbacks.length + ').\n' +
+      '   scripts/build-i18n.mjs from the Android app\'s i18n table plus\n' +
+      '   scripts/l10n-overrides.mjs (keys still in English: ' + fallbacks.length + ').\n' +
       '   Loaded by ' + code + '.html before viewer.js. */\n' +
       'window.__CAW_T = ' + JSON.stringify(dict, null, 1) + ';\n';
     fs.writeFileSync(path.join(DOCS, 'dict-' + code + '.js'), body);

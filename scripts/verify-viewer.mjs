@@ -411,8 +411,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=41') && jaHtml.includes('?v=41'), 'shells reference ?v=41 assets');
-ok(swSrc.includes("caw-view-v41"), 'sw.js cache name is caw-view-v41');
+ok(enHtml.includes('?v=42') && jaHtml.includes('?v=42'), 'shells reference ?v=42 assets');
+ok(swSrc.includes("caw-view-v42"), 'sw.js cache name is caw-view-v42');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1348,7 +1348,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v41'), 'sw cache is caw-view-v41');
+  ok(swJs.includes('caw-view-v42'), 'sw cache is caw-view-v42');
 }
 
 /* ---- v28: plain send out of the posting wallet ----
@@ -3081,8 +3081,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     const rtl = B.RTL_LANGS.includes(code);
     ok(html.includes('<html lang="' + code + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">'),
       'v36 M14: ' + code + '.html declares lang=' + code + ' dir=' + (rtl ? 'rtl' : 'ltr'));
-    ok(html.includes('viewer.js?v=41') && html.includes('style.css?v=41') && html.includes('__cawViewerBooted'),
-      'v36 M14: ' + code + '.html loads the v41 assets + watchdog');
+    ok(html.includes('viewer.js?v=42') && html.includes('style.css?v=42') && html.includes('__cawViewerBooted'),
+      'v36 M14: ' + code + '.html loads the v42 assets + watchdog');
     ok([...html.matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',') === enNavSeq,
       'v36 M14: ' + code + '.html nav rows match the en shell, row for row');
     ok((html.match(/class="lang-slot"/g) || []).length === 2,
@@ -3092,8 +3092,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     if (rtl) ok(html.includes('>→<') && !html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point forward (RTL)');
     else ok(html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point back');
     if (code !== 'en' && code !== 'ja') {
-      const at = html.indexOf('dict-' + code + '.js?v=41');
-      ok(at >= 0 && at < html.indexOf('viewer.js?v=41'),
+      const at = html.indexOf('dict-' + code + '.js?v=42');
+      ok(at >= 0 && at < html.indexOf('viewer.js?v=42'),
         'v36 M14: ' + code + '.html loads its dict before viewer.js');
       ok(!html.includes('var ja ='), 'v36 M14: ' + code + '.html theme script has its labels baked in');
     }
@@ -3117,13 +3117,12 @@ console.log('— v36: twenty languages + RTL (M14) —');
     const { dict: fresh, fallbacks } = B.buildDict(code, webDicts, appDicts, mapping);
     ok(JSON.stringify(d) === JSON.stringify(fresh),
       'v36 M14: dict-' + code + ' matches a fresh regeneration from the app i18n');
-    /* v39: the cap moves 200 -> 203 — the three hidden-media
-       list keys (modHiddenMediaLbl / modNoneHiddenMedia /
-       modHiddenMeta) are web-only UI with no app counterpart,
-       so each is one more English fallback per dict; the
-       translated bulk (320) is unchanged. */
-    ok(fallbacks.length <= 203 && enKeys.length - fallbacks.length >= 300,
-      'v36 M14: dict-' + code + ' translates the bulk of the UI', (enKeys.length - fallbacks.length) + ' translated, ' + fallbacks.length + ' English fallbacks');
+    /* v39: the cap moved 200 -> 203 (three web-only hidden-media
+       keys). v42: the web-only keys are translated in
+       scripts/l10n-overrides.mjs, so the fallback count is now
+       exactly zero and the full key set is translated. */
+    ok(fallbacks.length === 0 && enKeys.length - fallbacks.length === enKeys.length,
+      'v36 M14+v42: dict-' + code + ' translates the whole UI', (enKeys.length - fallbacks.length) + ' translated, ' + fallbacks.length + ' English fallbacks');
     ok(d && enKeys.every(k => tokSet(d[k]).every(t => tokSet(webDicts.en[k]).includes(t))),
       'v36 M14: dict-' + code + ' never demands a placeholder the web does not supply');
     ok(swSrc.includes("'dict-" + code + ".js'"), 'v36 M14: sw.js precaches dict-' + code + '.js');
@@ -3151,7 +3150,7 @@ console.log('— v36: twenty languages + RTL (M14) —');
      viewerSrc.includes("return h + 'h'") && viewerSrc.includes("return d + 'd'") &&
      !viewerSrc.includes('m + T.relMin'),
     'v37: relTime uses the app\u2019s compact literals, not the localised suffixes');
-  ok((viewerSrc.match(/CAW Social — web v41/g) || []).length === 2, 'v41: the version label reads web v41 in both embedded languages');
+  ok((viewerSrc.match(/CAW Social — web v42/g) || []).length === 2, 'v42: the version label reads web v42 in both embedded languages');
 
   /* stub-DOM boots: es and ar render from their dicts */
   const headSrc = viewerSrc.slice(0, viewerSrc.indexOf('/* ---------- minimal ABI helpers'));
@@ -3172,9 +3171,10 @@ console.log('— v36: twenty languages + RTL (M14) —');
       'v36 M14: the es boot renders composer/home strings from the Spanish dict');
     /* v37 (Audit A): noticeTitle is one of the 13 removed dead
        keys — the fallback witness is statsTitle now (a live
-       web-only key). */
-    ok(api.T.statsTitle === webDicts.en.statsTitle && api.T.relMin === 'm',
-      'v36 M14: web-only keys fall back to English inside the es boot (no blanks)');
+       web-only key). v42: web-only keys no longer fall back —
+       they render their l10n-overrides translation. */
+    ok(api.T.statsTitle === 'CAW ahora mismo' && api.T.relMin === 'min',
+      'v36 M14+v42: web-only keys render translated inside the es boot (no blanks, no English)');
   }
   {
     const { api } = bootLang('ar', read('../docs/dict-ar.js'));
@@ -3423,8 +3423,9 @@ console.log('— v38: moderation (admin UI + hidden-post filtering) —');
     'v38: the stylesheet carries the dimmed-row, badge and attachment-control styles');
 
   /* Strings: the whole moderation set exists in EN + JA (the
-     other eighteen take the English fallback via build-i18n —
-     counted by the v36 dict checks above). */
+     other eighteen take the app mapping, and since v42 the
+     web-only remainder from l10n-overrides — zero English
+     fallbacks, counted by the v36 dict checks above). */
   const MOD_KEYS = ['modHiddenBadge', 'modHiddenNote', 'modHideBtn', 'modUnhideBtn', 'modHideTitle',
     'modHideNote', 'modUnhideTitle', 'modSectionTitle', 'modHiddenListLbl', 'modNoneHidden',
     'modMediaTitle', 'modHideMediaBtn', 'modHideMediaTitle', 'modUnhideMediaTitle', 'modDeleteBtn',
@@ -3545,8 +3546,8 @@ console.log('— v39: persistent hidden-media list (list-hidden) —');
     'v39: the hidden-media list strings exist in EN + JA');
   const appDicts39 = B39.loadAppDicts(fs.readFileSync(new URL('../../caw-social-app/src/i18n.ts', import.meta.url), 'utf8'));
   const map39 = B39.buildMapping(web39, appDicts39);
-  ok(B39.buildDict('es', web39, appDicts39, map39).fallbacks.length === 169,
-    'v39+v40: fallback count per dict — 203 at v39; the v40 regeneration maps 34 more keys because the app i18n gained the media/moderation translations with app v0.7.6, honestly counted at 169');
+  ok(B39.buildDict('es', web39, appDicts39, map39).fallbacks.length === 0,
+    'v39+v40+v42: fallback count per dict — 203 at v39, 169 at v40 (app v0.7.6 i18n), and 0 at v42: the remaining web-only keys are translated in scripts/l10n-overrides.mjs');
 }
 
 console.log('— v40: attachment images never rendered (nested .pfoot insertBefore) —');
@@ -3766,6 +3767,67 @@ console.log('— v41: WQOM joins HuntersDEX (wrap pair is 1:1, not a swap) —')
     ok(!!fwd && fwd[fwd.length - 1] > 0n && !!rev && rev[rev.length - 1] > 0n,
       'v41 live quote: 100 WQOM <-> ' + sym41 + ' via the direct pair, both directions');
   }
+}
+
+/* ---------- v42: the eighteen languages are fully translated ----------
+   User report (2026-11-19): on the desktop web the languages
+   "stay English". Verified live first: the switcher itself was
+   never broken (de.html boots with dict-de, the picker navigates
+   en -> de, the root gate routes by caw-lang) — the visible
+   English was coverage: 172 of 523 dict keys and ~67 shell
+   static chunks per language fell back to English. v42 adds
+   scripts/l10n-overrides.mjs (hand-written translations of the
+   web-only strings, from the EN + JA originals) and wires it
+   into build-i18n after the app mapping: KEY_L10N for dict
+   keys, CHUNK_L10N for shell chunks, THEME_LABELS for the
+   shells' theme toggle. Fallbacks are now zero everywhere. */
+console.log('— v42: full translation coverage (l10n overrides) —');
+{
+  const B42 = await import('./build-i18n.mjs');
+  const O42 = await import('./l10n-overrides.mjs');
+  const web42 = B42.loadWebDicts(viewerSrc);
+  const app42 = B42.loadAppDicts(fs.readFileSync(new URL('../../caw-social-app/src/i18n.ts', import.meta.url), 'utf8'));
+  const map42 = B42.buildMapping(web42, app42);
+  const enHtml42 = read('../docs/en.html'), jaHtml42 = read('../docs/ja.html');
+  const tok42 = s => [...String(s).matchAll(/\{[a-zA-Z]+\}/g)].map(m => m[0]).sort().join(' ');
+  for (const [code] of B42.LANGS) {
+    if (code === 'en' || code === 'ja') continue;
+    const { dict, fallbacks } = B42.buildDict(code, web42, app42, map42);
+    ok(fallbacks.length === 0 && Object.keys(dict).length === Object.keys(web42.en).length,
+      'v42: dict-' + code + ' has zero English fallbacks (all ' + Object.keys(web42.en).length + ' keys translated)');
+    const { fallbacks: shellFb } = B42.buildShell(code, enHtml42, jaHtml42, app42);
+    ok(shellFb === 0, 'v42: ' + code + '.html has zero English static fallbacks');
+    /* every override is real translated text: for the long
+       prose keys a translation can never coincide with the
+       English (short labels legitimately can — cognates like
+       Total/Route/Menu, unit letters, and proper nouns like
+       HuntersDEX — so those are not policed here) */
+    const prose = ['timelineSub', 'pwIntro', 'getDesc', 'mediaNote', 'modRoleNote', 'dexIntro', 'pwSafetyCreate', 'mirrorNeedConnect'];
+    const stillEn = prose.filter(k => dict[k] === web42.en[k]);
+    ok(stillEn.length === 0, 'v42: no ' + code + ' prose string is left in English', stillEn.join(','));
+  }
+  /* placeholder exactness is enforced by the builder (it throws);
+     pin the same rule here so a future edit cannot weaken it. */
+  ok(Object.entries(O42.KEY_L10N).every(([k, byLang]) =>
+    Object.values(byLang).every(v => tok42(v) === tok42(web42.en[k]))),
+    'v42: every KEY_L10N string carries exactly the English placeholders');
+  ok(Object.keys(O42.KEY_L10N).length === 172 && Object.keys(O42.CHUNK_L10N).length === 67,
+    'v42: the override tables cover the whole v42 fallback set (172 keys, 67 chunks)');
+  /* spot checks: strings a user sees immediately, per language */
+  const de42 = B42.buildDict('de', web42, app42, map42).dict;
+  const fa42 = B42.buildDict('fa', web42, app42, map42).dict;
+  const zh42 = B42.buildDict('zh', web42, app42, map42).dict;
+  ok(de42.timelineSub.startsWith('Die neuesten Beiträge') && de42.pwRemoveWord === 'löschen',
+    'v42: German spot strings are translated (timeline intro, remove word)');
+  ok(zh42.mediaNote.includes('媒体服务器') && zh42.timeline === '时间线',
+    'v42: Chinese spot strings are translated (media note, timeline)');
+  ok(fa42.modRoleNote.includes('مدیر') && fa42.pwTitle === 'کیف پول پست',
+    'v42: Persian spot strings are translated (role note, wallet title)');
+  const deShell42 = read('../docs/de.html'), arShell42 = read('../docs/ar.html');
+  ok(deShell42.includes('☀️ Hell') && deShell42.includes('🌙 Dunkel') && !deShell42.includes("'🌙 Dark'"),
+    'v42: the German shell bakes its own theme labels');
+  ok(arShell42.includes('🌙 داكن') && deShell42.includes('Lies die CAW-Timeline'),
+    'v42: the Arabic shell bakes its theme labels; the German meta description is translated');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
