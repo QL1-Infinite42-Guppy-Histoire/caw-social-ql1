@@ -204,7 +204,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'About',
     setAboutBody: 'CAW is a social app on QL1, a chain that runs without a central operator. Posts and follows are written to the public record — nobody can quietly rewrite them. Names are NFTs: yours stays yours.',
     setViewsNote: 'View counts are not public. Nobody — not the app, not this page — can see how many people looked at a post. Only on-chain actions (posts, likes, follows) are public.',
-    setVersionLbl: 'CAW Social — web v43',
+    setVersionLbl: 'CAW Social — web v44',
     setDangerTitle: 'Danger zone',
     setNoWallet: 'No posting wallet in this browser yet.',
     setSetupBtn: 'Set up the posting wallet',
@@ -255,6 +255,20 @@ const T_EMBEDDED = {
     modErrThrottle: 'Too many operations in a row — please wait a moment and try again.',
     modErrBad: 'The request was not accepted.',
     modErrFail: 'The operation failed. Please try again later.',
+    modSanctionsLbl: 'Sanctions',
+    modFrozenBadge: 'Frozen', modBannedBadge: 'Banned',
+    modFrozenNotice: 'This account is frozen.', modBannedNotice: 'This account is banned.',
+    modFreezeBtn: 'Freeze', modBanBtn: 'Ban', modLiftBtn: 'Lift sanction',
+    modDur24h: '24 hours', modDur7d: '7 days', modDur30d: '30 days',
+    modUntilLbl: 'Until {when}',
+    modFreezeTitle: 'Freeze this account?', modBanTitle: 'Ban this account?', modLiftTitle: 'Lift the sanction?',
+    modTargetName: 'Account',
+    modSanctionNote: 'Their posts disappear from every screen of this app and web viewer for everyone except moderators, and they cannot upload media. The posts stay on the public record (on-chain), and other clients may still show them.',
+    modLiftNote: 'Their posts become visible again, and they can upload media again.',
+    modNoSanctions: 'No active sanctions.',
+    modSanctionPh: 'CAW name or name ID',
+    modErrSanctionAdmin: 'That name belongs to an admin or the root, so it cannot be sanctioned.',
+    modUploadSanctioned: 'This account is sanctioned, so media cannot be uploaded.',
     attachLbl: 'Add images (up to 4)', attachSelected: '{n} image(s) selected',
     attachBusy: 'Attaching images…', attachDone: 'Attached {n} image(s).',
     attachFail: 'Your post is up, but the image upload failed.',
@@ -600,7 +614,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'このアプリについて',
     setAboutBody: 'CAW は QL1 上のソーシャルアプリです。QL1 は中央の運営者なしに動くチェーンで、投稿やフォローは公開記録に書かれ、誰もこっそり書き換えられません。名前は NFT で、あなたの名前はあなたのものです。',
     setViewsNote: '閲覧数は公開されません。アプリにもこのページにも、投稿が何回見られたかを知る方法はありません。公開されるのはオンチェーンの操作（投稿・いいね・フォロー）だけです。',
-    setVersionLbl: 'CAW Social — web v43',
+    setVersionLbl: 'CAW Social — web v44',
     setDangerTitle: '危険ゾーン',
     setNoWallet: 'このブラウザには、まだ投稿用ウォレットがありません。',
     setSetupBtn: '投稿用ウォレットを作る',
@@ -651,6 +665,20 @@ const T_EMBEDDED = {
     modErrThrottle: '操作が続いています。少し待ってからもう一度お試しください。',
     modErrBad: 'リクエストが受け付けられませんでした。',
     modErrFail: '操作に失敗しました。時間をおいてもう一度お試しください。',
+    modSanctionsLbl: '制裁',
+    modFrozenBadge: '凍結中', modBannedBadge: 'BAN',
+    modFrozenNotice: 'このアカウントは凍結されています', modBannedNotice: 'このアカウントはBANされています',
+    modFreezeBtn: '凍結', modBanBtn: 'BAN', modLiftBtn: '制裁を解除',
+    modDur24h: '24時間', modDur7d: '7日間', modDur30d: '30日間',
+    modUntilLbl: '{when} まで',
+    modFreezeTitle: 'このアカウントを凍結しますか？', modBanTitle: 'このアカウントをBANしますか？', modLiftTitle: '制裁を解除しますか？',
+    modTargetName: 'アカウント',
+    modSanctionNote: 'この名前の投稿は、このアプリとWeb版のすべての画面でモデレーター以外には見えなくなり、メディアのアップロードもできなくなります。投稿は公開記録（オンチェーン）に残り、他のクライアントでは表示されることがあります。',
+    modLiftNote: '投稿が再び表示され、メディアのアップロードもできるようになります。',
+    modNoSanctions: '有効な制裁はありません。',
+    modSanctionPh: 'CAW名または名前ID',
+    modErrSanctionAdmin: 'その名前は管理者またはルートのものなので、制裁できません。',
+    modUploadSanctioned: 'このアカウントは制裁中のため、メディアをアップロードできません。',
     attachLbl: '画像を追加（最大4枚）', attachSelected: '{n}枚選択中',
     attachBusy: '画像を添付しています…', attachDone: '画像を{n}枚添付しました。',
     attachFail: '投稿は完了しましたが、画像の添付に失敗しました。',
@@ -3869,13 +3897,30 @@ function buildAdminMessage(o) {
    the stale-hash race and gets its own honest wording. */
 function adminOpErrorKey(status, msg) {
   const m = String(msg || '');
-  if (status === 403) return m.includes('root only') ? 'modErrRootOnly' : 'modErrNotAdmin';
+  if (status === 403) {
+    if (m.includes('cannot sanction')) return 'modErrSanctionAdmin';
+    return m.includes('root only') ? 'modErrRootOnly' : 'modErrNotAdmin';
+  }
   if (status === 409) return 'modErrChanged';
   if (status === 404) return 'modErrNotFound';
   if (status === 401) return 'modErrSig';
   if (status === 429) return 'modErrThrottle';
   if (status === 400) return 'modErrBad';
   return 'modErrFail';
+}
+/* v44: a media-write rejection, carrying the string-table key
+   when the server says why in a way the UI has wording for —
+   a sanctioned name's writes are refused 403 'account
+   sanctioned', and the generic "could not save" would hide
+   that. Other rejections keep the plain status error.
+   (Defined with the pure moderation helpers, outside the
+   browser block, so the harness can exercise it.) */
+async function mediaUploadError(res) {
+  let msg = '';
+  try { const j = await res.clone().json(); if (j && j.error) msg = String(j.error); } catch (e) {}
+  const err = new Error('media ' + res.status);
+  if (res.status === 403 && msg.includes('account sanctioned')) err.mediaKey = 'modUploadSanctioned';
+  return err;
 }
 /* Media blobs are content-addressed: /media/<sha256>.<ext>.
    The hash an admin op must pin is read back out of the URL
@@ -3887,13 +3932,44 @@ function modHashFromMediaUrl(url) {
 /* The one visibility rule for posts: a hidden post is dropped
    for everyone except admins, who keep seeing it (marked). */
 function modItemVisible(hidden, isAdmin) { return !hidden || !!isAdmin; }
+/* v44: user sanctions (freeze / ban) from GET /v1/sanctions —
+   the public list carries no reason and no author, only the
+   name id, the kind and (for a freeze) the expiry. Both
+   structures are mutated in place so references stay valid. */
+const modSanctionedIds = new Set();  // decimal name ids, as strings
+const modSanctionById = new Map();   // nameId -> { nameId, kind, until, ts }
+function modSanctionOf(nameId) {
+  if (nameId == null || nameId === '') return null;
+  return modSanctionById.get(String(nameId)) || null;
+}
+function modNameSanctioned(nameId) { return !!modSanctionOf(nameId); }
+function modSetSanctions(list) {
+  modSanctionedIds.clear(); modSanctionById.clear();
+  if (!Array.isArray(list)) return;
+  for (const s of list) {
+    if (!s || s.nameId == null || (s.kind !== 'freeze' && s.kind !== 'ban')) continue;
+    const id = String(s.nameId);
+    modSanctionedIds.add(id);
+    modSanctionById.set(id, { nameId: id, kind: s.kind, until: s.until != null ? Number(s.until) : null, ts: Number(s.ts || 0) });
+  }
+}
 /* The list choke point: feed-shaped items (type 0 posts and
    type 2 Recaws carry the post's cawId; follows/unfollows are
-   never posts) filtered against the lowercase hidden set. */
+   never posts) filtered against the lowercase hidden set.
+   v44: the same choke point also drops every post and Recaw
+   whose AUTHOR name is sanctioned (freeze or ban) — for
+   non-admins only; admins keep the rows, badged by
+   modPaintSanctionRow. */
 function modFilterItems(items, hidden, isAdmin) {
-  if (!items || !hidden || !hidden.size || isAdmin) return items || [];
-  return items.filter(a => !(a && (a.type === 0 || a.type === 2) &&
-    a.cawId && hidden.has(String(a.cawId).toLowerCase())));
+  if (isAdmin) return items || [];
+  const hidePosts = hidden && hidden.size;
+  if (!items || (!hidePosts && !modSanctionedIds.size)) return items || [];
+  return items.filter(a => {
+    if (!a || (a.type !== 0 && a.type !== 2)) return true;
+    if (hidePosts && a.cawId && hidden.has(String(a.cawId).toLowerCase())) return false;
+    if (modSanctionedIds.size && a.senderId != null && modSanctionedIds.has(String(a.senderId))) return false;
+    return true;
+  });
 }
 /* v39: the server's list-hidden answer, normalised into row
    models for the Settings Moderation list (the persistent
@@ -4050,7 +4126,7 @@ async function mediaSetProfile(kind, file) {
   fd.append('nameId', String(acting.id)); fd.append('kind', kind);
   fd.append('ts', String(ts)); fd.append('sig', sig); fd.append('file', file);
   const res = await fetchTimeout(MEDIA_API + '/v1/profile-media', { method: 'POST', body: fd }, 30000);
-  if (!res.ok) throw new Error('media ' + res.status);
+  if (!res.ok) throw await mediaUploadError(res);
   mediaCache.delete(String(acting.id));
   return res.json();
 }
@@ -4063,7 +4139,7 @@ async function mediaClearProfile(kind) {
     method: 'POST', headers: { 'content-type': 'application/json' },
     body: JSON.stringify({ nameId: String(acting.id), kind, ts, sig }),
   }, 15000);
-  if (!res.ok) throw new Error('media ' + res.status);
+  if (!res.ok) throw await mediaUploadError(res);
   mediaCache.delete(String(acting.id));
   return res.json();
 }
@@ -4082,7 +4158,7 @@ async function mediaAttach(cawId, txHash, file) {
     fd.append('ts', String(ts)); fd.append('sig', sig); fd.append('file', file);
     const res = await fetchTimeout(MEDIA_API + '/v1/attach', { method: 'POST', body: fd }, 30000);
     if (res.ok) return res.json();
-    if (res.status !== 404 || attempt === 1) throw new Error('media ' + res.status);
+    if (res.status !== 404 || attempt === 1) throw await mediaUploadError(res);
     await new Promise(r => setTimeout(r, 4000)); // the post tx may need a moment to be readable
   }
   throw new Error('media 404');
@@ -4144,13 +4220,13 @@ function wireMediaSettings() {
       if (st) st.textContent = T.mediaBusy;
       setBtn.disabled = true;
       try { await mediaSetProfile(kind, f); if (st) st.textContent = T.mediaDone; loadProfile(); }
-      catch (e) { if (st) st.innerHTML = '<span class="err">' + esc(T.mediaFail) + '</span>'; setBtn.disabled = false; }
+      catch (e) { if (st) st.innerHTML = '<span class="err">' + esc((e && e.mediaKey && T[e.mediaKey]) || T.mediaFail) + '</span>'; setBtn.disabled = false; }
     };
     if (clearBtn) clearBtn.onclick = async () => {
       const st = $('msetStatus');
       if (st) st.textContent = T.mediaBusy;
       try { await mediaClearProfile(kind); if (st) st.textContent = T.mediaDone; loadProfile(); }
-      catch (e) { if (st) st.innerHTML = '<span class="err">' + esc(T.mediaFail) + '</span>'; }
+      catch (e) { if (st) st.innerHTML = '<span class="err">' + esc((e && e.mediaKey && T[e.mediaKey]) || T.mediaFail) + '</span>'; }
     };
   }
 }
@@ -4261,17 +4337,29 @@ const modHiddenMedia = new Map(); // v38 session map, kept as an optimistic cach
 function modIsAdmin() { return !!modRole; }
 function modIsRoot() { return modRole === 'root'; }
 function modPostHidden(cawId) { return !!cawId && modHidden.has(String(cawId).toLowerCase()); }
-function modVisibleItem(a) { return modItemVisible(modPostHidden(a && a.cawId), modIsAdmin()); }
+/* v44: an item is invisible to non-admins when the post itself
+   is hidden OR its author's name is sanctioned — the single
+   rule the post page, quote frames and Recaw originals share
+   with the list choke point. */
+function modVisibleItem(a) {
+  return modItemVisible(modPostHidden(a && a.cawId) || modNameSanctioned(a && a.senderId), modIsAdmin());
+}
 async function modRefresh() {
   const prevRole = modRole;
   try {
-    const [ra, rh] = await Promise.all([
+    const [ra, rh, rs] = await Promise.all([
       fetchTimeout(MEDIA_API + '/v1/admins', null, 15000).catch(() => null),
       fetchTimeout(MEDIA_API + '/v1/hidden-posts', null, 15000).catch(() => null),
+      fetchTimeout(MEDIA_API + '/v1/sanctions', null, 15000).catch(() => null),
     ]);
     if (ra && ra.ok) { const j = await ra.json().catch(() => null); if (j && Array.isArray(j.admins)) modAdmins = j.admins; }
     if (rh && rh.ok) { const j = await rh.json().catch(() => null); if (j && Array.isArray(j.posts)) modHidden = new Set(j.posts.map(x => String(x).toLowerCase())); }
+    if (rs && rs.ok) { const j = await rs.json().catch(() => null); if (j && Array.isArray(j.sanctions)) modSetSanctions(j.sanctions); }
   } catch (e) { /* a failed poll changes nothing on screen */ }
+  /* v44: an open profile's sanction notice follows the poll. */
+  if (typeof profileState !== 'undefined' && profileState && typeof paintProfSanction === 'function') {
+    try { paintProfSanction(); } catch (e) {}
+  }
   const me = pwSession && pwSession.address ? pwSession.address.toLowerCase() : null;
   const mine = me ? modAdmins.find(x => String(x.address).toLowerCase() === me) : null;
   modRole = mine ? mine.role : null;
@@ -4472,6 +4560,73 @@ function modTogglePost(a) {
     },
   });
 }
+/* v44: paint one rendered row for the author's sanction state:
+   admins keep sanctioned authors' rows, dimmed and badged with
+   the kind (Frozen / Banned); everyone else never has the row
+   (modFilterItems dropped it). */
+function modPaintSanctionRow(div, senderId) {
+  if (!div || senderId == null) return;
+  const sanc = modSanctionOf(senderId);
+  const show = !!sanc && modIsAdmin();
+  div.classList.toggle('mod-sanc', show);
+  const body = div.querySelector('.pbody');
+  let badge = [...div.querySelectorAll('.mod-sanc-badge')].find(b => b.closest('.post') === div);
+  if (show) {
+    if (!badge && body) {
+      badge = document.createElement('span');
+      badge.className = 'mod-badge mod-sanc-badge';
+      body.insertBefore(badge, body.firstChild);
+    }
+    if (badge) badge.textContent = sanc.kind === 'ban' ? T.modBannedBadge : T.modFrozenBadge;
+  } else if (badge) badge.remove();
+}
+/* v44: freeze / ban / lift, behind the shared confirm panel.
+   The ops are the server's freeze-user / ban-user /
+   unsanction-user; the message canonicalisation in
+   buildAdminMessage + modOp already matches the contract
+   (name = the name id, sha256 = the empty hash, caw = -,
+   target = the duration code for a freeze, else -). A name
+   owned by an admin or the root is refused by the server
+   (403 cannot sanction an admin) and the mapped error is what
+   the panel shows — the buttons are NOT pre-hidden, so the
+   refusal stays honest. After success the local map takes the
+   server's answer at once (until for freeze / ban, removal
+   for a lift) and a poll re-reads the authoritative list. */
+function modSanctionConfirm(nameId, display, action, durationCode) {
+  if (!modIsAdmin() || nameId == null) return;
+  const id = String(nameId);
+  const isFreeze = action === 'freeze-user';
+  const isBan = action === 'ban-user';
+  const title = isFreeze ? T.modFreezeTitle : isBan ? T.modBanTitle : T.modLiftTitle;
+  const lines = [[T.modTargetName, display || ('#' + id)]];
+  if (isFreeze) {
+    lines.push([T.modFreezeBtn, durationCode === '24h' ? T.modDur24h : durationCode === '7d' ? T.modDur7d : T.modDur30d]);
+  }
+  openConfirmPanel({
+    title,
+    lines,
+    statusHtml: '<p class="small">' + esc(isFreeze || isBan ? T.modSanctionNote : T.modLiftNote) + '</p>',
+    signLabel: isFreeze ? T.modFreezeBtn : isBan ? T.modBanBtn : T.modLiftBtn,
+    onSign: async () => {
+      const fields = { action, nameId: id };
+      if (isFreeze) fields.target = durationCode;
+      const j = await modOp(fields);
+      if (isFreeze || isBan) {
+        modSanctionedIds.add(id);
+        modSanctionById.set(id, { nameId: id, kind: isFreeze ? 'freeze' : 'ban', until: j && j.until != null ? Number(j.until) : null, ts: Date.now() });
+      } else {
+        modSanctionedIds.delete(id);
+        modSanctionById.delete(id);
+      }
+    },
+    afterSuccess: async () => {
+      modRefresh().catch(() => {});
+      if (typeof settingsQuery !== 'undefined' && settingsQuery) renderSettings();
+      if (typeof profileState !== 'undefined' && profileState && String(profileState.id) === id) paintProfSanction();
+      try { refreshViewsForWallet(); } catch (e) {}
+    },
+  });
+}
 /* Profile-media moderation: the rows applyProfileMedia built
    (visible items pin their current hash; session-hidden items
    stay listed so the hide can be undone from here). */
@@ -4647,6 +4802,35 @@ async function modAppoint() {
     signLabel: T.modAppointBtn,
     onSign: async () => { await modOp(fields); },
     afterSuccess: async () => { await modRefresh(); renderSettings(); },
+  });
+}
+
+/* v44: the Settings sanction form — a raw decimal name id is
+   taken as-is; anything else is resolved as a CAW name (the
+   appoint flow's discipline). An unknown name is reported in
+   place and nothing is signed. */
+async function modSanctionFromSettings(action) {
+  const inp = $('modSancInput'), st = $('modSancStatus');
+  if (!inp) return;
+  const v = inp.value.trim();
+  if (!v) return;
+  let id = null, display = v;
+  if (/^\d+$/.test(v)) {
+    id = v; display = '#' + v;
+  } else {
+    const res = await resolveNameId(v.replace(/^@/, '')).catch(() => null);
+    if (!res || res.status !== 'ok') {
+      if (st) st.innerHTML = '<span class="err">' + esc(T.modErrNotFound) + '</span>';
+      return;
+    }
+    id = String(res.id); display = '@' + v.replace(/^@/, '') + ' (#' + id + ')';
+  }
+  const dur = action === 'freeze-user' ? (($('modSancDur') || {}).value || '24h') : undefined;
+  modSanctionConfirm(id, display, action, dur);
+}
+function modFillSanctionNames(area) {
+  area.querySelectorAll('[data-sanc-name]').forEach(span => {
+    resolveName(span.dataset.sancName).then(n => { if (n) span.textContent = '· @' + n; }).catch(() => {});
   });
 }
 
@@ -4832,6 +5016,7 @@ async function postCard(a, opts) {
     })();
   }
   modPaintRow(div, a.cawId); /* v38: dim + badge when this post is hidden (admins) */
+  modPaintSanctionRow(div, a.senderId); /* v44: dim + badge when the author is sanctioned (admins) */
   wireRowActions(div, a);
   if (typeof paintSuperRow === 'function') paintSuperRow(div, a);
   return div;
@@ -4878,6 +5063,7 @@ async function recawCard(a) {
     div.querySelector('.pbody').appendChild(mr);
   }
   modPaintRow(div, a.cawId);
+  modPaintSanctionRow(div, a.senderId); /* v44: the Recawer's sanction state */
   const slot = div.querySelector('.frameslot');
   (async () => {
     const orig = await findPostByCawId(a.cawId, 12).catch(() => null);
@@ -5444,6 +5630,7 @@ async function loadProfile() {
     (balance !== null ? '<div class="count-cell"><span class="cc-num">' + esc(fmtQcaw(balance)) + '</span><span class="cc-lbl">qCAW</span></div>' : '') +
     '</div>' +
     '<div class="chips">' + chips.map(c => '<span class="chip">' + esc(c) + '</span>').join('') + '</div>' +
+    '<div id="profSanction"></div>' +
     '<div id="followLists"></div>';
   profileState = { id, username };
   profileOwner = owner;
@@ -5455,6 +5642,7 @@ async function loadProfile() {
   if (fb) fb.onclick = () => openFollowList('following');
   if (rb2) rb2.onclick = () => openFollowList('followers');
   renderProfFollow();
+  paintProfSanction(); /* v44: sanction notice + admin controls */
   applyProfileMedia(id).catch(() => {});
   profCursor = undefined; profDone = false;
   profBuckets = { posts: [], recaws: [] };
@@ -5469,6 +5657,43 @@ async function loadProfile() {
    the SAME feed scan, so switching tabs never rescans, and "See
    more" simply continues the one underlying scan. */
 let profBuckets = { posts: [], recaws: [] }, profTab = 'posts';
+/* v44: the profile's sanction area. A sanctioned name shows
+   everyone the simple notice (frozen / banned — the public
+   list carries no reason, and none is shown); admins also see
+   the expiry and can lift, and admins get the freeze / ban
+   controls for any name here. Sanctioning a name an admin or
+   the root owns is refused by the server and shown honestly. */
+function paintProfSanction() {
+  const box = $('profSanction');
+  if (!box || !profileState) return;
+  const id = String(profileState.id);
+  const sanc = modSanctionOf(id);
+  const display = '@' + profileState.username + ' (#' + id + ')';
+  let h = '';
+  if (sanc) {
+    h += '<div class="mod-sanc-note">' + esc(sanc.kind === 'ban' ? T.modBannedNotice : T.modFrozenNotice) +
+      (modIsAdmin() && sanc.kind === 'freeze' && sanc.until
+        ? '<div class="small">' + esc(T.modUntilLbl.replace('{when}', fullTimeStr(Math.floor(sanc.until / 1000)))) + '</div>'
+        : '') + '</div>';
+  }
+  if (modIsAdmin()) {
+    h += '<div class="mod-sanc-ctl">' +
+      '<button type="button" class="mini-btn" data-sanc-freeze="24h">' + esc(T.modFreezeBtn) + ' · ' + esc(T.modDur24h) + '</button>' +
+      '<button type="button" class="mini-btn" data-sanc-freeze="7d">' + esc(T.modFreezeBtn) + ' · ' + esc(T.modDur7d) + '</button>' +
+      '<button type="button" class="mini-btn" data-sanc-freeze="30d">' + esc(T.modFreezeBtn) + ' · ' + esc(T.modDur30d) + '</button>' +
+      '<button type="button" class="mini-btn danger-btn" data-sanc-ban="1">' + esc(T.modBanBtn) + '</button>' +
+      (sanc ? '<button type="button" class="mini-btn" data-sanc-lift="1">' + esc(T.modLiftBtn) + '</button>' : '') +
+      '</div>';
+  }
+  box.innerHTML = h;
+  box.querySelectorAll('[data-sanc-freeze]').forEach(b => {
+    b.onclick = () => modSanctionConfirm(id, display, 'freeze-user', b.dataset.sancFreeze);
+  });
+  const banB = box.querySelector('[data-sanc-ban]');
+  if (banB) banB.onclick = () => modSanctionConfirm(id, display, 'ban-user');
+  const liftB = box.querySelector('[data-sanc-lift]');
+  if (liftB) liftB.onclick = () => modSanctionConfirm(id, display, 'unsanction-user');
+}
 function paintProfTabs() {
   const a = $('profTabPosts'), b = $('profTabRecaws');
   if (a) a.classList.toggle('on', profTab === 'posts');
@@ -6915,6 +7140,23 @@ function renderSettings() {
          above (any admin session can unhide from here). */
       '<p class="small">' + esc(T.modHiddenMediaLbl) + '</p>' +
       '<div id="modHiddenMediaBox"><p class="small">' + esc(T.loading) + '</p></div>' +
+      /* v44: sanctions — the active list (newest first, the
+         server's order) with a per-name Lift, plus the
+         freeze / ban form: a CAW name or raw name id and a
+         duration. The same ops live on the profile screen. */
+      '<p class="small">' + esc(T.modSanctionsLbl) + '</p>' +
+      (modSanctionById.size
+        ? [...modSanctionById.values()].map(s => '<div class="menu-row wrow"><span class="grow">#' + esc(s.nameId) +
+            ' <span class="small" data-sanc-name="' + esc(s.nameId) + '"></span></span>' +
+            '<span class="mod-badge">' + esc(s.kind === 'ban' ? T.modBannedBadge : T.modFrozenBadge) + '</span>' +
+            (s.kind === 'freeze' && s.until ? '<span class="small">' + esc(T.modUntilLbl.replace('{when}', fullTimeStr(Math.floor(s.until / 1000)))) + '</span>' : '') +
+            '<button type="button" class="mini-btn" data-sanc-lift="' + esc(s.nameId) + '">' + esc(T.modLiftBtn) + '</button></div>').join('')
+        : '<p class="small">' + esc(T.modNoSanctions) + '</p>') +
+      '<div class="row"><input id="modSancInput" placeholder="' + esc(T.modSanctionPh) + '">' +
+      '<select id="modSancDur"><option value="24h">' + esc(T.modDur24h) + '</option><option value="7d">' + esc(T.modDur7d) + '</option><option value="30d">' + esc(T.modDur30d) + '</option></select></div>' +
+      '<div class="row"><button type="button" id="modSancFreezeBtn">' + esc(T.modFreezeBtn) + '</button>' +
+      '<button type="button" class="danger-btn" id="modSancBanBtn">' + esc(T.modBanBtn) + '</button></div>' +
+      '<p id="modSancStatus"></p>' +
       '</div>';
   }
   /* v38: admin management (ROOT only) — the server's admin
@@ -6976,6 +7218,15 @@ function renderSettings() {
   if (apBtn) apBtn.onclick = () => modAppoint();
   if (pwSession && modIsRoot()) modFillAdminNames(area);
   if (pwSession && modIsAdmin()) modLoadHiddenMedia(); /* v39: fill the hidden-media list */
+  /* v44: sanctions wiring (Settings side; the profile screen
+     wires its own buttons in paintProfSanction). */
+  area.querySelectorAll('[data-sanc-lift]').forEach(b => {
+    b.onclick = () => modSanctionConfirm(b.dataset.sancLift, '#' + b.dataset.sancLift, 'unsanction-user');
+  });
+  const sfBtn = $('modSancFreezeBtn'), sbBtn = $('modSancBanBtn');
+  if (sfBtn) sfBtn.onclick = () => modSanctionFromSettings('freeze-user');
+  if (sbBtn) sbBtn.onclick = () => modSanctionFromSettings('ban-user');
+  if (pwSession && modIsAdmin()) modFillSanctionNames(area);
   syncChrome();
 }
 async function renderNamesScreen() {
@@ -8258,13 +8509,15 @@ function renderComposer() {
             const st = $('compStatus');
             if (st) st.textContent = T.attachBusy;
             let okCount = 0;
+            let failKey = null;
             for (const f of filesAtPost) {
-              try { await mediaAttach(filesCaw, filesTx, f); okCount++; } catch (e) { /* reported below */ }
+              try { await mediaAttach(filesCaw, filesTx, f); okCount++; }
+              catch (e) { if (e && e.mediaKey) failKey = e.mediaKey; /* else reported below */ }
             }
             const st2 = $('compStatus');
             if (st2) st2.innerHTML = okCount === filesAtPost.length
               ? esc(T.attachDone.replace('{n}', String(okCount)))
-              : '<span class="err">' + esc(T.attachFail) + '</span>';
+              : '<span class="err">' + esc(failKey ? T[failKey] : T.attachFail) + '</span>';
             if (okCount) hydrateAttachmentsIn($('timeline')).catch(() => {});
           }
         },
@@ -10410,6 +10663,7 @@ if (typeof module !== 'undefined' && module.exports) {
     randomCawId, submitLocalAction, buildMediaMessage, MEDIA_API,
     buildAdminMessage, adminOpErrorKey, modHashFromMediaUrl, modItemVisible, modFilterItems,
     modHiddenMediaModel, modHiddenEntryOp,
+    modSanctionOf, modNameSanctioned, modSetSanctions, modSanctionedIds, modSanctionById, mediaUploadError,
     bmList, bmHas, bmToggle, BOOKMARKS_KEY_PREFIX,
     O_TOKEN, BURN_ADDRESS,
     HAWK_TOKEN, PHOENIX_TOKEN, KET_TOKEN, WQOM_TOKEN, DEX_ROUTER,

@@ -413,8 +413,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=43') && jaHtml.includes('?v=43'), 'shells reference ?v=43 assets');
-ok(swSrc.includes("caw-view-v43"), 'sw.js cache name is caw-view-v43');
+ok(enHtml.includes('?v=44') && jaHtml.includes('?v=44'), 'shells reference ?v=44 assets');
+ok(swSrc.includes("caw-view-v44"), 'sw.js cache name is caw-view-v44');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1350,7 +1350,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v43'), 'sw cache is caw-view-v43');
+  ok(swJs.includes('caw-view-v44'), 'sw cache is caw-view-v44');
 }
 
 /* ---- v28: plain send out of the posting wallet ----
@@ -3083,8 +3083,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     const rtl = B.RTL_LANGS.includes(code);
     ok(html.includes('<html lang="' + code + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">'),
       'v36 M14: ' + code + '.html declares lang=' + code + ' dir=' + (rtl ? 'rtl' : 'ltr'));
-    ok(html.includes('viewer.js?v=43') && html.includes('style.css?v=43') && html.includes('__cawViewerBooted'),
-      'v36 M14: ' + code + '.html loads the v43 assets + watchdog');
+    ok(html.includes('viewer.js?v=44') && html.includes('style.css?v=44') && html.includes('__cawViewerBooted'),
+      'v36 M14: ' + code + '.html loads the v44 assets + watchdog');
     ok([...html.matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',') === enNavSeq,
       'v36 M14: ' + code + '.html nav rows match the en shell, row for row');
     ok((html.match(/class="lang-slot"/g) || []).length === 2,
@@ -3094,8 +3094,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     if (rtl) ok(html.includes('>→<') && !html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point forward (RTL)');
     else ok(html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point back');
     if (code !== 'en' && code !== 'ja') {
-      const at = html.indexOf('dict-' + code + '.js?v=43');
-      ok(at >= 0 && at < html.indexOf('viewer.js?v=43'),
+      const at = html.indexOf('dict-' + code + '.js?v=44');
+      ok(at >= 0 && at < html.indexOf('viewer.js?v=44'),
         'v36 M14: ' + code + '.html loads its dict before viewer.js');
       ok(!html.includes('var ja ='), 'v36 M14: ' + code + '.html theme script has its labels baked in');
     }
@@ -3152,7 +3152,7 @@ console.log('— v36: twenty languages + RTL (M14) —');
      viewerSrc.includes("return h + 'h'") && viewerSrc.includes("return d + 'd'") &&
      !viewerSrc.includes('m + T.relMin'),
     'v37: relTime uses the app\u2019s compact literals, not the localised suffixes');
-  ok((viewerSrc.match(/CAW Social — web v43/g) || []).length === 2, 'v43: the version label reads web v43 in both embedded languages');
+  ok((viewerSrc.match(/CAW Social — web v44/g) || []).length === 2, 'v44: the version label reads web v44 in both embedded languages');
 
   /* stub-DOM boots: es and ar render from their dicts */
   const headSrc = viewerSrc.slice(0, viewerSrc.indexOf('/* ---------- minimal ABI helpers'));
@@ -3214,8 +3214,8 @@ console.log('— v37: app-feel batch (feel-audit-v36: Audit A cleanup + Audit B)
     const w = {}; new Function('window', read('../docs/dict-' + code + '.js'))(w);
     ok(w.__CAW_T && DEAD_KEYS.every(k => !(k in w.__CAW_T)), 'v37 A: dict-' + code + ' carries none of the 13 dead keys');
   }
-  ok(Object.keys(web37.en).length === 523 && Object.keys(web37.ja).length === 523,
-    'v37 A + v38 + v39: the tables hold 523 keys (484 after the dead-key cleanup, + the 36 v38 moderation keys, + the 3 v39 hidden-media list keys)');
+  ok(Object.keys(web37.en).length === 545 && Object.keys(web37.ja).length === 545,
+    'v37 A + v38 + v39 + v44: the tables hold 545 keys (523 through v43, + the 22 v44 sanction keys)');
   ok(!css37.includes('#walletArea {') && !css37.includes('button.big-connect {'),
     'v37 A: the dead CSS rules (#walletArea, button.big-connect) are gone');
   ok(!/window\.ethereum|eth_requestAccounts/.test(viewerSrc),
@@ -3813,8 +3813,8 @@ console.log('— v42: full translation coverage (l10n overrides) —');
   ok(Object.entries(O42.KEY_L10N).every(([k, byLang]) =>
     Object.values(byLang).every(v => tok42(v) === tok42(web42.en[k]))),
     'v42: every KEY_L10N string carries exactly the English placeholders');
-  ok(Object.keys(O42.KEY_L10N).length === 169 && Object.keys(O42.CHUNK_L10N).length === 67,
-    'v42+v43: the override tables cover the fallback set (169 keys — the 3 tip keys left at v43, back on the app mapping — and 67 chunks)');
+  ok(Object.keys(O42.KEY_L10N).length === 191 && Object.keys(O42.CHUNK_L10N).length === 67,
+    'v42+v43+v44: the override tables cover the fallback set (191 keys — 169 through v43 + the 22 v44 sanction keys — and 67 chunks)');
   /* spot checks: strings a user sees immediately, per language */
   const de42 = B42.buildDict('de', web42, app42, map42).dict;
   const fa42 = B42.buildDict('fa', web42, app42, map42).dict;
@@ -3868,6 +3868,94 @@ console.log('— v43: tip currency PHOENIX -> HAWK —');
   ok(JSON.stringify(V.DEX_TOKENS.map(t => t.sym)) === JSON.stringify(['QOM', 'WQOM', 'qCAW', 'O', 'KET', 'HAWK', 'PHOENIX']) &&
      web43.en.bhIntro.includes('PHOENIX') && viewerSrc.includes('id="pwPhoenixBal"'),
     'v43: PHOENIX stays in HuntersDEX, BurnHawk and the wallet display');
+}
+
+/* ---------- v44: user sanctions (freeze / ban) ----------
+   User decision (2026-11-19): moderators and the root can
+   freeze a CAW name (24h / 7d / 30d), ban it, or lift the
+   sanction early. The server contract (implemented +
+   deployed, tests 42/42): POST /v1/admin/op actions
+   freeze-user { nameId, target: duration } / ban-user /
+   unsanction-user on the v38 signed message (name = the
+   name id, sha256 = the empty hash, caw = -, target = the
+   duration code for a freeze, else -); the public list
+   GET /v1/sanctions carries { nameId, kind, until, ts }
+   with NO reason and NO author. The client polls it with
+   the hidden-post list, filters sanctioned authors at the
+   modFilterItems choke point, badges their rows for
+   admins, notices on the profile, and manages from the
+   profile + Settings. A name owned by an admin/root is
+   refused by the server (403) and shown honestly. */
+console.log('— v44: user sanctions (freeze / ban) —');
+{
+  /* the sanction set: normalisation + lookups */
+  V.modSetSanctions([
+    { nameId: '3945', kind: 'freeze', until: 2000000000000, ts: 1999999000000 },
+    { nameId: 190, kind: 'ban', until: null, ts: 1999998000000 },
+    { nameId: '7', kind: 'bogus', until: null, ts: 1 },
+    { nameId: null, kind: 'ban', until: null, ts: 1 }, null, 'junk',
+  ]);
+  ok(V.modSanctionedIds.size === 2 && V.modNameSanctioned('3945') && V.modNameSanctioned(190) &&
+     !V.modNameSanctioned('7') && !V.modNameSanctioned('999'),
+    'v44: modSetSanctions keeps only well-formed freeze/ban entries, keyed by the decimal id string');
+  ok(V.modSanctionOf('3945').kind === 'freeze' && V.modSanctionOf('3945').until === 2000000000000 &&
+     V.modSanctionOf(190).kind === 'ban' && V.modSanctionOf(190).until === null,
+    'v44: modSanctionOf returns the kind + expiry (ban = null until)');
+  /* the choke point: a sanctioned author's posts + Recaws
+     drop for non-admins; follows and others' posts stay;
+     admins keep everything */
+  const items44 = [
+    { type: 0, senderId: 3945, cawId: '0xp1' }, { type: 2, senderId: '3945', cawId: '0xp2' },
+    { type: 3, senderId: 3945, cawId: '' }, { type: 0, senderId: 42, cawId: '0xp3' },
+    { type: 0, senderId: 190, cawId: '0xp4' },
+  ];
+  ok(V.modFilterItems(items44, new Set(), false).length === 2 &&
+     V.modFilterItems(items44, new Set(), true).length === 5,
+    'v44: modFilterItems drops sanctioned authors\' posts + Recaws for non-admins only');
+  V.modSetSanctions([]);
+  ok(V.modSanctionedIds.size === 0 && V.modFilterItems(items44, new Set(), false).length === 5,
+    'v44: an empty sanctions list restores every row');
+  /* the signed message matches the server canonicalisation */
+  const fm = V.buildAdminMessage({ action: 'freeze-user', nameId: '3945', target: '24h', ts: 1700000000 });
+  ok(fm === ['CAW Media v1', 'action: freeze-user', 'name: 3945',
+    'sha256: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+    'caw: -', 'tx: -', 'target: 24h', 'ts: 1700000000'].join('\n'),
+    'v44: the freeze message is the canonical 7-line form (duration in target)');
+  const bm = V.buildAdminMessage({ action: 'ban-user', nameId: '3945', ts: 1700000000 });
+  ok(bm.includes('\ntarget: -\n') && bm.includes('\nname: 3945\n'),
+    'v44: the ban message carries target - (no duration)');
+  /* error mapping: the cannot-sanction refusal gets its own
+     honest wording; the generic 403 keeps the not-admin key */
+  ok(V.adminOpErrorKey(403, 'cannot sanction an admin') === 'modErrSanctionAdmin' &&
+     V.adminOpErrorKey(403, 'not an admin') === 'modErrNotAdmin' &&
+     V.adminOpErrorKey(404, 'name not found') === 'modErrNotFound' &&
+     V.adminOpErrorKey(400, 'bad duration') === 'modErrBad',
+    'v44: adminOpErrorKey splits cannot-sanction from not-an-admin');
+  /* the upload refusal surfaces its own wording */
+  const fakeRes = (status, payload) => ({ status, clone() { return { json: async () => payload }; } });
+  const eSanc = await V.mediaUploadError(fakeRes(403, { error: 'account sanctioned' }));
+  const eGen = await V.mediaUploadError(fakeRes(500, { error: 'boom' }));
+  ok(eSanc.mediaKey === 'modUploadSanctioned' && eGen.mediaKey === undefined &&
+     (viewerSrc.match(/throw await mediaUploadError\(res\)/g) || []).length === 3,
+    'v44: mediaUploadError tags the sanctioned 403; all three media writes route through it');
+  /* wiring pins: poll, profile, settings, row badge */
+  ok(viewerSrc.includes("fetchTimeout(MEDIA_API + '/v1/sanctions'") &&
+     viewerSrc.includes('id="profSanction"') && viewerSrc.includes('function paintProfSanction()') &&
+     viewerSrc.includes('data-sanc-freeze') && viewerSrc.includes('id="modSancInput"') &&
+     viewerSrc.includes('data-sanc-lift') && viewerSrc.includes('modPaintSanctionRow(div, a.senderId)') &&
+     viewerSrc.includes("modSanctionConfirm(id, display, 'freeze-user'"),
+    'v44: sanctions poll with the moderation refresh; profile notice + controls; Settings list + form; row badges');
+  /* strings: the notice pair exists EN + JA, and one
+     translated dict carries the sanction wording */
+  const B44 = await import('./build-i18n.mjs');
+  const web44 = B44.loadWebDicts(viewerSrc);
+  ok(web44.en.modFrozenNotice === 'This account is frozen.' && web44.ja.modFrozenNotice === 'このアカウントは凍結されています' &&
+     web44.en.modUploadSanctioned.includes('sanctioned') && web44.ja.modErrSanctionAdmin.includes('制裁できません'),
+    'v44: the sanction strings exist in EN + JA');
+  const w44 = {}; new Function('window', read('../docs/dict-de.js'))(w44);
+  ok(w44.__CAW_T.modFrozenNotice === 'Dieses Konto ist eingefroren.' &&
+     w44.__CAW_T.modSanctionsLbl === 'Sanktionen' && w44.__CAW_T.modUntilLbl === 'Bis {when}',
+    'v44: dict-de carries the sanction translations (overrides, placeholders intact)');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');
