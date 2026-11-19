@@ -411,8 +411,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=38') && jaHtml.includes('?v=38'), 'shells reference ?v=38 assets');
-ok(swSrc.includes("caw-view-v38"), 'sw.js cache name is caw-view-v38');
+ok(enHtml.includes('?v=39') && jaHtml.includes('?v=39'), 'shells reference ?v=39 assets');
+ok(swSrc.includes("caw-view-v39"), 'sw.js cache name is caw-view-v39');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1344,7 +1344,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v38'), 'sw cache is caw-view-v38');
+  ok(swJs.includes('caw-view-v39'), 'sw cache is caw-view-v39');
 }
 
 /* ---- v28: plain send out of the posting wallet ----
@@ -3077,8 +3077,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     const rtl = B.RTL_LANGS.includes(code);
     ok(html.includes('<html lang="' + code + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">'),
       'v36 M14: ' + code + '.html declares lang=' + code + ' dir=' + (rtl ? 'rtl' : 'ltr'));
-    ok(html.includes('viewer.js?v=38') && html.includes('style.css?v=38') && html.includes('__cawViewerBooted'),
-      'v36 M14: ' + code + '.html loads the v37 assets + watchdog');
+    ok(html.includes('viewer.js?v=39') && html.includes('style.css?v=39') && html.includes('__cawViewerBooted'),
+      'v36 M14: ' + code + '.html loads the v39 assets + watchdog');
     ok([...html.matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',') === enNavSeq,
       'v36 M14: ' + code + '.html nav rows match the en shell, row for row');
     ok((html.match(/class="lang-slot"/g) || []).length === 2,
@@ -3088,8 +3088,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     if (rtl) ok(html.includes('>→<') && !html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point forward (RTL)');
     else ok(html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point back');
     if (code !== 'en' && code !== 'ja') {
-      const at = html.indexOf('dict-' + code + '.js?v=38');
-      ok(at >= 0 && at < html.indexOf('viewer.js?v=38'),
+      const at = html.indexOf('dict-' + code + '.js?v=39');
+      ok(at >= 0 && at < html.indexOf('viewer.js?v=39'),
         'v36 M14: ' + code + '.html loads its dict before viewer.js');
       ok(!html.includes('var ja ='), 'v36 M14: ' + code + '.html theme script has its labels baked in');
     }
@@ -3113,7 +3113,12 @@ console.log('— v36: twenty languages + RTL (M14) —');
     const { dict: fresh, fallbacks } = B.buildDict(code, webDicts, appDicts, mapping);
     ok(JSON.stringify(d) === JSON.stringify(fresh),
       'v36 M14: dict-' + code + ' matches a fresh regeneration from the app i18n');
-    ok(fallbacks.length <= 200 && enKeys.length - fallbacks.length >= 300,
+    /* v39: the cap moves 200 -> 203 — the three hidden-media
+       list keys (modHiddenMediaLbl / modNoneHiddenMedia /
+       modHiddenMeta) are web-only UI with no app counterpart,
+       so each is one more English fallback per dict; the
+       translated bulk (320) is unchanged. */
+    ok(fallbacks.length <= 203 && enKeys.length - fallbacks.length >= 300,
       'v36 M14: dict-' + code + ' translates the bulk of the UI', (enKeys.length - fallbacks.length) + ' translated, ' + fallbacks.length + ' English fallbacks');
     ok(d && enKeys.every(k => tokSet(d[k]).every(t => tokSet(webDicts.en[k]).includes(t))),
       'v36 M14: dict-' + code + ' never demands a placeholder the web does not supply');
@@ -3142,7 +3147,7 @@ console.log('— v36: twenty languages + RTL (M14) —');
      viewerSrc.includes("return h + 'h'") && viewerSrc.includes("return d + 'd'") &&
      !viewerSrc.includes('m + T.relMin'),
     'v37: relTime uses the app\u2019s compact literals, not the localised suffixes');
-  ok((viewerSrc.match(/CAW Social — web v38/g) || []).length === 2, 'v38: the version label reads web v38 in both embedded languages');
+  ok((viewerSrc.match(/CAW Social — web v39/g) || []).length === 2, 'v39: the version label reads web v39 in both embedded languages');
 
   /* stub-DOM boots: es and ar render from their dicts */
   const headSrc = viewerSrc.slice(0, viewerSrc.indexOf('/* ---------- minimal ABI helpers'));
@@ -3203,8 +3208,8 @@ console.log('— v37: app-feel batch (feel-audit-v36: Audit A cleanup + Audit B)
     const w = {}; new Function('window', read('../docs/dict-' + code + '.js'))(w);
     ok(w.__CAW_T && DEAD_KEYS.every(k => !(k in w.__CAW_T)), 'v37 A: dict-' + code + ' carries none of the 13 dead keys');
   }
-  ok(Object.keys(web37.en).length === 520 && Object.keys(web37.ja).length === 520,
-    'v37 A + v38: the tables hold 520 keys (484 after the dead-key cleanup, + the 36 v38 moderation keys)');
+  ok(Object.keys(web37.en).length === 523 && Object.keys(web37.ja).length === 523,
+    'v37 A + v38 + v39: the tables hold 523 keys (484 after the dead-key cleanup, + the 36 v38 moderation keys, + the 3 v39 hidden-media list keys)');
   ok(!css37.includes('#walletArea {') && !css37.includes('button.big-connect {'),
     'v37 A: the dead CSS rules (#walletArea, button.big-connect) are gone');
   ok(!/window\.ethereum|eth_requestAccounts/.test(viewerSrc),
@@ -3449,6 +3454,95 @@ console.log('— v38: moderation (admin UI + hidden-post filtering) —');
     'v38: the profile head renders no account address (own or others); the owner read stays internal');
   ok(setBody38.includes('setAddressLbl') && setBody38.includes('setCopyAddr') && setBody38.includes('pwSession.address'),
     'v38: Settings keeps the owner-only own-address + copy card (confirmed exception, untouched)');
+}
+
+console.log('— v39: persistent hidden-media list (list-hidden) —');
+{
+  const B39 = await import('./build-i18n.mjs');
+  const web39 = B39.loadWebDicts(viewerSrc);
+  const EMPTY39 = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  const HASH39 = 'AB'.repeat(32);
+  const HASH39_L = HASH39.toLowerCase();
+  const CAW39 = '0x' + 'CD'.repeat(32);
+  const CAW39_L = CAW39.toLowerCase();
+  const ADMIN39 = '0x90359C6913915B9824B9CE8ABF4B85B30A5CF8CC';
+
+  /* The list-hidden message: the standard admin form with
+     EVERY field at its placeholder — that is the whole
+     contract (the op carries no target). */
+  ok(V.buildAdminMessage({ action: 'list-hidden', ts: 1700000100 }) ===
+    ['CAW Media v1', 'action: list-hidden', 'name: -', 'sha256: ' + EMPTY39,
+     'caw: -', 'tx: -', 'target: -', 'ts: 1700000100'].join('\n'),
+    'v39: the list-hidden message is byte-exact (all placeholders, empty hash)');
+  ok(viewerSrc.includes("modOp({ action: 'list-hidden' })"),
+    'v39: the loader posts exactly { action, ts, sig } via the one admin op path');
+
+  /* The row model, behaviourally, from a stubbed list-hidden
+     response: profile + attach entries normalise to the
+     lowercase forms the ops sign, the server's order is
+     kept, and entries that cannot identify an item or pin
+     its bytes are dropped, never rendered half-known. */
+  const stubHidden = [
+    { kind: 'icon', nameId: '190', hash: HASH39, hiddenBy: ADMIN39, ts: 1795091926000 },
+    { kind: 'attach', cawId: CAW39, hash: HASH39, hiddenBy: ADMIN39, ts: 1795091900000 },
+    { kind: 'audio', nameId: '7', hash: 'zz'.repeat(32), hiddenBy: ADMIN39, ts: 1 },
+    { kind: 'banner', nameId: '7', hash: HASH39, hiddenBy: ADMIN39, ts: 1 },
+    { kind: 'header', hash: HASH39, hiddenBy: ADMIN39, ts: 1 },
+    null, 'junk',
+  ];
+  const model39 = V.modHiddenMediaModel(stubHidden);
+  ok(model39.length === 2 && model39[0].kind === 'icon' && model39[0].nameId === '190' &&
+     model39[0].hash === HASH39_L && model39[0].hiddenBy === ADMIN39.toLowerCase() &&
+     model39[0].ts === 1795091926000 &&
+     model39[1].kind === 'attach' && model39[1].cawId === CAW39_L && model39[1].hash === HASH39_L,
+    'v39: modHiddenMediaModel normalises a stubbed response (order kept, junk dropped)');
+  ok(V.modHiddenMediaModel(null).length === 0 && V.modHiddenMediaModel({}).length === 0 &&
+     V.modHiddenMediaModel([]).length === 0,
+    'v39: a missing/empty hidden list models as no rows');
+
+  /* Unhide/delete wiring per entry kind: profile entries pin
+     nameId + hash under verb-kind; attachments pin cawId +
+     hash under verb-attach. */
+  ok(JSON.stringify(V.modHiddenEntryOp(model39[0], 'unhide')) ===
+     JSON.stringify({ action: 'unhide-icon', nameId: '190', sha256: HASH39_L }) &&
+     JSON.stringify(V.modHiddenEntryOp(model39[0], 'delete')) ===
+     JSON.stringify({ action: 'delete-icon', nameId: '190', sha256: HASH39_L }) &&
+     JSON.stringify(V.modHiddenEntryOp(model39[1], 'unhide')) ===
+     JSON.stringify({ action: 'unhide-attach', cawId: CAW39_L, sha256: HASH39_L }) &&
+     JSON.stringify(V.modHiddenEntryOp(model39[1], 'delete')) ===
+     JSON.stringify({ action: 'delete-attach', cawId: CAW39_L, sha256: HASH39_L }) &&
+     V.modHiddenEntryOp(null, 'unhide') === null,
+    'v39: modHiddenEntryOp wires unhide/delete per entry kind');
+
+  /* Rendering + refresh wiring (source pins over the browser
+     section, the same style as the v38 pins). */
+  const setBody39 = viewerSrc.slice(viewerSrc.indexOf('function renderSettings()'), viewerSrc.indexOf('async function renderNamesScreen()'));
+  ok(setBody39.includes('T.modHiddenMediaLbl') && setBody39.includes('id="modHiddenMediaBox"') &&
+     setBody39.includes('modLoadHiddenMedia()'),
+    'v39: Settings renders the Hidden media box inside the Moderation card and loads it for admins');
+  const paint39 = viewerSrc.slice(viewerSrc.indexOf('function modPaintHiddenMedia('), viewerSrc.indexOf('function modConfirmHiddenEntry('));
+  ok(paint39.includes('modHiddenMediaErrKey') && paint39.includes('T[modHiddenMediaErrKey]') &&
+     paint39.includes('data-modhm-unhide') && paint39.includes('data-modhm-del') &&
+     paint39.includes('T.modHiddenMeta') && paint39.includes('postUrl(m.cawId)') &&
+     paint39.includes('data-modhm-prof') && paint39.includes('resolveName('),
+    'v39: the list paints rows (identity, who/when meta, Unhide + Delete), resolves profile names, and shows load errors with no rows');
+  ok(viewerSrc.slice(viewerSrc.indexOf('function modConfirmHiddenEntry('), viewerSrc.indexOf('function modPaintRow('))
+      .includes('modHiddenEntryOp(m, verb)'),
+    'v39: list Unhide/Delete confirm through modHiddenEntryOp');
+  ok(viewerSrc.slice(viewerSrc.indexOf('function modConfirmMedia('), viewerSrc.indexOf('function modConfirmAttach(')).includes('modLoadHiddenMedia()') &&
+     viewerSrc.slice(viewerSrc.indexOf('function modConfirmAttach('), viewerSrc.indexOf('function modFillAdminNames(')).includes('modLoadHiddenMedia()'),
+    'v39: profile + attachment ops refresh the Settings list after success');
+
+  /* Strings: the three list keys exist in EN + JA (the other
+     eighteen take the English fallback — pinned below). */
+  ok(['modHiddenMediaLbl', 'modNoneHiddenMedia', 'modHiddenMeta'].every(k =>
+     typeof web39.en[k] === 'string' && web39.en[k].length > 0 &&
+     typeof web39.ja[k] === 'string' && web39.ja[k].length > 0),
+    'v39: the hidden-media list strings exist in EN + JA');
+  const appDicts39 = B39.loadAppDicts(fs.readFileSync(new URL('../../caw-social-app/src/i18n.ts', import.meta.url), 'utf8'));
+  const map39 = B39.buildMapping(web39, appDicts39);
+  ok(B39.buildDict('es', web39, appDicts39, map39).fallbacks.length === 203,
+    'v39: fallback count is 203 per dict (200 + the 3 web-only list keys), honestly counted');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

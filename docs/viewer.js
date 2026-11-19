@@ -204,7 +204,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'About',
     setAboutBody: 'CAW is a social app on QL1, a chain that runs without a central operator. Posts and follows are written to the public record — nobody can quietly rewrite them. Names are NFTs: yours stays yours.',
     setViewsNote: 'View counts are not public. Nobody — not the app, not this page — can see how many people looked at a post. Only on-chain actions (posts, likes, follows) are public.',
-    setVersionLbl: 'CAW Social — web v38',
+    setVersionLbl: 'CAW Social — web v39',
     setDangerTitle: 'Danger zone',
     setNoWallet: 'No posting wallet in this browser yet.',
     setSetupBtn: 'Set up the posting wallet',
@@ -233,6 +233,9 @@ const T_EMBEDDED = {
     modRoleNote: 'The admin’s role is to remove malicious images and other harmful content from CAW. It covers the whole front: every screen of this app and web viewer where posts and media appear — timelines, search, profiles, everywhere.',
     modUnhideTitle: 'Show this post again?',
     modSectionTitle: 'Moderation', modHiddenListLbl: 'Hidden posts',
+    modHiddenMediaLbl: 'Hidden media',
+    modNoneHiddenMedia: 'No media is hidden right now.',
+    modHiddenMeta: 'Hidden by {who} · {when}',
     modNoneHidden: 'No posts are hidden right now.',
     modMediaTitle: 'Moderate this media', modHideMediaBtn: 'Hide',
     modHideMediaTitle: 'Hide this media?', modUnhideMediaTitle: 'Show this media again?',
@@ -597,7 +600,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'このアプリについて',
     setAboutBody: 'CAW は QL1 上のソーシャルアプリです。QL1 は中央の運営者なしに動くチェーンで、投稿やフォローは公開記録に書かれ、誰もこっそり書き換えられません。名前は NFT で、あなたの名前はあなたのものです。',
     setViewsNote: '閲覧数は公開されません。アプリにもこのページにも、投稿が何回見られたかを知る方法はありません。公開されるのはオンチェーンの操作（投稿・いいね・フォロー）だけです。',
-    setVersionLbl: 'CAW Social — web v38',
+    setVersionLbl: 'CAW Social — web v39',
     setDangerTitle: '危険ゾーン',
     setNoWallet: 'このブラウザには、まだ投稿用ウォレットがありません。',
     setSetupBtn: '投稿用ウォレットを作る',
@@ -626,6 +629,9 @@ const T_EMBEDDED = {
     modRoleNote: '管理者の役割は、悪意のある画像などの有害な内容をCAWから削除することです。範囲はフロント全体——タイムライン・検索・プロフィールなど、このアプリとWeb版で投稿やメディアが表示されるすべての画面です。',
     modUnhideTitle: 'この投稿を再表示しますか？',
     modSectionTitle: 'モデレーション', modHiddenListLbl: '非表示の投稿',
+    modHiddenMediaLbl: '非表示のメディア',
+    modNoneHiddenMedia: '現在、非表示のメディアはありません。',
+    modHiddenMeta: '非表示：{who} · {when}',
     modNoneHidden: '現在、非表示の投稿はありません。',
     modMediaTitle: 'このメディアの管理', modHideMediaBtn: '隠す',
     modHideMediaTitle: 'このメディアを隠しますか？', modUnhideMediaTitle: 'このメディアを再表示しますか？',
@@ -3860,6 +3866,44 @@ function modFilterItems(items, hidden, isAdmin) {
   return items.filter(a => !(a && (a.type === 0 || a.type === 2) &&
     a.cawId && hidden.has(String(a.cawId).toLowerCase())));
 }
+/* v39: the server's list-hidden answer, normalised into row
+   models for the Settings Moderation list (the persistent
+   source of truth for hidden media — the v38 session map is
+   only an optimistic cache now). Profile entries carry kind
+   icon|header|audio + the decimal nameId; attach entries
+   carry the post's cawId. Hashes and ids are canonicalised
+   to the lowercase forms the ops sign; entries that cannot
+   identify an item (or pin its bytes) are dropped rather
+   than rendered half-known. The server's order (newest
+   hidden first) is preserved. */
+function modHiddenMediaModel(entries) {
+  if (!Array.isArray(entries)) return [];
+  const out = [];
+  for (const e of entries) {
+    if (!e || typeof e !== 'object') continue;
+    const hash = e.hash ? String(e.hash).toLowerCase() : '';
+    if (!/^[0-9a-f]{64}$/.test(hash)) continue;
+    const hiddenBy = e.hiddenBy ? String(e.hiddenBy).toLowerCase() : '';
+    const ts = Number(e.ts) || 0;
+    if (e.kind === 'attach') {
+      if (!e.cawId) continue;
+      out.push({ kind: 'attach', cawId: String(e.cawId).toLowerCase(), hash, hiddenBy, ts });
+    } else if (e.kind === 'icon' || e.kind === 'header' || e.kind === 'audio') {
+      if (e.nameId == null || e.nameId === '') continue;
+      out.push({ kind: e.kind, nameId: String(e.nameId), hash, hiddenBy, ts });
+    }
+  }
+  return out;
+}
+/* The admin-op fields one hidden-media row sends for a verb
+   (unhide / delete): profile media pins nameId + hash,
+   attachments pin cawId + hash — the same shapes the
+   in-feed controls sign. */
+function modHiddenEntryOp(m, verb) {
+  if (!m) return null;
+  if (m.kind === 'attach') return { action: verb + '-attach', cawId: m.cawId, sha256: m.hash };
+  return { action: verb + '-' + m.kind, nameId: m.nameId, sha256: m.hash };
+}
 /* ================= browser UI (skipped under Node) ================= */
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
 
@@ -4179,7 +4223,7 @@ let modAdmins = [];          // [{address, role}] from GET /v1/admins
 let modRole = null;          // 'root' | 'mod' | null for THIS wallet
 let modHidden = new Set();   // lowercase cawIds from GET /v1/hidden-posts
 let modRefreshAt = 0;
-const modHiddenMedia = new Map(); // session-only: 'prof:<id>:<kind>' | 'att:<caw>:<hash>' -> {hash, url}
+const modHiddenMedia = new Map(); // v38 session map, kept as an optimistic cache: 'prof:<id>:<kind>' | 'att:<caw>:<hash>' -> {hash, url}; v39: the Settings list (the server's list-hidden) is the source of truth
 function modIsAdmin() { return !!modRole; }
 function modIsRoot() { return modRole === 'root'; }
 function modPostHidden(cawId) { return !!cawId && modHidden.has(String(cawId).toLowerCase()); }
@@ -4235,6 +4279,113 @@ async function modOp(fields) {
       { adminKey: adminOpErrorKey(res.status, msg), adminStatus: res.status });
   }
   return j;
+}
+/* v39: the persistent hidden-media list. The server's
+   list-hidden op (signed like every admin op, all message
+   fields at placeholders) returns what is hidden right now,
+   so an unhide no longer depends on this session having
+   hidden the item (the v38 limit). Settings renders the box;
+   this loader fills it and re-fills it after any op. A failed
+   load (e.g. 403 — the wallet was revoked) shows the mapped
+   error and NO rows: never a stale list. */
+let modHiddenMediaList = null;   // row models from modHiddenMediaModel
+let modHiddenMediaErrKey = null; // string-table key when the load failed
+async function modLoadHiddenMedia() {
+  const box = $('modHiddenMediaBox');
+  if (!box || !pwSession || !modIsAdmin()) return;
+  try {
+    const j = await modOp({ action: 'list-hidden' });
+    modHiddenMediaList = modHiddenMediaModel(j && j.hidden);
+    modHiddenMediaErrKey = null;
+  } catch (e) {
+    modHiddenMediaList = null;
+    modHiddenMediaErrKey = (e && e.adminKey) || 'modErrFail';
+  }
+  modPaintHiddenMedia();
+}
+function modHiddenKindLbl(kind) {
+  return kind === 'icon' ? T.mediaIcon : kind === 'header' ? T.mediaHeader : T.mediaAudioLbl;
+}
+function modPaintHiddenMedia() {
+  const box = $('modHiddenMediaBox');
+  if (!box) return;
+  if (modHiddenMediaErrKey) {
+    box.innerHTML = '<p class="err">' + esc(T[modHiddenMediaErrKey] || T.modErrFail) + '</p>';
+    return;
+  }
+  const list = modHiddenMediaList || [];
+  if (!list.length) {
+    box.innerHTML = '<p class="small">' + esc(T.modNoneHiddenMedia) + '</p>';
+    return;
+  }
+  box.innerHTML = list.map((m, i) => {
+    const meta = T.modHiddenMeta
+      .replace('{who}', m.hiddenBy ? shortAddr(m.hiddenBy) : '—')
+      .replace('{when}', fullTimeStr(Math.floor(m.ts / 1000)));
+    const idHtml = m.kind === 'attach'
+      ? '<a class="plink" href="' + postUrl(m.cawId) + '">' + esc(T.modAttHidden) + ' · ' +
+        esc(m.cawId.slice(0, 10)) + '…</a>'
+      : '<a class="plink" data-modhm-prof="' + esc(m.nameId) + '" data-modhm-kind="' + esc(m.kind) + '">' +
+        esc(modHiddenKindLbl(m.kind)) + ' · #' + esc(m.nameId) + '</a>';
+    return '<div class="menu-row wrow"><span class="grow">' + idHtml +
+      '<br><span class="small">' + esc(meta) + '</span></span>' +
+      '<button type="button" class="mini-btn" data-modhm-unhide="' + i + '">' + esc(T.modUnhideBtn) + '</button>' +
+      '<button type="button" class="mini-btn danger-btn" data-modhm-del="' + i + '">' + esc(T.modDeleteBtn) + '</button></div>';
+  }).join('');
+  box.querySelectorAll('[data-modhm-unhide]').forEach(b => {
+    b.onclick = () => modConfirmHiddenEntry(list[Number(b.dataset.modhmUnhide)], 'unhide');
+  });
+  box.querySelectorAll('[data-modhm-del]').forEach(b => {
+    b.onclick = () => modConfirmHiddenEntry(list[Number(b.dataset.modhmDel)], 'delete');
+  });
+  /* Resolve each profile entry's name id to its @name (the
+     row links to the profile once the name is known). */
+  box.querySelectorAll('[data-modhm-prof]').forEach(a => {
+    const id = a.dataset.modhmProf, kind = a.dataset.modhmKind;
+    resolveName(BigInt(id)).then(nm => {
+      if (!nm || !a.isConnected) return;
+      a.textContent = modHiddenKindLbl(kind) + ' · @' + nm;
+      a.setAttribute('href', profUrl(nm));
+    }).catch(() => {});
+  });
+}
+/* Unhide / delete from the Settings list: the op fields come
+   from modHiddenEntryOp (the same shapes the in-feed controls
+   sign). After success the session cache drops the entry, a
+   profile item's media cache is invalidated (and repainted
+   when its profile is on screen), and the list reloads from
+   the server — it stays the source of truth. */
+function modConfirmHiddenEntry(m, verb) {
+  if (!m) return;
+  const del = verb === 'delete';
+  const fields = modHiddenEntryOp(m, verb);
+  const kindLbl = m.kind === 'attach' ? T.modAttHidden : modHiddenKindLbl(m.kind);
+  const idLbl = m.kind === 'attach' ? String(m.cawId).slice(0, 10) + '…' : '#' + m.nameId;
+  openConfirmPanel({
+    title: del ? T.modDeleteTitle : T.modUnhideMediaTitle,
+    lines: [[kindLbl, idLbl]],
+    statusHtml: del ? '<p class="small err">' + esc(T.modDeleteWarn) + '</p>' : '',
+    signLabel: del ? T.modDeleteBtn : T.modUnhideBtn,
+    onSign: async () => {
+      try { await modOp(fields); }
+      catch (e) {
+        /* 409: the bytes moved since the list loaded — reload
+           the list so the row shows the current state. */
+        if (e.adminStatus === 409) modLoadHiddenMedia();
+        throw e;
+      }
+    },
+    afterSuccess: async () => {
+      if (m.kind === 'attach') {
+        modHiddenMedia.delete('att:' + m.cawId + ':' + m.hash);
+      } else {
+        modHiddenMedia.delete('prof:' + m.nameId + ':' + m.kind);
+        mediaCache.delete(String(m.nameId));
+        if (verb === 'unhide') applyProfileMedia(m.nameId).catch(() => {});
+      }
+      modLoadHiddenMedia();
+    },
+  });
 }
 /* Paint one rendered row for the current hidden state: admins
    keep hidden rows, dimmed and badged, with the toggle button
@@ -4323,6 +4474,7 @@ function modConfirmMedia(o) {
       if (o.verb === 'hide') modHiddenMedia.set(key, { hash: o.hash, url: o.url });
       else modHiddenMedia.delete(key);
       applyProfileMedia(o.nameId).catch(() => {});
+      modLoadHiddenMedia(); /* v39: keep an open Settings list truthful */
     },
   });
 }
@@ -4415,6 +4567,7 @@ function modConfirmAttach(o) {
         modHiddenMedia.delete(key);
         if (o.tile) o.tile.remove();
       }
+      modLoadHiddenMedia(); /* v39: keep an open Settings list truthful */
     },
   });
 }
@@ -6721,6 +6874,11 @@ function renderSettings() {
             esc(id.slice(0, 10) + '…' + id.slice(-6)) + '</a>' +
             '<button type="button" class="mini-btn" data-modunhide="' + esc(id) + '">' + esc(T.modUnhideBtn) + '</button></div>').join('')
         : '<p class="small">' + esc(T.modNoneHidden) + '</p>') +
+      /* v39: hidden media, from the server's list-hidden —
+         the persistent counterpart of the hidden-post list
+         above (any admin session can unhide from here). */
+      '<p class="small">' + esc(T.modHiddenMediaLbl) + '</p>' +
+      '<div id="modHiddenMediaBox"><p class="small">' + esc(T.loading) + '</p></div>' +
       '</div>';
   }
   /* v38: admin management (ROOT only) — the server's admin
@@ -6781,6 +6939,7 @@ function renderSettings() {
   const apBtn = $('modAppointBtn');
   if (apBtn) apBtn.onclick = () => modAppoint();
   if (pwSession && modIsRoot()) modFillAdminNames(area);
+  if (pwSession && modIsAdmin()) modLoadHiddenMedia(); /* v39: fill the hidden-media list */
   syncChrome();
 }
 async function renderNamesScreen() {
@@ -10185,6 +10344,7 @@ if (typeof module !== 'undefined' && module.exports) {
     parseAmount, hexToB64Url, postRefMarker, appendPostRef, textBytes,
     randomCawId, submitLocalAction, buildMediaMessage, MEDIA_API,
     buildAdminMessage, adminOpErrorKey, modHashFromMediaUrl, modItemVisible, modFilterItems,
+    modHiddenMediaModel, modHiddenEntryOp,
     bmList, bmHas, bmToggle, BOOKMARKS_KEY_PREFIX,
     O_TOKEN, BURN_ADDRESS,
     HAWK_TOKEN, PHOENIX_TOKEN, KET_TOKEN, WQOM_TOKEN, DEX_ROUTER,
