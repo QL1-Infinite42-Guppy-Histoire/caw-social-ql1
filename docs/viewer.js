@@ -204,7 +204,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'About',
     setAboutBody: 'CAW is a social app on QL1, a chain that runs without a central operator. Posts and follows are written to the public record — nobody can quietly rewrite them. Names are NFTs: yours stays yours.',
     setViewsNote: 'View counts are not public. Nobody — not the app, not this page — can see how many people looked at a post. Only on-chain actions (posts, likes, follows) are public.',
-    setVersionLbl: 'CAW Social — web v37',
+    setVersionLbl: 'CAW Social — web v38',
     setDangerTitle: 'Danger zone',
     setNoWallet: 'No posting wallet in this browser yet.',
     setSetupBtn: 'Set up the posting wallet',
@@ -225,6 +225,33 @@ const T_EMBEDDED = {
     mediaPick: 'Choose a file', mediaSet: 'Save', mediaClear: 'Remove',
     mediaBusy: 'Uploading…', mediaDone: 'Saved.', mediaFail: 'Could not save. Please try again later.',
     mediaNote: 'Icons, header images and audio live on a separate media server, signed by your posting wallet. If that server is down, the NFT image is shown instead and everything else keeps working.',
+    modHiddenBadge: 'Hidden',
+    modHiddenNote: 'This post was hidden by a moderator, so it is removed from every screen of this app and web viewer. It stays on the public record (on-chain).',
+    modHideBtn: 'Hide post', modUnhideBtn: 'Unhide',
+    modHideTitle: 'Hide this post?',
+    modHideNote: 'The post disappears from every screen of this app and web viewer — timelines, search, profiles — for everyone except moderators. It stays on the public record (on-chain), and other clients may still show it.',
+    modRoleNote: 'The admin’s role is to remove malicious images and other harmful content from CAW. It covers the whole front: every screen of this app and web viewer where posts and media appear — timelines, search, profiles, everywhere.',
+    modUnhideTitle: 'Show this post again?',
+    modSectionTitle: 'Moderation', modHiddenListLbl: 'Hidden posts',
+    modNoneHidden: 'No posts are hidden right now.',
+    modMediaTitle: 'Moderate this media', modHideMediaBtn: 'Hide',
+    modHideMediaTitle: 'Hide this media?', modUnhideMediaTitle: 'Show this media again?',
+    modDeleteBtn: 'Delete', modDeleteTitle: 'Delete this media?',
+    modDeleteWarn: 'Delete is permanent — the file is removed from the media server and cannot be brought back. Hide only makes it invisible, and can be undone.',
+    modAttHidden: 'Hidden image',
+    modAdminsTitle: 'Moderators', modRoleRoot: 'Root', modRoleMod: 'Moderator',
+    modAppointLbl: 'Appoint a moderator', modAppointPh: 'CAW name or 0x address',
+    modAppointBtn: 'Appoint',
+    modAppointNote: 'A moderator can hide posts and media in this app and web viewer. Appointing is for the root admin only.',
+    modRevokeBtn: 'Revoke', modRevokeTitle: 'Revoke this moderator?',
+    modErrNotAdmin: 'You are not an admin, so this was not applied.',
+    modErrRootOnly: 'Only the root admin can do this.',
+    modErrChanged: 'The media changed since this page loaded, so nothing was applied. The current version is shown now — please check it and try again.',
+    modErrNotFound: 'That item was not found on the media server.',
+    modErrSig: 'The signature was rejected. Please try again.',
+    modErrThrottle: 'Too many operations in a row — please wait a moment and try again.',
+    modErrBad: 'The request was not accepted.',
+    modErrFail: 'The operation failed. Please try again later.',
     attachLbl: 'Add images (up to 4)', attachSelected: '{n} image(s) selected',
     attachBusy: 'Attaching images…', attachDone: 'Attached {n} image(s).',
     attachFail: 'Your post is up, but the image upload failed.',
@@ -570,7 +597,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'このアプリについて',
     setAboutBody: 'CAW は QL1 上のソーシャルアプリです。QL1 は中央の運営者なしに動くチェーンで、投稿やフォローは公開記録に書かれ、誰もこっそり書き換えられません。名前は NFT で、あなたの名前はあなたのものです。',
     setViewsNote: '閲覧数は公開されません。アプリにもこのページにも、投稿が何回見られたかを知る方法はありません。公開されるのはオンチェーンの操作（投稿・いいね・フォロー）だけです。',
-    setVersionLbl: 'CAW Social — web v37',
+    setVersionLbl: 'CAW Social — web v38',
     setDangerTitle: '危険ゾーン',
     setNoWallet: 'このブラウザには、まだ投稿用ウォレットがありません。',
     setSetupBtn: '投稿用ウォレットを作る',
@@ -591,6 +618,33 @@ const T_EMBEDDED = {
     mediaPick: 'ファイルを選ぶ', mediaSet: '保存', mediaClear: '削除',
     mediaBusy: 'アップロード中…', mediaDone: '保存しました。', mediaFail: '保存できませんでした。時間をおいて再度お試しください。',
     mediaNote: 'アイコン・ヘッダー・音声は専用のメディアサーバーに置かれ、投稿用ウォレットの署名で保存されます。サーバーが落ちている間はNFTの画像が表示され、他の機能はそのまま使えます。',
+    modHiddenBadge: '非表示',
+    modHiddenNote: 'この投稿はモデレーターによって非表示にされ、このアプリとWeb版のすべての画面から取り除かれています。公開記録（オンチェーン）には残っています。',
+    modHideBtn: '投稿を隠す', modUnhideBtn: '再表示',
+    modHideTitle: 'この投稿を隠しますか？',
+    modHideNote: 'このアプリとWeb版のすべての画面（タイムライン・検索・プロフィールなど）で、モデレーター以外には見えなくなります。公開記録（オンチェーン）には残り、他のクライアントでは表示されることがあります。',
+    modRoleNote: '管理者の役割は、悪意のある画像などの有害な内容をCAWから削除することです。範囲はフロント全体——タイムライン・検索・プロフィールなど、このアプリとWeb版で投稿やメディアが表示されるすべての画面です。',
+    modUnhideTitle: 'この投稿を再表示しますか？',
+    modSectionTitle: 'モデレーション', modHiddenListLbl: '非表示の投稿',
+    modNoneHidden: '現在、非表示の投稿はありません。',
+    modMediaTitle: 'このメディアの管理', modHideMediaBtn: '隠す',
+    modHideMediaTitle: 'このメディアを隠しますか？', modUnhideMediaTitle: 'このメディアを再表示しますか？',
+    modDeleteBtn: '削除', modDeleteTitle: 'このメディアを削除しますか？',
+    modDeleteWarn: '削除は取り消せません。ファイルはメディアサーバーから完全に削除されます。非表示は見えなくするだけで、あとから戻せます。',
+    modAttHidden: '非表示の画像',
+    modAdminsTitle: 'モデレーター', modRoleRoot: 'ルート', modRoleMod: 'モデレーター',
+    modAppointLbl: 'モデレーターを任命', modAppointPh: 'CAW名または0xアドレス',
+    modAppointBtn: '任命',
+    modAppointNote: 'モデレーターはこのアプリとWeb版で投稿やメディアを非表示にできます。任命できるのはルート管理者だけです。',
+    modRevokeBtn: '解除', modRevokeTitle: 'このモデレーターを解除しますか？',
+    modErrNotAdmin: '管理者ではないため、適用されませんでした。',
+    modErrRootOnly: 'これはルート管理者だけができます。',
+    modErrChanged: 'このページを開いてからメディアが変更されたため、適用されませんでした。現在の状態を表示しています。確認してからもう一度お試しください。',
+    modErrNotFound: 'その項目はメディアサーバーに見つかりませんでした。',
+    modErrSig: '署名が拒否されました。もう一度お試しください。',
+    modErrThrottle: '操作が続いています。少し待ってからもう一度お試しください。',
+    modErrBad: 'リクエストが受け付けられませんでした。',
+    modErrFail: '操作に失敗しました。時間をおいてもう一度お試しください。',
     attachLbl: '画像を追加（最大4枚）', attachSelected: '{n}枚選択中',
     attachBusy: '画像を添付しています…', attachDone: '画像を{n}枚添付しました。',
     attachFail: '投稿は完了しましたが、画像の添付に失敗しました。',
@@ -3759,6 +3813,53 @@ function buildMediaMessage(o) {
   return ['CAW Media v1', 'action: ' + o.action, 'name: ' + o.nameId, 'sha256: ' + o.sha256,
     'caw: ' + (o.caw || '-'), 'tx: ' + (o.tx || '-'), 'ts: ' + o.ts].join('\n');
 }
+/* ---------- v38: moderation (the media server's admin API) ----------
+   The admin message format extends the media format with a
+   target: line before ts: — the server reproduces it byte for
+   byte, so the canonicalisation here IS the contract: name is
+   the decimal id or -, sha256 the lowercase hash (the empty
+   hash when the action pins no media), caw and target the
+   lowercase hex or -. Clients sign the lowercase forms. */
+function buildAdminMessage(o) {
+  return ['CAW Media v1', 'action: ' + o.action,
+    'name: ' + (o.nameId != null && o.nameId !== '' ? String(o.nameId) : '-'),
+    'sha256: ' + (o.sha256 ? String(o.sha256).toLowerCase() : MEDIA_EMPTY_SHA256),
+    'caw: ' + (o.cawId ? String(o.cawId).toLowerCase() : '-'),
+    'tx: -',
+    'target: ' + (o.target ? String(o.target).toLowerCase() : '-'),
+    'ts: ' + o.ts].join('\n');
+}
+/* Map an admin-op rejection to its string-table key. 403 splits
+   by the server's message (not an admin vs root only); 409 is
+   the stale-hash race and gets its own honest wording. */
+function adminOpErrorKey(status, msg) {
+  const m = String(msg || '');
+  if (status === 403) return m.includes('root only') ? 'modErrRootOnly' : 'modErrNotAdmin';
+  if (status === 409) return 'modErrChanged';
+  if (status === 404) return 'modErrNotFound';
+  if (status === 401) return 'modErrSig';
+  if (status === 429) return 'modErrThrottle';
+  if (status === 400) return 'modErrBad';
+  return 'modErrFail';
+}
+/* Media blobs are content-addressed: /media/<sha256>.<ext>.
+   The hash an admin op must pin is read back out of the URL
+   the public reads already hand the client. */
+function modHashFromMediaUrl(url) {
+  const m = /\/media\/([0-9a-f]{64})\.[a-z0-9]+/.exec(String(url || ''));
+  return m ? m[1] : null;
+}
+/* The one visibility rule for posts: a hidden post is dropped
+   for everyone except admins, who keep seeing it (marked). */
+function modItemVisible(hidden, isAdmin) { return !hidden || !!isAdmin; }
+/* The list choke point: feed-shaped items (type 0 posts and
+   type 2 Recaws carry the post's cawId; follows/unfollows are
+   never posts) filtered against the lowercase hidden set. */
+function modFilterItems(items, hidden, isAdmin) {
+  if (!items || !hidden || !hidden.size || isAdmin) return items || [];
+  return items.filter(a => !(a && (a.type === 0 || a.type === 2) &&
+    a.cawId && hidden.has(String(a.cawId).toLowerCase())));
+}
 /* ================= browser UI (skipped under Node) ================= */
 if (typeof document !== 'undefined' && typeof window !== 'undefined') {
 
@@ -3776,6 +3877,7 @@ const IC_STAR_FILL = svgIcFill('<polygon points="12 2 15.09 8.26 22 9.27 17 14.1
 const IC_BOOKMARK = svgIc('<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>');
 const IC_BOOKMARK_FILL = svgIcFill('<path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>');
 const IC_SHARE = svgIc('<path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/>');
+const IC_EYE_OFF = svgIc('<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>');
 /* Tip coin (the app's TipGlyph): a gold disc with a white "C"
    arc. Drawn as one SVG so it survives the icon sizing here. */
 const IC_COIN = '<svg class="ic" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#FFAC33"/><path d="M15.6 8.7A5.2 5.2 0 1 0 15.6 15.3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>';
@@ -3814,6 +3916,7 @@ async function fillOriginalFrame(el, cawId) {
   try {
     const post = await findPostByCawId(cawId, 12);
     if (!post) { el.innerHTML = '<span class="small">' + T.originalMissing + '</span>'; return; }
+    if (!modVisibleItem(post)) { el.innerHTML = '<span class="small">' + esc(T.modHiddenNote) + '</span>'; return; }
     const [name, img] = await Promise.all([resolveName(post.senderId), avatarFor(post.senderId)]);
     const who = name ? '@' + name : T.unknownName + post.senderId;
     el.innerHTML =
@@ -3922,7 +4025,7 @@ async function hydrateAttachmentsIn(root) {
   if (!root || !root.querySelectorAll) return;
   const els = [...root.querySelectorAll('[data-cawid]')].filter(el => !el.querySelector('.post-media'));
   const ids = [...new Set(els.map(el => el.dataset.cawid.toLowerCase()))].slice(0, 50);
-  if (!ids.length) return;
+  if (!ids.length) { modDecorateAttach(root); return; }
   let j = null;
   try {
     const res = await fetchTimeout(MEDIA_API + '/v1/posts?caw=' + ids.join(','), null, 15000);
@@ -3938,6 +4041,7 @@ async function hydrateAttachmentsIn(root) {
     const foot = el.querySelector('.pfoot');
     if (foot) el.insertBefore(div, foot); else el.appendChild(div);
   }
+  modDecorateAttach(root); /* v38: admin per-image controls + session-hidden tiles */
 }
 function mediaSettingRow(kind, label, has, accept) {
   return '<div class="mset-row"><span class="mset-lbl">' + esc(label) + '</span>' +
@@ -3979,6 +4083,8 @@ async function applyProfileMedia(id) {
   const m = await mediaFor(id);
   const head = $('profileHead');
   if (!head || !profileState || String(profileState.id) !== String(id)) return;
+  const prevMedia = document.getElementById('profMedia');
+  if (prevMedia) prevMedia.remove(); /* v38: moderation ops re-run this; never stack slots */
   if (m && m.header && m.header.url) {
     const band = head.querySelector('.pband');
     if (band) band.innerHTML = '<img class="pband-img" src="' + esc(m.header.url) + '" alt="">';
@@ -4002,6 +4108,39 @@ async function applyProfileMedia(id) {
       mediaSettingRow('audio', T.mediaAudioLbl, !!(m && m.audio), 'audio/mpeg,audio/mp4,audio/ogg') +
       '<p class="small">' + esc(T.mediaNote) + '</p><p id="msetStatus"></p></div>';
   }
+  /* v38: moderation rows for this profile's media (admins
+     only, any profile). A visible item pins its current hash
+     from its media URL; an item this session hid is absent
+     from the server's answer, so it stays listed from the
+     session map with an Unhide control. */
+  modMediaRows = [];
+  if (modIsAdmin()) {
+    const rows = [];
+    for (const kind of ['icon', 'header', 'audio']) {
+      const item = m && m[kind];
+      const key = 'prof:' + String(id) + ':' + kind;
+      const sess = modHiddenMedia.get(key);
+      const lbl = kind === 'icon' ? T.mediaIcon : kind === 'header' ? T.mediaHeader : T.mediaAudioLbl;
+      if (item && item.url) {
+        if (sess) modHiddenMedia.delete(key); /* the server shows it again — trust that */
+        const hash = modHashFromMediaUrl(item.url);
+        if (hash) rows.push({ kind, lbl, hash, url: item.url, hidden: false, nameId: String(id) });
+      } else if (sess) {
+        rows.push({ kind, lbl, hash: sess.hash, url: sess.url, hidden: true, nameId: String(id) });
+      }
+    }
+    if (rows.length) {
+      modMediaRows = rows;
+      html += '<div class="mod-media-box"><h4>' + esc(T.modMediaTitle) + '</h4>' +
+        rows.map((r, i) => '<div class="mset-row"><span class="mset-lbl">' + esc(r.lbl) +
+          (r.hidden ? ' · ' + esc(T.modHiddenBadge) : '') + '</span>' +
+          (r.hidden
+            ? '<button type="button" class="ghost" data-modmedia="' + i + '" data-verb="unhide">' + esc(T.modUnhideBtn) + '</button>'
+            : '<button type="button" class="ghost" data-modmedia="' + i + '" data-verb="hide">' + esc(T.modHideMediaBtn) + '</button>') +
+          '<button type="button" class="ghost" data-modmedia="' + i + '" data-verb="delete">' + esc(T.modDeleteBtn) + '</button></div>').join('') +
+        '</div>';
+    }
+  }
   if (!html) return;
   const slot = document.createElement('div');
   slot.id = 'profMedia';
@@ -4019,7 +4158,309 @@ async function applyProfileMedia(id) {
     paBtn.onclick = () => { if (au.paused) { const p = au.play(); if (p && p.catch) p.catch(() => {}); } else { au.pause(); } };
   }
   if (own) wireMediaSettings();
+  modWireMedia(slot);
 }
+
+/* ================= v38: moderation (admin UI) =================
+   The media server keeps a small admin list (one root, plus the
+   moderators it appoints). When the posting wallet's address is
+   on it, this viewer grows moderation tools: posts can be
+   hidden (display-level only — the post stays on-chain),
+   profile media and post attachments can be hidden or deleted,
+   and the root can appoint/revoke moderators. Every op is an
+   EIP-191 message signed by the posting wallet (buildAdminMessage
+   + pwSignMediaMsg, the media signing path) and authorised by
+   the server against its admin list — never against name
+   ownership. Non-admins see none of this UI; for them the only
+   change is that hidden posts and media are simply absent.
+   The hidden-post list is polled like the other background
+   scans (boot, wallet changes, a 60 s tick). */
+let modAdmins = [];          // [{address, role}] from GET /v1/admins
+let modRole = null;          // 'root' | 'mod' | null for THIS wallet
+let modHidden = new Set();   // lowercase cawIds from GET /v1/hidden-posts
+let modRefreshAt = 0;
+const modHiddenMedia = new Map(); // session-only: 'prof:<id>:<kind>' | 'att:<caw>:<hash>' -> {hash, url}
+function modIsAdmin() { return !!modRole; }
+function modIsRoot() { return modRole === 'root'; }
+function modPostHidden(cawId) { return !!cawId && modHidden.has(String(cawId).toLowerCase()); }
+function modVisibleItem(a) { return modItemVisible(modPostHidden(a && a.cawId), modIsAdmin()); }
+async function modRefresh() {
+  const prevRole = modRole;
+  try {
+    const [ra, rh] = await Promise.all([
+      fetchTimeout(MEDIA_API + '/v1/admins', null, 15000).catch(() => null),
+      fetchTimeout(MEDIA_API + '/v1/hidden-posts', null, 15000).catch(() => null),
+    ]);
+    if (ra && ra.ok) { const j = await ra.json().catch(() => null); if (j && Array.isArray(j.admins)) modAdmins = j.admins; }
+    if (rh && rh.ok) { const j = await rh.json().catch(() => null); if (j && Array.isArray(j.posts)) modHidden = new Set(j.posts.map(x => String(x).toLowerCase())); }
+  } catch (e) { /* a failed poll changes nothing on screen */ }
+  const me = pwSession && pwSession.address ? pwSession.address.toLowerCase() : null;
+  const mine = me ? modAdmins.find(x => String(x.address).toLowerCase() === me) : null;
+  modRole = mine ? mine.role : null;
+  modRefreshAt = Date.now();
+  /* A role appearing or vanishing changes what every row should
+     show (marks, buttons, sections) — repaint the current view
+     once, the way a wallet change does. */
+  if (modRole !== prevRole) {
+    if (typeof settingsQuery !== 'undefined' && settingsQuery) renderSettings();
+    else { try { refreshViewsForWallet(); } catch (e) {} }
+  }
+}
+function modRefreshThrottled() {
+  if (Date.now() - modRefreshAt < 20000) return;
+  modRefresh().catch(() => {});
+}
+setInterval(() => { modRefresh().catch(() => {}); }, 60000);
+/* One signed admin op. The body carries only the fields the
+   action uses, plus action/ts/sig; the message is the canonical
+   buildAdminMessage form. Rejections throw with .adminKey set
+   (confirmErrHtml renders it) and .adminStatus for the 409
+   refresh path. */
+async function modOp(fields) {
+  if (!pwSession) throw new Error('locked');
+  const ts = Math.floor(Date.now() / 1000);
+  const sig = await pwSignMediaMsg(buildAdminMessage({ ...fields, ts }));
+  const body = { action: fields.action, ts, sig };
+  if (fields.nameId != null && fields.nameId !== '') body.nameId = String(fields.nameId);
+  if (fields.sha256) body.sha256 = String(fields.sha256).toLowerCase();
+  if (fields.cawId) body.cawId = String(fields.cawId).toLowerCase();
+  if (fields.target) body.target = String(fields.target).toLowerCase();
+  const res = await fetchTimeout(MEDIA_API + '/v1/admin/op', {
+    method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body),
+  }, 15000);
+  const j = await res.json().catch(() => null);
+  if (!res.ok) {
+    const msg = j && (j.error || j.message) ? (j.error || j.message) : '';
+    throw Object.assign(new Error('admin-op-' + res.status),
+      { adminKey: adminOpErrorKey(res.status, msg), adminStatus: res.status });
+  }
+  return j;
+}
+/* Paint one rendered row for the current hidden state: admins
+   keep hidden rows, dimmed and badged, with the toggle button
+   reading Unhide; everyone else never has the row at all (the
+   list builders filtered it). */
+function modPaintRow(div, cawId) {
+  if (!div || !cawId) return;
+  const key = String(cawId).toLowerCase();
+  const hidden = modPostHidden(key);
+  div.classList.toggle('mod-hidden', hidden && modIsAdmin());
+  const body = div.querySelector('.pbody');
+  let badge = [...div.querySelectorAll('.mod-badge')].find(b => b.dataset.modfor === key && b.closest('.post') === div);
+  if (hidden && modIsAdmin()) {
+    if (!badge && body) {
+      badge = document.createElement('span');
+      badge.className = 'mod-badge';
+      badge.dataset.modfor = key;
+      badge.textContent = T.modHiddenBadge;
+      body.insertBefore(badge, body.firstChild);
+    }
+  } else if (badge) badge.remove();
+  const btn = [...div.querySelectorAll('[data-modact]')].find(b => b.closest('.post') === div);
+  if (btn) {
+    btn.dataset.modact = hidden ? 'unhide' : 'hide';
+    const lbl = btn.querySelector('.xcount');
+    const txt = hidden ? T.modUnhideBtn : T.modHideBtn;
+    if (lbl) lbl.textContent = txt; else btn.textContent = txt;
+    btn.setAttribute('aria-label', txt);
+  }
+}
+function modRepaintPosts(cawId) {
+  document.querySelectorAll('[data-cawid="' + String(cawId).toLowerCase() + '"]')
+    .forEach(el => modPaintRow(el, cawId));
+}
+function modTogglePost(a) {
+  if (!modIsAdmin() || !a || !a.cawId) return;
+  const key = String(a.cawId).toLowerCase();
+  const hidden = modPostHidden(key);
+  openConfirmPanel({
+    title: hidden ? T.modUnhideTitle : T.modHideTitle,
+    lines: [[T.modHiddenListLbl, key.slice(0, 10) + '…' + key.slice(-6)]],
+    statusHtml: hidden ? '' : '<p class="small">' + esc(T.modHideNote) + '</p>',
+    signLabel: hidden ? T.modUnhideBtn : T.modHideBtn,
+    onSign: async () => { await modOp({ action: hidden ? 'unhide-post' : 'hide-post', cawId: key }); },
+    afterSuccess: async () => {
+      if (hidden) modHidden.delete(key); else modHidden.add(key);
+      modRepaintPosts(key);
+      if (typeof settingsQuery !== 'undefined' && settingsQuery) renderSettings();
+      modRefresh().catch(() => {});
+    },
+  });
+}
+/* Profile-media moderation: the rows applyProfileMedia built
+   (visible items pin their current hash; session-hidden items
+   stay listed so the hide can be undone from here). */
+let modMediaRows = [];
+function modWireMedia(slot) {
+  if (!slot) return;
+  slot.querySelectorAll('[data-modmedia]').forEach(b => {
+    b.onclick = () => {
+      const row = modMediaRows[Number(b.dataset.modmedia)];
+      if (row) modConfirmMedia({ ...row, verb: b.dataset.verb });
+    };
+  });
+}
+function modConfirmMedia(o) {
+  const del = o.verb === 'delete';
+  const key = 'prof:' + o.nameId + ':' + o.kind;
+  const kindLbl = o.kind === 'icon' ? T.mediaIcon : o.kind === 'header' ? T.mediaHeader : T.mediaAudioLbl;
+  openConfirmPanel({
+    title: del ? T.modDeleteTitle : o.verb === 'hide' ? T.modHideMediaTitle : T.modUnhideMediaTitle,
+    lines: [[kindLbl, '#' + o.nameId]],
+    statusHtml: del ? '<p class="small err">' + esc(T.modDeleteWarn) + '</p>' : '',
+    signLabel: del ? T.modDeleteBtn : o.verb === 'hide' ? T.modHideMediaBtn : T.modUnhideBtn,
+    onSign: async () => {
+      try { await modOp({ action: o.verb + '-' + o.kind, nameId: o.nameId, sha256: o.hash }); }
+      catch (e) {
+        /* 409: the bytes moved since this page loaded — show
+           the current state instead of the stale one. */
+        if (e.adminStatus === 409) { mediaCache.delete(String(o.nameId)); applyProfileMedia(o.nameId).catch(() => {}); }
+        throw e;
+      }
+    },
+    afterSuccess: async () => {
+      mediaCache.delete(String(o.nameId));
+      if (o.verb === 'hide') modHiddenMedia.set(key, { hash: o.hash, url: o.url });
+      else modHiddenMedia.delete(key);
+      applyProfileMedia(o.nameId).catch(() => {});
+    },
+  });
+}
+/* Attachment moderation: per-image controls overlaid by
+   modDecorateAttach (called from hydrateAttachmentsIn). The
+   server omits hidden attachments from its lists, so a tile
+   this session hid is kept on screen for the admin (dimmed,
+   controls swapped to Unhide) and, after a re-render, returns
+   as a placeholder tile from the session map. */
+function modSwapAttachCtl(tile, cawId, hash, url, hidden) {
+  const ctl = tile.querySelector('.mod-att-ctl');
+  if (!ctl) return;
+  ctl.innerHTML = (hidden
+    ? '<button type="button" data-attop="unhide">' + esc(T.modUnhideBtn) + '</button>'
+    : '<button type="button" data-attop="hide">' + esc(T.modHideMediaBtn) + '</button>') +
+    '<button type="button" data-attop="delete">' + esc(T.modDeleteBtn) + '</button>';
+  ctl.querySelectorAll('button').forEach(b => {
+    b.onclick = ev => { ev.preventDefault(); ev.stopPropagation(); modConfirmAttach({ verb: b.dataset.attop, cawId, hash, url, tile }); };
+  });
+}
+function modDecorateAttach(root) {
+  if (!modIsAdmin() || !root || !root.querySelectorAll) return;
+  root.querySelectorAll('[data-cawid]').forEach(row => {
+    const cawId = row.dataset.cawid;
+    let pm = row.querySelector('.post-media');
+    for (const [key, entry] of modHiddenMedia) {
+      if (!key.startsWith('att:' + cawId + ':')) continue;
+      if (pm && pm.querySelector('[data-modph="' + entry.hash + '"]')) continue;
+      if (pm && pm.querySelector('a[href*="' + entry.hash + '"]')) continue;
+      if (!pm) {
+        pm = document.createElement('div');
+        pm.className = 'post-media n1';
+        const foot = row.querySelector('.pfoot');
+        if (foot) row.insertBefore(pm, foot); else row.appendChild(pm);
+      }
+      const ph = document.createElement('span');
+      ph.className = 'mod-att-ph';
+      ph.dataset.modph = entry.hash;
+      ph.innerHTML = '<span class="mod-att-ph-lbl">' + esc(T.modAttHidden) + '</span><span class="mod-att-ctl"></span>';
+      pm.appendChild(ph);
+      modSwapAttachCtl(ph, cawId, entry.hash, entry.url, true);
+    }
+    if (!pm) return;
+    pm.querySelectorAll('a').forEach(aEl => {
+      if (aEl.dataset.modctl) return;
+      const hash = modHashFromMediaUrl(aEl.getAttribute('href') || '');
+      if (!hash) return;
+      aEl.dataset.modctl = '1';
+      aEl.classList.add('mod-att');
+      const ctl = document.createElement('span');
+      ctl.className = 'mod-att-ctl';
+      aEl.appendChild(ctl);
+      const sessHidden = modHiddenMedia.has('att:' + cawId + ':' + hash);
+      if (sessHidden) aEl.classList.add('mod-att-hidden');
+      modSwapAttachCtl(aEl, cawId, hash, aEl.href, sessHidden);
+    });
+  });
+}
+function modConfirmAttach(o) {
+  const del = o.verb === 'delete';
+  const key = 'att:' + String(o.cawId).toLowerCase() + ':' + o.hash;
+  openConfirmPanel({
+    title: del ? T.modDeleteTitle : o.verb === 'hide' ? T.modHideMediaTitle : T.modUnhideMediaTitle,
+    lines: [[T.modAttHidden, String(o.cawId).slice(0, 10) + '…']],
+    statusHtml: del ? '<p class="small err">' + esc(T.modDeleteWarn) + '</p>' : '',
+    signLabel: del ? T.modDeleteBtn : o.verb === 'hide' ? T.modHideMediaBtn : T.modUnhideBtn,
+    onSign: async () => {
+      try { await modOp({ action: o.verb + '-attach', cawId: o.cawId, sha256: o.hash }); }
+      catch (e) {
+        if (e.adminStatus === 409 && o.tile) {
+          const row = o.tile.closest('[data-cawid]');
+          const pm = row && row.querySelector('.post-media');
+          if (pm) { pm.remove(); hydrateAttachmentsIn(row).catch(() => {}); }
+        }
+        throw e;
+      }
+    },
+    afterSuccess: async () => {
+      if (o.verb === 'hide') {
+        modHiddenMedia.set(key, { hash: o.hash, url: o.url });
+        if (o.tile) { o.tile.classList.add('mod-att-hidden'); modSwapAttachCtl(o.tile, o.cawId, o.hash, o.url, true); }
+      } else if (o.verb === 'unhide') {
+        modHiddenMedia.delete(key);
+        if (o.tile && o.tile.dataset.modph) {
+          const row = o.tile.closest('[data-cawid]');
+          o.tile.remove();
+          if (row) { const pm = row.querySelector('.post-media'); if (pm) pm.remove(); hydrateAttachmentsIn(row).catch(() => {}); }
+        } else if (o.tile) { o.tile.classList.remove('mod-att-hidden'); modSwapAttachCtl(o.tile, o.cawId, o.hash, o.url, false); }
+      } else if (o.verb === 'delete') {
+        modHiddenMedia.delete(key);
+        if (o.tile) o.tile.remove();
+      }
+    },
+  });
+}
+/* Settings: admin management (root only). */
+function modFillAdminNames(area) {
+  area.querySelectorAll('[data-admin-name]').forEach(span => {
+    const addr = span.dataset.adminName;
+    tokensOf(addr).then(toks => {
+      if (toks && toks.length) span.textContent = '· @' + toks[0].username;
+    }).catch(() => {});
+  });
+}
+function modConfirmRevoke(address) {
+  openConfirmPanel({
+    title: T.modRevokeTitle,
+    lines: [[T.modAdminsTitle, shortAddr(address)]],
+    signLabel: T.modRevokeBtn,
+    onSign: async () => { await modOp({ action: 'revoke-admin', target: address }); },
+    afterSuccess: async () => { await modRefresh(); renderSettings(); },
+  });
+}
+async function modAppoint() {
+  const inp = $('modAppointInput'), st = $('modAppointStatus');
+  if (!inp) return;
+  const v = inp.value.trim();
+  if (!v) return;
+  let fields = null;
+  if (/^0x[0-9a-fA-F]{40}$/.test(v)) {
+    fields = { action: 'appoint-admin', target: v };
+  } else {
+    const res = await resolveNameId(v.replace(/^@/, '')).catch(() => null);
+    if (!res || res.status !== 'ok') {
+      if (st) st.innerHTML = '<span class="err">' + esc(T.modErrNotFound) + '</span>';
+      return;
+    }
+    fields = { action: 'appoint-admin', nameId: String(res.id) };
+  }
+  openConfirmPanel({
+    title: T.modAppointLbl,
+    lines: [[T.modAppointLbl, v]],
+    signLabel: T.modAppointBtn,
+    onSign: async () => { await modOp(fields); },
+    afterSuccess: async () => { await modRefresh(); renderSettings(); },
+  });
+}
+
 async function shortenViaCawl(url) {
   try {
     const res = await fetch(CAWL_BASE + '/api/shorten', {
@@ -4158,6 +4599,13 @@ async function postCard(a, opts) {
     '<span class="xspacer"></span>' +
     '<button type="button" class="xact x-bm' + (saved ? ' on' : '') + '" data-act="bookmark" aria-label="' + esc(T.bmAdd) + '"><span class="icring">' + (saved ? IC_BOOKMARK_FILL : IC_BOOKMARK) + '</span></button>' +
     '<button type="button" class="xact x-share" data-act="share" aria-label="' + esc(T.shareLabel) + '"><span class="icring">' + IC_SHARE + '</span></button>' +
+    /* v38: the Hide/Unhide post control — rendered only when
+       the media server's admin list names this wallet (mod or
+       root). It is a moderation control, not a post action, so
+       it also appears on bookmark rows (noActions). */
+    (!opts.nested && modIsAdmin()
+      ? '<button type="button" class="xact x-mod" data-modact="' + (modPostHidden(a.cawId) ? 'unhide' : 'hide') + '" aria-label="' + esc(modPostHidden(a.cawId) ? T.modUnhideBtn : T.modHideBtn) + '"><span class="icring">' + IC_EYE_OFF + '</span><span class="xcount">' + esc(modPostHidden(a.cawId) ? T.modUnhideBtn : T.modHideBtn) + '</span></button>'
+      : '') +
     '</div>';
   /* Nested rows (the original inside a Recaw) render NO
      record link — the outer row's one link is the row's
@@ -4194,6 +4642,7 @@ async function postCard(a, opts) {
       rctx.innerHTML = '<a class="plink" href="' + postUrl(parent.cawId) + '">' + esc(T.replyingTo.replace('{name}', pn)) + '</a>';
     })();
   }
+  modPaintRow(div, a.cawId); /* v38: dim + badge when this post is hidden (admins) */
   wireRowActions(div, a);
   if (typeof paintSuperRow === 'function') paintSuperRow(div, a);
   return div;
@@ -4228,11 +4677,27 @@ async function recawCard(a) {
     recordLineHtml(a.hash) +
     '</div>';
   div.innerHTML = html;
+  /* v38: a Recaw is a post too — admins get its Hide/Unhide
+     control under the record link, and the row paints dimmed
+     + badged while it is hidden. */
+  if (modIsAdmin()) {
+    const mr = document.createElement('div');
+    mr.className = 'mod-row';
+    mr.innerHTML = '<button type="button" class="ghost" data-modact="' + (modPostHidden(a.cawId) ? 'unhide' : 'hide') + '">' +
+      esc(modPostHidden(a.cawId) ? T.modUnhideBtn : T.modHideBtn) + '</button>';
+    mr.querySelector('button').onclick = () => modTogglePost(a);
+    div.querySelector('.pbody').appendChild(mr);
+  }
+  modPaintRow(div, a.cawId);
   const slot = div.querySelector('.frameslot');
   (async () => {
     const orig = await findPostByCawId(a.cawId, 12).catch(() => null);
     if (!orig) {
       slot.innerHTML = '<div class="quotebox"><span class="small">' + T.originalMissing + '</span></div>';
+      return;
+    }
+    if (!modVisibleItem(orig)) {
+      slot.innerHTML = '<div class="quotebox"><span class="small">' + esc(T.modHiddenNote) + '</span></div>';
       return;
     }
     slot.appendChild(await postCard(orig, { nested: true }));
@@ -4324,7 +4789,7 @@ async function loadTimeline(append) {
       const cached = feedCacheLoad();
       if (cached.length) {
         box.innerHTML = '';
-        const rows = await Promise.all(cached.map(a => rowFor(a).catch(() => null)));
+        const rows = await Promise.all(modFilterItems(cached, modHidden, modIsAdmin()).map(a => rowFor(a).catch(() => null)));
         for (const row of rows) if (row) box.appendChild(row);
         if (cached[0]) tlTopItem = cached[0];
         if (rows.some(r => r)) hydrateAttachmentsIn(box).catch(() => {});
@@ -4344,8 +4809,10 @@ async function loadTimeline(append) {
       reconcileOwnPosts(page.items); /* v32: scanned copies graduate my pending posts */
       if (!append && tlTopItem === null && page.items.length) tlTopItem = page.items[0];
       /* Build the whole page's rows in parallel, append in order —
-         never await one row at a time (v9 speed rule). */
-      const rows = await Promise.all(page.items.map(a => rowFor(a).catch(() => null)));
+         never await one row at a time (v9 speed rule). v38:
+         hidden posts are filtered out here (non-admins) at the
+         one choke point every list shares. */
+      const rows = await Promise.all(modFilterItems(page.items, modHidden, modIsAdmin()).map(a => rowFor(a).catch(() => null)));
       if (!cleared) { box.innerHTML = ''; cleared = true; }
       for (const row of rows) if (row) { box.appendChild(row); rendered++; }
       hydrateAttachmentsIn(box).catch(() => {});
@@ -4531,7 +4998,7 @@ async function loadFollowing(append) {
       if (!folCursor) folDone = true;
       pages++;
       ntTapItems(page.items); /* a real scan feeds the notifications dot, like Latest's */
-      const mine = page.items.filter(a => folFeedItem(a, folSet));
+      const mine = modFilterItems(page.items.filter(a => folFeedItem(a, folSet)), modHidden, modIsAdmin());
       const rows = await Promise.all(mine.map(a => rowFor(a).catch(() => null)));
       if (!cleared) { box.innerHTML = ''; cleared = true; }
       for (const row of rows) if (row) { box.appendChild(row); rendered++; }
@@ -4634,6 +5101,17 @@ async function loadPostPage(cawId) {
     $('sharedByBlock').style.display = 'none';
     return;
   }
+  /* v38: a direct link to a hidden post shows the honest
+     hidden state (non-admins) instead of the post. Admins fall
+     through and see it, marked, with its Unhide control. */
+  if (!modVisibleItem(post)) {
+    main.innerHTML = '<div class="empty-card">' + esc(T.modHiddenNote) + '</div>';
+    $('threadBlock').style.display = 'none';
+    $('quotesBlock').style.display = 'none';
+    $('likedByBlock').style.display = 'none';
+    $('sharedByBlock').style.display = 'none';
+    return;
+  }
   main.innerHTML = '';
   main.appendChild(await postCard(post, { detail: true }));
   /* Attachments hydrate NOW, not only after the context scan:
@@ -4644,6 +5122,10 @@ async function loadPostPage(cawId) {
   note.textContent = T.stillLooking;
   let ctx = null;
   try { ctx = await collectPostContext(post, 80); } catch (e) {}
+  if (ctx) { /* v38: hidden replies/quotes leave the thread for non-admins */
+    ctx.replies = modFilterItems(ctx.replies, modHidden, modIsAdmin());
+    ctx.quotes = modFilterItems(ctx.quotes, modHidden, modIsAdmin());
+  }
   let likes = null;
   try { likes = await likesOf(post); } catch (e) {}
   if (ctx) {
@@ -4743,7 +5225,11 @@ async function loadProfile() {
     const d = new Date(mintTs);
     chips.push(T.nameCreated + ': ' + d.toLocaleDateString(CAW_LOCALES[LANG], { year: 'numeric', month: 'numeric', day: 'numeric' }));
   }
-  if (owner) chips.push(T.ownerLbl + ': ' + shortAddr(owner));
+  /* v38 (user, 2026-11-19): no account address on profiles —
+     neither your own nor anyone else's. The owner read above
+     stays (follow state and checks use it internally); the
+     address itself is only ever shown to its owner, in
+     Settings / the wallet view. */
   /* v13: the app's profile composition — banner, the avatar
      overlapping it, the follow pill on the same row (rendered by
      renderProfFollow into #profFollowArea), the big name, the
@@ -4833,7 +5319,7 @@ async function loadProfilePosts() {
       if (!profCursor) profDone = true;
       pages++;
       ntTapItems(page.items); /* a real scan: notifications + my-actions (v32) */
-      const mine = page.items.filter(a => a.senderId === profileState.id && a.type !== 1);
+      const mine = modFilterItems(page.items.filter(a => a.senderId === profileState.id && a.type !== 1), modHidden, modIsAdmin());
       const built = await Promise.all(mine.map(async a => {
         const row = await rowFor(a).catch(() => null);
         return row ? { bucket: a.type === 0 ? 'posts' : 'recaws', row } : null;
@@ -4973,7 +5459,7 @@ async function runSearch(append) {
       const hits = [];
       for (const a of page.items) {
         if (a.type === 0) searchState.scanned++;
-        if (postMatchesQuery(a, qLower)) hits.push(a);
+        if (postMatchesQuery(a, qLower) && modVisibleItem(a)) hits.push(a);
       }
       if (hits.length) {
         const rows = await Promise.all(hits.map(a => postCard(a, { highlight: searchState.q }).catch(() => null)));
@@ -5438,6 +5924,7 @@ setInterval(() => {
 /* After the wallet state changes, the visible view re-renders so
    action buttons appear/disappear with the lock state. */
 function refreshViewsForWallet() {
+  if (typeof modRefreshThrottled === 'function') modRefreshThrottled(); /* v38: wallet changes can change the admin role */
   if (typeof postQuery !== 'undefined' && postQuery) loadPostPage(postQuery);
   else if (typeof profileQuery !== 'undefined' && profileQuery) loadProfile();
   else if (typeof bmQuery !== 'undefined' && bmQuery) loadBookmarksView();
@@ -6223,6 +6710,37 @@ function renderSettings() {
   if (pwSession) {
     h += '<div class="pw-card"><div class="row"><button type="button" class="ghost" id="setLockNow">' + esc(T.setLockNow) + '</button></div></div>';
   }
+  /* v38: moderation (admins only) — the hidden-post list with
+     per-post Unhide, so a hide is reversible from here too. */
+  if (pwSession && modIsAdmin()) {
+    h += '<div class="pw-card"><h3 class="detail-h">' + esc(T.modSectionTitle) + '</h3>' +
+      '<p class="small">' + esc(T.modRoleNote) + '</p>' +
+      '<p class="small">' + esc(T.modHiddenListLbl) + '</p>' +
+      (modHidden.size
+        ? [...modHidden].map(id => '<div class="menu-row wrow"><a class="plink grow" href="' + postUrl(id) + '">' +
+            esc(id.slice(0, 10) + '…' + id.slice(-6)) + '</a>' +
+            '<button type="button" class="mini-btn" data-modunhide="' + esc(id) + '">' + esc(T.modUnhideBtn) + '</button></div>').join('')
+        : '<p class="small">' + esc(T.modNoneHidden) + '</p>') +
+      '</div>';
+  }
+  /* v38: admin management (ROOT only) — the server's admin
+     list, appoint by CAW name or raw address, revoke per mod.
+     Mods never render this card. */
+  if (pwSession && modIsRoot()) {
+    h += '<div class="pw-card"><h3 class="detail-h">' + esc(T.modAdminsTitle) + '</h3>' +
+      modAdmins.map(a2 => '<div class="menu-row wrow"><span class="wrow-addr">' + esc(shortAddr(a2.address)) +
+        ' <span class="small" data-admin-name="' + esc(String(a2.address).toLowerCase()) + '"></span></span>' +
+        '<span class="small">' + esc(a2.role === 'root' ? T.modRoleRoot : T.modRoleMod) + '</span>' +
+        (a2.role !== 'root'
+          ? '<button type="button" class="mini-btn danger-btn" data-modrevoke="' + esc(String(a2.address).toLowerCase()) + '">' + esc(T.modRevokeBtn) + '</button>'
+          : '') +
+        '</div>').join('') +
+      '<p class="small">' + esc(T.modRoleNote) + '</p>' +
+      '<p class="small">' + esc(T.modAppointNote) + '</p>' +
+      '<div class="row"><input id="modAppointInput" placeholder="' + esc(T.modAppointPh) + '">' +
+      '<button type="button" id="modAppointBtn">' + esc(T.modAppointBtn) + '</button></div>' +
+      '<p id="modAppointStatus"></p></div>';
+  }
   h += '<div class="pw-card"><h3 class="detail-h">' + esc(T.setAboutTitle) + '</h3>' +
     '<p>' + esc(T.setAboutBody) + '</p>' +
     '<p class="small">' + esc(T.setViewsNote) + '</p>' +
@@ -6252,6 +6770,17 @@ function renderSettings() {
   area.querySelectorAll('[data-setdel]').forEach(b => {
     b.onclick = () => renderPwRemove($('setDelArea'), reg.wallets[Number(b.dataset.setdel)].address);
   });
+  /* v38: moderation wiring (the cards above exist only for
+     admins / the root, so every lookup here is guarded). */
+  area.querySelectorAll('[data-modunhide]').forEach(b => {
+    b.onclick = () => modTogglePost({ cawId: b.dataset.modunhide });
+  });
+  area.querySelectorAll('[data-modrevoke]').forEach(b => {
+    b.onclick = () => modConfirmRevoke(b.dataset.modrevoke);
+  });
+  const apBtn = $('modAppointBtn');
+  if (apBtn) apBtn.onclick = () => modAppoint();
+  if (pwSession && modIsRoot()) modFillAdminNames(area);
   syncChrome();
 }
 async function renderNamesScreen() {
@@ -6737,6 +7266,8 @@ async function faucetDoClaim(i) {
 
 /* ----- confirm panel: sign what you see ----- */
 function confirmErrHtml(e) {
+  /* v38: admin-op rejections carry their mapped string key. */
+  if (e && e.adminKey) return '<span class="err">' + esc(T[e.adminKey] || T.modErrFail) + '</span>';
   if (e && e.message === 'not-owner') return '<span class="err">' + esc(T.actNotOwner) + '</span>';
   if (e && e.message === 'self-follow') return '<span class="err">' + esc(T.actSelfFollow) + '</span>';
   /* v33 (D8): the mint guard's named stops. */
@@ -7840,6 +8371,8 @@ function wireRowActions(div, a) {
   };
   const sh = btn('share');
   if (sh) sh.onclick = () => sharePostText(a, sh);
+  const modBtn = foot.querySelector('[data-modact]');
+  if (modBtn) modBtn.onclick = () => modTogglePost(a);
 }
 /* The Recaw choice sheet (the app's RecawChoiceSheet): plain
    Recaw, SuperRecaw (v14), Quote Recaw. Any unfinished
@@ -8484,7 +9017,18 @@ async function loadBookmarksView() {
       let post = null;
       try { post = await findPostByCawId(id, 12); } catch (e) {}
       if (!post) { try { post = await findPostDeep(id); } catch (e) {} }
-      if (post) {
+      if (post && !modVisibleItem(post)) {
+        /* v38: a bookmarked post a moderator hid reads as
+           hidden here too (with the way out: remove the
+           bookmark). Admins fall through to the marked card. */
+        wrap.innerHTML = '<div class="bm-missing"><span class="small">' + esc(T.modHiddenNote) + '</span>' +
+          '<button type="button" class="ghost bm-del">' + esc(T.bmRemove) + '</button></div>';
+        wrap.querySelector('.bm-del').onclick = () => {
+          if (pwSession) bmToggle(pwSession.address, id);
+          wrap.remove();
+          if (!box.querySelector('.bm-row')) box.innerHTML = emptyCardHtml(T.bmEmpty);
+        };
+      } else if (post) {
         const card = await postCard(post, { noTip: true, noActions: true }); /* v31/v35: the app leaves tip + like/Recaw/SuperLike unwired on bookmarks (D13) */
         wrap.innerHTML = '';
         wrap.appendChild(card);
@@ -9529,6 +10073,7 @@ if (addQuery && walletQuery) { pwView = 'add'; renderPw(); } /* v34: Settings' A
 mirrorAdoptDraft(); /* v19: a pending mirror draft becomes the composer draft */
 renderComposer();
 pwRestoreSession(); /* v30: revive this tab's saved session, if it is still fresh */
+modRefresh().catch(() => {}); /* v38: the admin list + hidden posts, from boot */
 /* v13 chrome wiring: the mobile drawer (avatar button, scrim,
    close, Escape), the floating compose button and the sidebar
    Post button (both jump to the home composer — on other views
@@ -9639,6 +10184,7 @@ if (typeof module !== 'undefined' && module.exports) {
     buildDepositCalldata, buildWithdrawCalldata, buildApproveToCalldata,
     parseAmount, hexToB64Url, postRefMarker, appendPostRef, textBytes,
     randomCawId, submitLocalAction, buildMediaMessage, MEDIA_API,
+    buildAdminMessage, adminOpErrorKey, modHashFromMediaUrl, modItemVisible, modFilterItems,
     bmList, bmHas, bmToggle, BOOKMARKS_KEY_PREFIX,
     O_TOKEN, BURN_ADDRESS,
     HAWK_TOKEN, PHOENIX_TOKEN, KET_TOKEN, WQOM_TOKEN, DEX_ROUTER,

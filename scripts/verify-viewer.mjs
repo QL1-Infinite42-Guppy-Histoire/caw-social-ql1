@@ -411,8 +411,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=37') && jaHtml.includes('?v=37'), 'shells reference ?v=37 assets');
-ok(swSrc.includes("caw-view-v37"), 'sw.js cache name is caw-view-v37');
+ok(enHtml.includes('?v=38') && jaHtml.includes('?v=38'), 'shells reference ?v=38 assets');
+ok(swSrc.includes("caw-view-v38"), 'sw.js cache name is caw-view-v38');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1344,7 +1344,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v37'), 'sw cache is caw-view-v37');
+  ok(swJs.includes('caw-view-v38'), 'sw cache is caw-view-v38');
 }
 
 /* ---- v28: plain send out of the posting wallet ----
@@ -1830,6 +1830,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     const api = new Function('$', 'document', 'esc', 'T', 'pageFile', 'pwSession', 'pwActing',
       'skeletonHtml', 'feedLoadingHtml', 'emptyCardHtml', 'fetchPage', 'ntTapItems', 'rowFor', 'hydrateAttachmentsIn',
       'followBuildState', 'buildFollowIndex', 'refinedFollowListsOf', 'followListsOf', 'folFeedItem',
+      'modFilterItems', 'modHidden', 'modIsAdmin',
       'loadTimeline',
       folSrc + '\nreturn { switchFeedMode, setupFollowing, loadFollowing, mode: () => tlMode };')(
       $id, { createElement: () => mkFolEl() }, s => String(s),
@@ -1840,7 +1841,8 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       () => 'SKEL', () => 'LOADING', t => 'EMPTYCARD', async () => pages[Math.min(pageIdx++, pages.length - 1)], () => {},
       async a => { const d = mkFolEl(); d.className = 'post'; d.dataset.cawid = a.cawId; return d; },
       async () => {}, () => ({ complete: true, pages: 0, walking: false, pairs: 0 }),
-      async () => ({ complete: true }), async () => lists, () => lists, V.folFeedItem, () => {});
+      async () => ({ complete: true }), async () => lists, () => lists, V.folFeedItem,
+      V.modFilterItems, new Set(), () => false, () => {});
     return { api, els };
   };
   const tick = () => new Promise(r => setTimeout(r, 25));
@@ -3075,7 +3077,7 @@ console.log('— v36: twenty languages + RTL (M14) —');
     const rtl = B.RTL_LANGS.includes(code);
     ok(html.includes('<html lang="' + code + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">'),
       'v36 M14: ' + code + '.html declares lang=' + code + ' dir=' + (rtl ? 'rtl' : 'ltr'));
-    ok(html.includes('viewer.js?v=37') && html.includes('style.css?v=37') && html.includes('__cawViewerBooted'),
+    ok(html.includes('viewer.js?v=38') && html.includes('style.css?v=38') && html.includes('__cawViewerBooted'),
       'v36 M14: ' + code + '.html loads the v37 assets + watchdog');
     ok([...html.matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',') === enNavSeq,
       'v36 M14: ' + code + '.html nav rows match the en shell, row for row');
@@ -3086,8 +3088,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     if (rtl) ok(html.includes('>→<') && !html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point forward (RTL)');
     else ok(html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point back');
     if (code !== 'en' && code !== 'ja') {
-      const at = html.indexOf('dict-' + code + '.js?v=37');
-      ok(at >= 0 && at < html.indexOf('viewer.js?v=37'),
+      const at = html.indexOf('dict-' + code + '.js?v=38');
+      ok(at >= 0 && at < html.indexOf('viewer.js?v=38'),
         'v36 M14: ' + code + '.html loads its dict before viewer.js');
       ok(!html.includes('var ja ='), 'v36 M14: ' + code + '.html theme script has its labels baked in');
     }
@@ -3140,7 +3142,7 @@ console.log('— v36: twenty languages + RTL (M14) —');
      viewerSrc.includes("return h + 'h'") && viewerSrc.includes("return d + 'd'") &&
      !viewerSrc.includes('m + T.relMin'),
     'v37: relTime uses the app\u2019s compact literals, not the localised suffixes');
-  ok((viewerSrc.match(/CAW Social — web v37/g) || []).length === 2, 'v37: the version label reads web v37 in both embedded languages');
+  ok((viewerSrc.match(/CAW Social — web v38/g) || []).length === 2, 'v38: the version label reads web v38 in both embedded languages');
 
   /* stub-DOM boots: es and ar render from their dicts */
   const headSrc = viewerSrc.slice(0, viewerSrc.indexOf('/* ---------- minimal ABI helpers'));
@@ -3201,8 +3203,8 @@ console.log('— v37: app-feel batch (feel-audit-v36: Audit A cleanup + Audit B)
     const w = {}; new Function('window', read('../docs/dict-' + code + '.js'))(w);
     ok(w.__CAW_T && DEAD_KEYS.every(k => !(k in w.__CAW_T)), 'v37 A: dict-' + code + ' carries none of the 13 dead keys');
   }
-  ok(Object.keys(web37.en).length === 484 && Object.keys(web37.ja).length === 484,
-    'v37 A: the tables hold 484 keys (497 − the 13 dead ones)');
+  ok(Object.keys(web37.en).length === 520 && Object.keys(web37.ja).length === 520,
+    'v37 A + v38: the tables hold 520 keys (484 after the dead-key cleanup, + the 36 v38 moderation keys)');
   ok(!css37.includes('#walletArea {') && !css37.includes('button.big-connect {'),
     'v37 A: the dead CSS rules (#walletArea, button.big-connect) are gone');
   ok(!/window\.ethereum|eth_requestAccounts/.test(viewerSrc),
@@ -3292,6 +3294,161 @@ console.log('— v37: app-feel batch (feel-audit-v36: Audit A cleanup + Audit B)
     'v37 B-C1: the FAB / sidebar Post no longer hide when locked or nameless');
   ok(viewerSrc.includes('id="compHeadClose"') && viewerSrc.includes('esc(T.compPostAs)'),
     'v37 B-C1: the composer header carries the ✕ and the Post-as row');
+}
+
+console.log('— v38: moderation (admin UI + hidden-post filtering) —');
+{
+  const B38 = await import('./build-i18n.mjs');
+  const web38 = B38.loadWebDicts(viewerSrc);
+  const css38 = read('../docs/style.css');
+  const EMPTY = 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  const CAW = '0x' + 'AB'.repeat(32);
+  const CAW_L = CAW.toLowerCase();
+  const HASH = 'CD'.repeat(32);
+  const HASH_L = HASH.toLowerCase();
+
+  /* The admin message, byte-exact against the server's
+     buildAdminMessage (caw-media main.js): the media format
+     plus a target: line before ts:, everything canonicalised
+     to the lowercase forms clients must sign. */
+  ok(V.buildAdminMessage({ action: 'hide-post', cawId: CAW, ts: 1700000000 }) ===
+    ['CAW Media v1', 'action: hide-post', 'name: -', 'sha256: ' + EMPTY,
+     'caw: ' + CAW_L, 'tx: -', 'target: -', 'ts: 1700000000'].join('\n'),
+    'v38: hide-post message is byte-exact (empty hash, lowercase caw, dash placeholders)');
+  ok(V.buildAdminMessage({ action: 'hide-icon', nameId: '190', sha256: HASH, ts: 1700000001 }) ===
+    ['CAW Media v1', 'action: hide-icon', 'name: 190', 'sha256: ' + HASH_L,
+     'caw: -', 'tx: -', 'target: -', 'ts: 1700000001'].join('\n'),
+    'v38: a media op message pins the name id and the lowercase current hash');
+  ok(V.buildAdminMessage({ action: 'appoint-admin', target: '0x90359C6913915B9824B9CE8ABF4B85B30A5CF8CC', ts: 1700000002 }) ===
+    ['CAW Media v1', 'action: appoint-admin', 'name: -', 'sha256: ' + EMPTY,
+     'caw: -', 'tx: -', 'target: 0x90359c6913915b9824b9ce8abf4b85b30a5cf8cc', 'ts: 1700000002'].join('\n'),
+    'v38: appoint-by-address signs the lowercase target, name stays -');
+  ok(V.buildAdminMessage({ action: 'revoke-admin', target: '0x' + 'EF'.repeat(20), ts: 1700000003 }).split('\n').length === 8 &&
+     !V.buildAdminMessage({ action: 'hide-post', cawId: CAW, ts: 1 }).endsWith('\n'),
+    'v38: the admin message is 8 lines with no trailing newline');
+
+  /* Error mapping: 403 splits by the server's message; 409 is
+     the stale-hash race with its own wording. */
+  ok(V.adminOpErrorKey(403, 'not an admin') === 'modErrNotAdmin' &&
+     V.adminOpErrorKey(403, 'root only') === 'modErrRootOnly' &&
+     V.adminOpErrorKey(409, 'media changed since signing') === 'modErrChanged' &&
+     V.adminOpErrorKey(404, 'media not found') === 'modErrNotFound' &&
+     V.adminOpErrorKey(401, 'bad signature') === 'modErrSig' &&
+     V.adminOpErrorKey(429, 'throttled') === 'modErrThrottle' &&
+     V.adminOpErrorKey(400, 'bad name id') === 'modErrBad' &&
+     V.adminOpErrorKey(500, 'boom') === 'modErrFail',
+    'v38: admin-op errors map to their string keys (403 split, 409 stale-hash)');
+
+  /* The hash an op pins is read back out of the media URL. */
+  ok(V.modHashFromMediaUrl('https://x.example/media/' + HASH_L + '.jpg') === HASH_L &&
+     V.modHashFromMediaUrl('https://x.example/media/nope.jpg') === null &&
+     V.modHashFromMediaUrl('') === null,
+    'v38: modHashFromMediaUrl extracts the content hash, null when absent');
+
+  /* The visibility rule + the list choke point, behaviourally:
+     hidden posts drop for non-admins only; follows (type 3)
+     are never posts, even if a cawId collided; the item's own
+     case does not matter. */
+  ok(V.modItemVisible(true, false) === false && V.modItemVisible(true, true) === true &&
+     V.modItemVisible(false, false) === true && V.modItemVisible(false, true) === true,
+    'v38: modItemVisible truth table (hidden drops for non-admins only)');
+  const feedItems = [
+    { type: 0, cawId: CAW }, { type: 2, cawId: CAW }, { type: 3, cawId: CAW },
+    { type: 0, cawId: '0x' + '11'.repeat(32) }, { type: 1, cawId: CAW },
+  ];
+  const filtered = V.modFilterItems(feedItems, new Set([CAW_L]), false);
+  ok(filtered.length === 3 && filtered[0].type === 3 && filtered[1].type === 0 && filtered[2].type === 1,
+    'v38: modFilterItems drops hidden posts + Recaws for non-admins, keeps follows, likes (row rule handles those) and visible posts');
+  ok(V.modFilterItems(feedItems, new Set([CAW_L]), true).length === 5 &&
+     V.modFilterItems(feedItems, new Set(), false).length === 5,
+    'v38: modFilterItems keeps everything for admins and when nothing is hidden');
+
+  /* Wiring pins: the three endpoints, the op body discipline,
+     and the confirm error surface. */
+  ok(viewerSrc.includes("MEDIA_API + '/v1/admins'") && viewerSrc.includes("MEDIA_API + '/v1/hidden-posts'") &&
+     viewerSrc.includes("MEDIA_API + '/v1/admin/op'"),
+    'v38: the viewer polls /v1/admins + /v1/hidden-posts and posts ops to /v1/admin/op');
+  ok(viewerSrc.includes('const body = { action: fields.action, ts, sig };') &&
+     viewerSrc.includes('pwSignMediaMsg(buildAdminMessage('),
+    'v38: ops sign buildAdminMessage via the media signing path and send only the used fields');
+  ok(viewerSrc.includes('e.adminKey') && viewerSrc.includes('adminOpErrorKey(res.status, msg)'),
+    'v38: confirm panels render admin rejections through the mapped key');
+
+  /* Filtering call sites: every post surface passes the choke
+     point or the single-item rule. */
+  const tlBody = viewerSrc.slice(viewerSrc.indexOf('async function loadTimeline('), viewerSrc.indexOf('function startNewPostPolling('));
+  ok((tlBody.match(/modFilterItems\(/g) || []).length >= 2,
+    'v38: the home timeline filters the cache paint AND the fresh walk');
+  ok(viewerSrc.slice(viewerSrc.indexOf('async function loadFollowing('), viewerSrc.indexOf('function refreshHomeFeed(')).includes('modFilterItems('),
+    'v38: the Following feed filters hidden posts');
+  ok(viewerSrc.slice(viewerSrc.indexOf('async function loadProfilePosts('), viewerSrc.indexOf('async function renderFollowLists(')).includes('modFilterItems('),
+    'v38: profile timelines filter hidden posts');
+  ok(viewerSrc.includes('postMatchesQuery(a, qLower) && modVisibleItem(a)'),
+    'v38: post search drops hidden hits for non-admins');
+  const postPageBody = viewerSrc.slice(viewerSrc.indexOf('async function loadPostPage('), viewerSrc.indexOf('async function loadProfile()'));
+  ok(postPageBody.includes('if (!modVisibleItem(post))') && postPageBody.includes('modFilterItems(ctx.replies') &&
+     postPageBody.includes('modFilterItems(ctx.quotes'),
+    'v38: the post page shows the hidden state for a hidden post and filters its thread/quotes');
+  ok(viewerSrc.slice(viewerSrc.indexOf('async function loadBookmarksView('), viewerSrc.indexOf('async function loadReactionsView(')).includes('!modVisibleItem(post)'),
+    'v38: bookmarks render the hidden state for a hidden bookmarked post');
+  ok(viewerSrc.includes('if (!modVisibleItem(orig))') && viewerSrc.includes('if (!modVisibleItem(post))'),
+    'v38: nested originals (Recaw frame + quote frame) hide for non-admins');
+
+  /* Role gating: admin UI exists only behind the role checks —
+     post cards, profile media, attachments, Settings sections;
+     the appoint/revoke section is root-only and the root row
+     carries no revoke. */
+  const cardBody38 = viewerSrc.slice(viewerSrc.indexOf('async function postCard('), viewerSrc.indexOf('async function recawCard('));
+  ok(cardBody38.includes('data-modact') && cardBody38.includes('modIsAdmin()'),
+    'v38: post cards render the Hide/Unhide control only for admins');
+  ok(viewerSrc.slice(viewerSrc.indexOf('async function applyProfileMedia('), viewerSrc.indexOf('async function shortenViaCawl(')).includes('data-modmedia'),
+    'v38: profile media carries moderation rows for admins');
+  ok(viewerSrc.includes('modDecorateAttach(root)') && viewerSrc.includes("action: o.verb + '-attach'"),
+    'v38: attachments are decorated with per-image admin controls');
+  const setBody38 = viewerSrc.slice(viewerSrc.indexOf('function renderSettings()'), viewerSrc.indexOf('async function renderNamesScreen()'));
+  ok(setBody38.includes('modIsAdmin()') && setBody38.includes('T.modSectionTitle') && setBody38.includes('data-modunhide'),
+    'v38: Settings shows the Moderation section (hidden posts + Unhide) to admins only');
+  ok(setBody38.includes('modIsRoot()') && setBody38.includes('data-modrevoke') && setBody38.includes("a2.role !== 'root'"),
+    'v38: Settings shows admin management to the root only, and the root row has no revoke');
+  ok(css38.includes('.post.mod-hidden') && css38.includes('.mod-badge') && css38.includes('.mod-att-ctl'),
+    'v38: the stylesheet carries the dimmed-row, badge and attachment-control styles');
+
+  /* Strings: the whole moderation set exists in EN + JA (the
+     other eighteen take the English fallback via build-i18n —
+     counted by the v36 dict checks above). */
+  const MOD_KEYS = ['modHiddenBadge', 'modHiddenNote', 'modHideBtn', 'modUnhideBtn', 'modHideTitle',
+    'modHideNote', 'modUnhideTitle', 'modSectionTitle', 'modHiddenListLbl', 'modNoneHidden',
+    'modMediaTitle', 'modHideMediaBtn', 'modHideMediaTitle', 'modUnhideMediaTitle', 'modDeleteBtn',
+    'modDeleteTitle', 'modDeleteWarn', 'modAttHidden', 'modAdminsTitle', 'modRoleRoot', 'modRoleMod',
+    'modAppointLbl', 'modAppointPh', 'modAppointBtn', 'modAppointNote', 'modRevokeBtn', 'modRevokeTitle',
+    'modErrNotAdmin', 'modErrRootOnly', 'modErrChanged', 'modErrNotFound', 'modErrSig',
+    'modErrThrottle', 'modErrBad', 'modErrFail', 'modRoleNote'];
+  ok(MOD_KEYS.length === 36 && MOD_KEYS.every(k => typeof web38.en[k] === 'string' && web38.en[k].length > 0 &&
+     typeof web38.ja[k] === 'string' && web38.ja[k].length > 0),
+    'v38: all 36 moderation strings exist in EN + JA');
+  /* The role definition (user, 2026-11-19): admins remove
+     malicious images etc. from CAW, across the WHOLE front —
+     the Settings sections carry it, and the hide copy names
+     the whole-front scope while keeping the on-chain caveat. */
+  ok(setBody38.includes('T.modRoleNote') &&
+     web38.en.modRoleNote.includes('malicious images') && web38.en.modRoleNote.includes('every screen') &&
+     web38.ja.modRoleNote.includes('悪意のある画像') && web38.ja.modRoleNote.includes('全体'),
+    'v38: the admin role note (remove malicious content, whole-front scope) is in both Settings sections, EN + JA');
+  ok(web38.en.modHideNote.includes('every screen') && web38.en.modHideNote.includes('on-chain') &&
+     web38.ja.modHideNote.includes('すべての画面') && web38.ja.modHideNote.includes('オンチェーン'),
+    'v38: the hide confirm names the whole-front scope and keeps the stays-on-chain caveat');
+
+  /* No account address on profiles (user, 2026-11-19): the
+     profile head renders no owner address for anyone — the
+     owner read stays internal (profileOwner / follow state).
+     The confirmed exception: Settings keeps the owner's own
+     address + copy card, shown only with a live session. */
+  const profBody38 = viewerSrc.slice(viewerSrc.indexOf('async function loadProfile()'), viewerSrc.indexOf('async function loadProfilePosts()'));
+  ok(!profBody38.includes('ownerLbl') && !profBody38.includes('shortAddr(owner)') &&
+     profBody38.includes('profileOwner = owner'),
+    'v38: the profile head renders no account address (own or others); the owner read stays internal');
+  ok(setBody38.includes('setAddressLbl') && setBody38.includes('setCopyAddr') && setBody38.includes('pwSession.address'),
+    'v38: Settings keeps the owner-only own-address + copy card (confirmed exception, untouched)');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

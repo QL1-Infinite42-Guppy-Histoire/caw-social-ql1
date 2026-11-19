@@ -1204,3 +1204,31 @@ button:not(.xact):active:not(:disabled), .cta-btn:active,
 .follow-pill:active, .comp-post:active:not(:disabled),
 .pw-action-btn:active { opacity: .85; }
 .mn-use:active { opacity: .7; }
+
+/* ---------- v38: moderation ---------- */
+/* A hidden post stays visible to admins only: dimmed, with a
+   small pill badge at the top of its body column. */
+.post.mod-hidden { opacity: .55; }
+.mod-badge {
+  display: inline-block; font-size: 11px; font-weight: 700;
+  color: var(--muted); border: 1px solid var(--line2);
+  border-radius: 999px; padding: 1px 8px; margin-bottom: 4px;
+}
+.mod-row { margin-top: 6px; }
+.mod-media-box { margin-top: 12px; border-top: 1px solid var(--line); padding-top: 8px; }
+/* Attachment moderation: controls ride on the image's corner;
+   a hidden image dims under them. */
+.post-media a.mod-att { position: relative; }
+.mod-att-ctl { position: absolute; inset-inline-end: 4px; bottom: 4px; display: flex; gap: 4px; z-index: 2; }
+.mod-att-ctl button {
+  font-size: 11px; line-height: 1.5; padding: 2px 8px; border: none;
+  border-radius: 999px; background: rgba(0,0,0,.68); color: #fff; cursor: pointer;
+}
+.mod-att-ctl button:active { opacity: .85; }
+a.mod-att-hidden img { opacity: .3; }
+.mod-att-ph {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; min-height: 88px; border-radius: 12px;
+  background: var(--hover); color: var(--muted); font-size: 12px;
+}
+.mod-att-ph .mod-att-ctl { position: static; }
