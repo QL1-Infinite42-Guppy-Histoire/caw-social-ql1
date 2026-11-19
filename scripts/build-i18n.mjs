@@ -67,7 +67,7 @@ export const MANUAL = {
   getConfirmMint: 'get.confirmMint', notEnoughQcaw: 'get.notEnough',
   recording: 'get.waiting', sendFail: 'get.failed', mintDone: 'get.done',
   viewProfileBtn: 'get.viewProfile', mintChanged: 'get.changed',
-  priceChanged: 'get.changed', sentUnconfirmed: 'hs.unconfirmed',
+  priceChanged: 'get.changed',
   myNamesTitle: 'mine.title', noNames: 'mine.none',
   pwCreateBtn: 'wallet.create', pwImportBtn: 'wallet.import',
   pwCreateExplain: 'wallet.createDesc', pwShowPhraseTitle: 'wallet.wordsTitle',
@@ -354,9 +354,12 @@ export function buildShell(lang, enHtml, jaHtml, app) {
     '  render();\n' +
     '})();\n</script>');
   /* load this language's dict before viewer.js */
-  html = html.replace('<script src="viewer.js?v=36"></script>',
-    '<script src="dict-' + lang + '.js?v=36"></script>\n<script src="viewer.js?v=36"></script>');
+  html = html.replace('<script src="viewer.js?v=37"></script>',
+    '<script src="dict-' + lang + '.js?v=37"></script>\n<script src="viewer.js?v=37"></script>');
   if (rtl) html = html.split('>←<').join('>→<');
+  /* v37 (B-PR1): the profile text-back label ("← Back") leads
+     with its arrow inside the text chunk, so flip that one too. */
+  if (rtl) html = html.replace(/(text-back"[^>]*>)← /, '$1→ ');
   return { html, fallbacks };
 }
 

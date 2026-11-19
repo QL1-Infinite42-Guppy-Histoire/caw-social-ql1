@@ -400,16 +400,19 @@ console.log('— v9: linkify + relative time —');
   ok(lf.includes('href="https://a.example/b?c=1"'), 'linkify links URLs (trailing dot kept outside)');
   ok(lf.includes('?name=neptune') && lf.includes('@neptune'), 'linkify links @mentions to profiles');
   const NOW = 1700000000;
-  ok(V.relTime(NOW - 30, NOW) === 'now', 'relTime: under a minute is "now"');
+  /* v37 (B-P2): relTime is the app's formatRelativeTime — the
+     seconds count shows ("30s", was the localised "now"), and
+     the date fallback starts at a week (was ~30 days). */
+  ok(V.relTime(NOW - 30, NOW) === '30s', 'relTime: under a minute shows the seconds (app format)');
   ok(V.relTime(NOW - 300, NOW) === '5m', 'relTime: minutes');
   ok(V.relTime(NOW - 3 * 3600, NOW) === '3h', 'relTime: hours');
   ok(V.relTime(NOW - 2 * 86400, NOW) === '2d', 'relTime: days');
-  ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over ~30d falls back to the date');
+  ok(V.relTime(NOW - 40 * 86400, NOW).includes('2023'), 'relTime: over a week falls back to the date + time');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=36') && jaHtml.includes('?v=36'), 'shells reference ?v=36 assets');
-ok(swSrc.includes("caw-view-v36"), 'sw.js cache name is caw-view-v36');
+ok(enHtml.includes('?v=37') && jaHtml.includes('?v=37'), 'shells reference ?v=37 assets');
+ok(swSrc.includes("caw-view-v37"), 'sw.js cache name is caw-view-v37');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -892,10 +895,13 @@ console.log('— v15: home is the timeline only; wallet / lookup / name desk are
       label + ' carries the wallet / lookup / get-a-name views');
     const seg = (a, b) => { const i = html.indexOf(a); return i < 0 ? '' : html.slice(i, html.indexOf(b, i)); };
     const home = seg('id="viewHome"', 'id="viewSearch"');
-    ok(home.includes('id="composerArea"') && home.includes('id="timeline"') &&
+    /* v37 (B-HM1/B-C1): the home view is the segment + timeline
+       only — the composer moved into the compose sheet and the
+       title bar / new-posts pill are gone. */
+    ok(!home.includes('id="composerArea"') && home.includes('id="timeline"') && home.includes('class="ptabs segtabs"') &&
        !home.includes('id="pwallet"') && !home.includes('id="lookup"') && !home.includes('id="getname"') &&
-       !home.includes('statsCardMain'),
-       label + ': the home view is the composer + timeline only (no stacked blocks)');
+       !home.includes('statsCardMain') && !home.includes('newPostsPill') && !home.includes('view-head'),
+       label + ': the home view is the segment + timeline only (no composer, no stacked blocks)');
     ok(seg('id="viewWallet"', 'id="viewLookup"').includes('id="pwallet"') &&
        seg('id="viewWallet"', 'id="viewLookup"').includes('id="pwArea"'),
        label + ': the posting wallet lives inside the wallet view, not in the home flow');
@@ -951,8 +957,8 @@ console.log('— v16: post-row anatomy fixes (action pills, record link, recaw s
      'action buttons explicitly neutralise the generic button style (transparent bg, no border / shadow / min-height)');
   const iconPx = parseFloat((rule('.xact .icring svg').match(/width:\s*([\d.]+)px/) || [])[1]);
   ok(iconPx >= 16 && iconPx <= 18, 'action icon size is the app size (16–18px)', iconPx + 'px');
-  ok(rule('.xact .xcount').includes('font-size: 13px'),
-     'action counts sit next to the icon at 13px (never wrapped under it)');
+  ok(rule('.xact .xcount').includes('font-size: 12px'),
+     'action counts sit next to the icon (never wrapped under it) — 12px since v37 (B-P1, the app\u2019s count size); was 13px');
   ok(rule('.pfoot {').includes('flex-wrap: nowrap'), 'the action row never wraps');
   ok(!css.includes('var(--secondary)') && !css.includes('var(--hairline)'),
      'no style references the never-defined --secondary / --hairline variables');
@@ -964,11 +970,16 @@ console.log('— v16: post-row anatomy fixes (action pills, record link, recaw s
   const recawSrc = viewerSrc.slice(viewerSrc.indexOf('async function recawCard'), viewerSrc.indexOf('async function ctxRow'));
   ok(recawSrc.includes('recordLineHtml(a.hash)'),
      'the recaw row takes its one record link from the same single builder');
-  /* 3 — recaw stacking: attribution full-width on top */
-  ok(rule('.post.recaw-row').includes('flex-direction: column'),
-     'recaw rows stack in a column (no squeezed side columns)');
+  /* 3 — recaw anatomy (v16 stacked the attribution full-width;
+     v37 (B-P3) restores the app's RecawCard: the recawer's
+     avatar at the left, the attribution heading the body
+     column — the row is the ordinary flex row again) */
+  ok(!rule('.post.recaw-row').includes('flex-direction: column'),
+     'recaw rows are flex rows again (avatar + body column, the app anatomy)');
   ok(/\.recaw-attr\s*\{[^}]*display:\s*flex/.test(css),
-     'the attribution is a full-width line of its own at the top of the row');
+     'the attribution is a line of its own at the top of the body column');
+  ok(recawSrc.includes('avatarHtml(img, name)'),
+     'the recaw row renders the recawer\u2019s avatar (restored in v37; v16\u2013v36 dropped it)');
   ok(recawSrc.indexOf('recaw-attr') >= 0 && recawSrc.indexOf('recaw-attr') < recawSrc.indexOf('frameslot') &&
      recawSrc.indexOf('frameslot') < recawSrc.indexOf('recordLineHtml'),
      'recaw row order: attribution line, then the original, then the one record link');
@@ -1333,7 +1344,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v36'), 'sw cache is caw-view-v36');
+  ok(swJs.includes('caw-view-v37'), 'sw cache is caw-view-v37');
 }
 
 /* ---- v28: plain send out of the posting wallet ----
@@ -1817,7 +1828,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     $id('moreBtn').parentElement = mkFolEl();
     let pageIdx = 0;
     const api = new Function('$', 'document', 'esc', 'T', 'pageFile', 'pwSession', 'pwActing',
-      'skeletonHtml', 'fetchPage', 'ntTapItems', 'rowFor', 'hydrateAttachmentsIn',
+      'skeletonHtml', 'feedLoadingHtml', 'emptyCardHtml', 'fetchPage', 'ntTapItems', 'rowFor', 'hydrateAttachmentsIn',
       'followBuildState', 'buildFollowIndex', 'refinedFollowListsOf', 'followListsOf', 'folFeedItem',
       'loadTimeline',
       folSrc + '\nreturn { switchFeedMode, setupFollowing, loadFollowing, mode: () => tlMode };')(
@@ -1826,7 +1837,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
         followBuilding: 'Reading… {n} pages', ntOpenWallet: 'OPENWALLET', navGetName: 'GETNAME',
         loadFail: 'LOADFAIL', retryBtn: 'RETRY' },
       'en.html', session, acting,
-      () => 'SKEL', async () => pages[Math.min(pageIdx++, pages.length - 1)], () => {},
+      () => 'SKEL', () => 'LOADING', t => 'EMPTYCARD', async () => pages[Math.min(pageIdx++, pages.length - 1)], () => {},
       async a => { const d = mkFolEl(); d.className = 'post'; d.dataset.cawid = a.cawId; return d; },
       async () => {}, () => ({ complete: true, pages: 0, walking: false, pairs: 0 }),
       async () => ({ complete: true }), async () => lists, () => lists, V.folFeedItem, () => {});
@@ -2014,9 +2025,12 @@ console.log('— v32: mentions, shortening write-back, drafts, picker, thumbs, o
   const css32 = read('../docs/style.css');
   for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
     for (const id of ['namePickerOverlay', 'namePickerList', 'namePickerTitle', 'namePickerCancel',
-                      'composeOverlay', 'composeModalSlot', 'composeModalClose']) {
+                      'composeOverlay', 'composeModalSlot']) {
       ok(html.includes('id="' + id + '"'), 'v32: ' + label + ' carries #' + id);
     }
+    /* v37 (B-C1): the floating sheet ✕ (composeModalClose) is
+       gone — the composer's own header carries the close. */
+    ok(!html.includes('id="composeModalClose"'), 'v37: ' + label + ' has no composeModalClose (the header ✕ replaced it)');
   }
   for (const k of ['compCost', 'compCostFrom', 'compPostAs', 'draftRestored', 'draftDiscard',
                    'draftAutoSaved', 'confirmCostLbl', 'slAuthorAddr', 'dirBuilding', 'compCloseLbl']) {
@@ -2217,7 +2231,9 @@ console.log('— v32: mentions, shortening write-back, drafts, picker, thumbs, o
       null, null, '', [], null, null, '',
       null, false, null, false, null, null, '', null);
     holder.api = api;
-    const homeParent = mkCompEl();
+    /* v37 (B-C1): the composer's permanent home is the compose
+       sheet's slot (as in the shells) — bootComp mirrors that. */
+    const homeParent = $id('composeModalSlot');
     homeParent.appendChild($id('composerArea'));
     $id('viewHome').style.display = '';
     $id('viewPost').style.display = 'none';
@@ -2364,8 +2380,10 @@ console.log('— v32: mentions, shortening write-back, drafts, picker, thumbs, o
     } finally { delete globalThis.localStorage; }
   }
 
-  /* D7: reply from a non-home view opens the sheet in place
-     and closing returns the composer home. */
+  /* D7: reply from a non-home view opens the sheet in place.
+     v37 (B-C1): the composer lives in the sheet permanently —
+     closing hides the sheet (nothing moves), and the home view
+     takes the same sheet path (no inline composer remains). */
   {
     const c = bootComp({ names: [{ id: 7n, username: 'neptune', balance: 100n * E18_32 }], actingId: 7n });
     c.els.viewHome.style.display = 'none';
@@ -2377,13 +2395,14 @@ console.log('— v32: mentions, shortening write-back, drafts, picker, thumbs, o
       'v32 behaviour: reply off the home view opens the in-place sheet, with no navigation');
     c.api.closeComposeModal();
     ok(c.els.composeOverlay.style.display === 'none' &&
-       c.els.composerArea.parentNode === c.homeParent,
-      'v32 behaviour: closing the sheet returns the composer to its home slot');
+       c.els.composerArea.parentNode === c.els.composeModalSlot,
+      'v37 behaviour: closing the sheet hides it; the composer stays in the sheet');
     const h = bootComp({ names: [{ id: 7n, username: 'neptune', balance: 100n * E18_32 }], actingId: 7n });
     h.api.setComposerRef('quote', { senderId: 9n, cawId: CID32, text: 'orig' });
-    ok(h.loc.href === '' && h.els.composerArea.parentNode === h.homeParent &&
+    ok(h.loc.href === '' && h.els.composerArea.parentNode === h.els.composeModalSlot &&
+       h.els.composeOverlay.style.display === '' &&
        h.api.state().ref && h.api.state().ref.kind === 'quote',
-      'v32 behaviour: on the home view reply/quote still renders the home composer');
+      'v37 behaviour: on the home view reply/quote opens the same sheet (no inline composer)');
   }
 
   /* behavioural: my-Recaw painting (the guarded optimistic bump). */
@@ -3056,8 +3075,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     const rtl = B.RTL_LANGS.includes(code);
     ok(html.includes('<html lang="' + code + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">'),
       'v36 M14: ' + code + '.html declares lang=' + code + ' dir=' + (rtl ? 'rtl' : 'ltr'));
-    ok(html.includes('viewer.js?v=36') && html.includes('style.css?v=36') && html.includes('__cawViewerBooted'),
-      'v36 M14: ' + code + '.html loads the v36 assets + watchdog');
+    ok(html.includes('viewer.js?v=37') && html.includes('style.css?v=37') && html.includes('__cawViewerBooted'),
+      'v36 M14: ' + code + '.html loads the v37 assets + watchdog');
     ok([...html.matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',') === enNavSeq,
       'v36 M14: ' + code + '.html nav rows match the en shell, row for row');
     ok((html.match(/class="lang-slot"/g) || []).length === 2,
@@ -3067,8 +3086,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     if (rtl) ok(html.includes('>→<') && !html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point forward (RTL)');
     else ok(html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point back');
     if (code !== 'en' && code !== 'ja') {
-      const at = html.indexOf('dict-' + code + '.js?v=36');
-      ok(at >= 0 && at < html.indexOf('viewer.js?v=36'),
+      const at = html.indexOf('dict-' + code + '.js?v=37');
+      ok(at >= 0 && at < html.indexOf('viewer.js?v=37'),
         'v36 M14: ' + code + '.html loads its dict before viewer.js');
       ok(!html.includes('var ja ='), 'v36 M14: ' + code + '.html theme script has its labels baked in');
     }
@@ -3113,9 +3132,15 @@ console.log('— v36: twenty languages + RTL (M14) —');
   for (const k of ['relMin', 'relHour', 'relDay']) {
     ok((viewerSrc.match(new RegExp(k + ':', 'g')) || []).length === 2, 'v36: ' + k + ' exists in both embedded languages');
   }
-  ok(viewerSrc.includes('m + T.relMin') && viewerSrc.includes('h + T.relHour') && viewerSrc.includes('d + T.relDay'),
-    'v36 M14: relTime builds from T.relMin / T.relHour / T.relDay');
-  ok((viewerSrc.match(/CAW Social — web v36/g) || []).length === 2, 'v36: the version label reads web v36 in both embedded languages');
+  /* v37 (B-P2): relTime IS the app's formatRelativeTime now —
+     plain compact literals in every language; the localised
+     suffix keys stay in the tables (checked above) but are no
+     longer read. */
+  ok(viewerSrc.includes("return diff + 's'") && viewerSrc.includes("return m + 'm'") &&
+     viewerSrc.includes("return h + 'h'") && viewerSrc.includes("return d + 'd'") &&
+     !viewerSrc.includes('m + T.relMin'),
+    'v37: relTime uses the app\u2019s compact literals, not the localised suffixes');
+  ok((viewerSrc.match(/CAW Social — web v37/g) || []).length === 2, 'v37: the version label reads web v37 in both embedded languages');
 
   /* stub-DOM boots: es and ar render from their dicts */
   const headSrc = viewerSrc.slice(0, viewerSrc.indexOf('/* ---------- minimal ABI helpers'));
@@ -3134,7 +3159,10 @@ console.log('— v36: twenty languages + RTL (M14) —');
     ok(api.LANG === 'es' && store.get('caw-lang') === 'es', 'v36 M14: an es shell boots as Spanish and stores caw-lang');
     ok(api.T.moreBtn === appDicts.es['tl.more'] && api.T.compPh === appDicts.es['compose.ph'],
       'v36 M14: the es boot renders composer/home strings from the Spanish dict');
-    ok(api.T.noticeTitle === webDicts.en.noticeTitle && api.T.relMin === 'm',
+    /* v37 (Audit A): noticeTitle is one of the 13 removed dead
+       keys — the fallback witness is statsTitle now (a live
+       web-only key). */
+    ok(api.T.statsTitle === webDicts.en.statsTitle && api.T.relMin === 'm',
       'v36 M14: web-only keys fall back to English inside the es boot (no blanks)');
   }
   {
@@ -3147,6 +3175,123 @@ console.log('— v36: twenty languages + RTL (M14) —');
     ok(api.LANG === 'ja' && api.T.moreBtn === 'もっと見る',
       'v36 M14: a ja boot still renders the embedded Japanese table');
   }
+}
+
+console.log('— v37: app-feel batch (feel-audit-v36: Audit A cleanup + Audit B) —');
+{
+  const B37 = await import('./build-i18n.mjs');
+  const web37 = B37.loadWebDicts(viewerSrc);
+  const css37 = read('../docs/style.css');
+  const DEAD_KEYS = ['noWallet', 'mintNote', 'connectBtn', 'connectFail', 'connectedLbl', 'wrongChain',
+    'switchBtn', 'switchFail', 'sendingWallet', 'sentUnconfirmed', 'myNamesConnect', 'noticeTitle', 'noticeText'];
+
+  /* Audit A: the 13 dead injected-wallet keys are gone from
+     every table at the source — embedded EN + JA, the build
+     script's mapping, and every generated dict. */
+  for (const k of DEAD_KEYS) {
+    ok(!(k in web37.en) && !(k in web37.ja), 'v37 A: ' + k + ' is absent from the embedded EN + JA tables');
+    ok(!new RegExp('(^|[^A-Za-z])' + k + ':', 'm').test(viewerSrc), 'v37 A: no ' + k + ' definition or reference remains in viewer.js');
+  }
+  const buildSrc37 = read('./build-i18n.mjs');
+  ok(!buildSrc37.includes('sentUnconfirmed'), 'v37 A: the build mapping no longer names sentUnconfirmed');
+  ok(!B37.buildMapping(web37, B37.loadAppDicts(fs.readFileSync(new URL('../../caw-social-app/src/i18n.ts', import.meta.url), 'utf8'))).sentUnconfirmed,
+    'v37 A: a fresh mapping cannot resurrect sentUnconfirmed');
+  for (const [code] of B37.LANGS) {
+    if (code === 'en' || code === 'ja') continue;
+    const w = {}; new Function('window', read('../docs/dict-' + code + '.js'))(w);
+    ok(w.__CAW_T && DEAD_KEYS.every(k => !(k in w.__CAW_T)), 'v37 A: dict-' + code + ' carries none of the 13 dead keys');
+  }
+  ok(Object.keys(web37.en).length === 484 && Object.keys(web37.ja).length === 484,
+    'v37 A: the tables hold 484 keys (497 − the 13 dead ones)');
+  ok(!css37.includes('#walletArea {') && !css37.includes('button.big-connect {'),
+    'v37 A: the dead CSS rules (#walletArea, button.big-connect) are gone');
+  ok(!/window\.ethereum|eth_requestAccounts/.test(viewerSrc),
+    'v37 A: no injected-wallet provider code exists anywhere in viewer.js');
+
+  /* B-G1: press feedback — :active rules cover the main
+     interactive classes (the stylesheet had none before v37). */
+  for (const sel of ['.xact:active', '.post.clickable:active', '.name-row:active', '.menu-row:active',
+                     '.acting-row:active', '.count-cell:active', '.lookup-match:active', '.name-pick-row:active',
+                     '.lang-it:active', '.nav-it:active', '.nt-row.clickable:active', '.quotebox:active',
+                     '.back-link:active', '.ptab:active', '.bottomnav a:active', '.side-summary:active',
+                     '.addr-chip:active', '.loadmore button:active', '.mn-use:active']) {
+    ok(css37.includes(sel), 'v37 B-G1: press feedback covers ' + sel);
+  }
+
+  /* B-G2/G3: sheets slide up and stay bottom sheets at desktop
+     widths (no centred-modal media rule). */
+  ok(css37.includes('@keyframes sheet-up') && css37.includes('animation: sheet-up'),
+    'v37 B-G2: sheets animate in with the slide-up keyframes');
+  ok(!css37.includes('align-items: center; } .overlay .sheet'),
+    'v37 B-G3: the >=700px centred-modal rule is deleted — sheets stay bottom sheets');
+
+  /* B-HM1/B-C1: home composition + the composer sheet. */
+  for (const [label, html] of [['en.html', enHtml], ['ja.html', jaHtml]]) {
+    ok(html.includes('class="ptabs segtabs"') && html.includes('id="refreshBtn" class="seg-refresh"'),
+      'v37 B-HM1: ' + label + ' home header is the segment + a quiet refresh icon');
+    ok(html.includes('<div id="composeModalSlot"><div id="composerArea"></div></div>'),
+      'v37 B-C1: ' + label + ' keeps the composer inside the compose sheet');
+    ok(!html.includes('id="newPostsPill"') && !html.includes('id="newPostsBtn"'),
+      'v37 B-HM2: ' + label + ' has no new-posts pill');
+    ok(html.includes('class="search-pill"') && !html.includes('id="lookupBtn"'),
+      'v37 B-S1: ' + label + ' lookup is a search pill with no separate button row');
+    ok(html.includes('class="back-link text-back"') && (html.match(/class="sec-badge"/g) || []).length === 4,
+      'v37 B-PR1/B-PD1: ' + label + ' profile uses the text back row; the post page has four section badges');
+  }
+  ok(viewerSrc.includes('function feedLoadingHtml()') && viewerSrc.includes('function emptyCardHtml('),
+    'v37 B-ST2: the spinner + empty-card state builders exist');
+  ok(!viewerSrc.includes('newPostsPill'), 'v37 B-HM2: viewer.js no longer references the pill');
+  ok(!viewerSrc.includes('IntersectionObserver'), 'v37 B-HM4: no scroll-triggered auto-loading remains');
+
+  /* B-HM3: the swipe decision functions behave like the app's
+     feedSwipe (claim 24px + 2.2x dominance; switch at 60px;
+     RTL inverts). */
+  ok(V.swipeShouldClaim(25, 0) === true && V.swipeShouldClaim(24, 0) === false &&
+     V.swipeShouldClaim(30, 20) === false && V.swipeShouldClaim(50, 20) === true,
+    'v37 B-HM3 unit: the claim rule (24px, clearly horizontal-dominant)');
+  ok(V.swipeTargetMode(-60, false) === 'following' && V.swipeTargetMode(60, false) === 'latest' &&
+     V.swipeTargetMode(-59, false) === null && V.swipeTargetMode(60, true) === 'following' &&
+     V.swipeTargetMode(-60, true) === 'latest',
+    'v37 B-HM3 unit: the switch rule (60px; LTR left=F, right=L; RTL inverted)');
+  ok(viewerSrc.includes('wireFeedSwipe'), 'v37 B-HM3: the feed swipe is wired on the home view');
+
+  /* B-P1/P2: action-row metrics + the 12px sub-lines. */
+  ok(!/\.pfoot\s*\{[^}]*max-width:\s*425px/.test(css37), 'v37 B-P1: the action row has no 425px cap');
+  ok(css37.includes('.xact .icring svg { width: 16px'), 'v37 B-P1: action glyphs are 16px');
+  ok(/\.subline\{[^}]*font-size:12px/.test(css37) && /\.meta \.sub-line \{[^}]*font-size: 12px/.test(css37),
+    'v37 B-P2: sub-lines are 12px');
+
+  /* B-P3: recaw avatar (also pinned in the v16 block) + the
+     attribution at 12px. */
+  ok(/\.recaw-attr\s*\{[^}]*font-size: 12px/.test(css37), 'v37 B-P3: the recaw attribution is 12px');
+
+  /* B-R1: reaction rows carry the kind badge on the avatar. */
+  ok(viewerSrc.includes('class="nt-badge ') && css37.includes('.nt-badge.k-like') && css37.includes('.nt-badge.k-recaw') &&
+     css37.includes('.nt-badge.k-super') && !viewerSrc.includes('class="nt-ic '),
+    'v37 B-R1: reaction rows badge the avatar by kind; the inline icon is gone');
+
+  /* B-PR2: the profile audio is a pill button, not native controls. */
+  ok(viewerSrc.includes('class="prof-audio" data-audio-src=') && !viewerSrc.includes('<audio controls'),
+    'v37 B-PR2: the profile audio renders as the app-style pill');
+
+  /* B-MN1/MN2 + B-W1/B-W2 + B-C2/B-C3 + B-ST1 + chrome pins. */
+  ok(/\.mn-badge \{[^}]*background: var\(--accent\)/.test(css37) && css37.includes('.mn-use {'),
+    'v37 B-MN: the posting-as badge is filled; the use button is the outlined accent pill');
+  ok(css37.includes('.menu-row.lang-on') && viewerSrc.includes('menu-row lang-on'),
+    'v37 B-W2: the current language row is highlighted in Settings');
+  ok(css37.includes('#pwallet .asset-list') && /\.asset-amt\{[^}]*font-size:17px/.test(css37),
+    'v37 B-W1: the wallet asset list is boxed; amounts are 17px/800');
+  ok(/\.danger-btn \{[^}]*border: 1px solid #c62828/.test(css37), 'v37 B-W2: the danger button is the outlined red control');
+  ok(css37.includes('.skel-line {\n  /* v37 (B-ST1)') && !css37.includes('skel-shimmer'),
+    'v37 B-ST1: skeleton bars are static (no shimmer)');
+  ok(!/\.topbar \{[^}]*backdrop-filter/.test(css37) && !/\.bottomnav \{[^}]*backdrop-filter/.test(css37),
+    'v37 B-H1/B-H2: the top bar and tab bar are solid (no glass blur)');
+  ok(css37.includes('.bottomnav a svg { width: 22px') && css37.includes('min-width: 19px'),
+    'v37 B-H2: tab glyphs are 22px; the badge is 19px');
+  ok(!/body:not\(\.can-compose\)/.test(css37),
+    'v37 B-C1: the FAB / sidebar Post no longer hide when locked or nameless');
+  ok(viewerSrc.includes('id="compHeadClose"') && viewerSrc.includes('esc(T.compPostAs)'),
+    'v37 B-C1: the composer header carries the ✕ and the Post-as row');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

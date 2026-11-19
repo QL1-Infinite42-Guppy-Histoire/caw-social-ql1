@@ -122,7 +122,9 @@ button { font-family: inherit; }
   min-height: 100vh;
 }
 @media (min-width: 640px) {
-  .maincol { border-left: 1px solid var(--line); border-right: 1px solid var(--line); }
+  /* v37 (B-D4): the app has no column rules — the hairlines are
+     gone; rows separate themselves. */
+  .maincol { border-left: 0; border-right: 0; }
 }
 
 /* ---- left sidebar (PC) ---- */
@@ -144,6 +146,11 @@ button { font-family: inherit; }
   .sidebar .nav-label, .sidebar .side-name, .sidebar .side-sub,
   .sidebar .side-follow, .sidebar .side-post-label { display: block; }
   .sidebar .nav-it, .sidebar .side-summary { justify-content: flex-start; }
+  /* v37 (B-D1): the wide sidebar's rows take the app drawer's
+     metrics (17px / 700 / radius 12 instead of the pill). */
+  .sidebar .nav-it { font-size: 17px; font-weight: 700; border-radius: 12px; }
+  .sidebar button.nav-it { font-weight: 700; }
+  .sidebar .nav-it.on, .sidebar button.nav-it.on { font-weight: 800; }
 }
 .side-logo {
   display: flex; align-items: center; justify-content: center;
@@ -188,11 +195,15 @@ button.nav-it.on { font-weight: 800; }
   margin-top: 14px;
   display: flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 50px; padding: 12px 20px;
-  box-shadow: 0 4px 14px rgba(29,155,240,.35);
+  /* v37 (B-D3): flat, like the app's buttons — no drop shadow. */
 }
 .side-foot { margin-top: auto; padding: 10px 12px 0; color: var(--sub); font-size: 12.5px; line-height: 1.6; }
 .side-foot a { color: var(--sub); }
-body:not(.can-compose) .side-post, body:not(.can-compose) .fab { display: none; }
+/* v37 (B-C1): the FAB / sidebar Post no longer hide when the
+   wallet is locked or nameless — they open the composer sheet,
+   which shows the unlock / get-a-name guidance inside (the
+   app's model: the entry point is always there). The
+   can-compose body class itself stays (JS state marker). */
 
 /* ---- right rail (PC) ---- */
 .rightrail { display: none; }
@@ -216,7 +227,9 @@ body:not(.can-compose) .side-post, body:not(.can-compose) .fab { display: none; 
   font-size: 15px; color: var(--ink); font-family: inherit; margin: 0; padding: 0;
 }
 .railcard {
-  background: var(--surface2); border-radius: 16px;
+  /* v37 (B-D2): the app's card treatment — plain surface with a
+     hairline border, not a filled panel. */
+  background: var(--surface); border: 1px solid var(--line); border-radius: 16px;
   padding: 14px 16px; margin-bottom: 14px;
 }
 .railcard h3 { margin: 0 0 8px; font-size: 19px; font-weight: 800; }
@@ -232,8 +245,8 @@ body:not(.can-compose) .side-post, body:not(.can-compose) .fab { display: none; 
 .topbar {
   display: none;
   position: sticky; top: 0; z-index: 40;
-  background: var(--topbar-bg);
-  backdrop-filter: blur(8px);
+  /* v37 (B-H1): solid, like the app's headers — no glass blur. */
+  background: var(--bg);
   border-bottom: 1px solid var(--line);
 }
 @media (max-width: 899.98px) { .topbar { display: block; } }
@@ -291,7 +304,7 @@ body:not(.can-compose) .side-post, body:not(.can-compose) .fab { display: none; 
 
 /* ================= center column sections ============================ */
 section.block { padding: 16px; border-bottom: 1px solid var(--line); }
-section.block h2 { margin: 0 0 8px; font-size: 20px; font-weight: 800; }
+section.block h2 { margin: 0 0 8px; font-size: 17px; font-weight: 700; } /* v37 (B-W1): the app's section title (S.h2) */
 section.block p { margin: 6px 0; }
 .view-head {
   display: flex; align-items: center; gap: 14px;
@@ -305,6 +318,12 @@ section.block p { margin: 6px 0; }
   text-decoration: none; font-size: 18px; flex: 0 0 auto;
 }
 .back-link:hover { background: var(--hover); }
+/* v37 (B-PR1): the profile head's back is the app's plain text
+   row (accent "← Back"), not the circular icon button. */
+.back-link.text-back {
+  width: auto; height: auto; border-radius: 0;
+  color: var(--accent); font-size: 15px; font-weight: 600;
+}
 .muted { color: var(--sub); }
 .small { font-size: 13px; color: var(--sub); }
 button {
@@ -342,27 +361,24 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
 }
 .post:last-child { border-bottom: 0; }
 @media (hover: hover) {
-  .post { transition: background .15s ease; }
-  .post:hover { background: var(--hover); }
+  /* v37 (B-D4): post rows no longer tint on hover — the app has
+     no hover state; pressed feedback (:active, below) is the
+     pointer equivalent. Nav rows keep their hover tint. */
+  .post { transition: none; }
 }
 /* SuperRecaw: the flat row itself glows — the app's gold wash
    (light 0.10 / dark 0.16), no frame, no gradient, no card. */
 .post.super-recaw { background: var(--super-wash); }
 .post.super-recaw:hover { background: var(--super-wash); }
-/* A Recaw row STACKS (v16): the attribution is one small
-   full-width line at the top of the row, and the original
-   post below it keeps the ordinary full-width row layout
-   (avatar 44 + body column). Before, .post's flex row laid
-   attribution / original / record link out as three squeezed
-   columns — the attribution crushed into a narrow left strip
-   (the post body shrank to ~60% width) and the record link
-   wrapped character-by-character down the right edge. The
-   SuperRecaw wash lives on this outer row, so it covers the
-   attribution line too. */
-.post.recaw-row { flex-direction: column; gap: 0; }
+/* A Recaw row (v16 stacked the attribution full-width;
+   v37 (B-P3) restores the app's RecawCard anatomy): the row is
+   the ordinary flex row — the RECAWER's 44px avatar at the
+   left, and a body column holding the attribution line, the
+   nested original and the one record link. The SuperRecaw
+   wash lives on this outer row, so it covers the whole row. */
 .recaw-attr {
   display: flex; align-items: center; gap: 5px;
-  font-size: 13px; font-weight: 700; color: var(--sub); min-width: 0;
+  font-size: 12px; font-weight: 700; color: var(--sub); min-width: 0;
 }
 .recaw-attr .ra-ic { display: inline-flex; color: var(--recaw); flex: 0 0 auto; }
 .recaw-attr .ra-ic svg { width: 14px; height: 14px; display: block; }
@@ -391,14 +407,15 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
   display: block; font-size: 15px; font-weight: 700; color: var(--ink);
   line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.meta .sub-line { display: block; color: var(--sub); font-size: 13px; line-height: 1.4; }
+.meta .sub-line { display: block; color: var(--sub); font-size: 12px; line-height: 1.4; } /* v37 (B-P2): the app's 12px sub-line */
 .meta .time { color: var(--sub); }
 .ptext {
   margin-top: 2px; font-size: 15px; line-height: 1.45; color: var(--ink);
   white-space: pre-wrap; word-break: break-word;
 }
 .ptext a, .qtext a { color: var(--accent); text-decoration: none; }
-.ptext a:hover, .qtext a:hover { text-decoration: underline; }
+/* v37 (B-D4): no underline-on-hover for in-text links (the app
+   has no hover treatment). */
 .ptext a.mention, .qtext a.mention { font-weight: 600; }
 /* The ONE action row: a single space-between line, never
    wraps (the app's actionRow). v16: the buttons are the app's
@@ -412,14 +429,16 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
    EXPLICITLY, and the primary-button style stays scoped to
    the containers that opt in (forms, sheets, composer). */
 .pfoot {
+  /* v37 (B-P1): the action row spans the full body column (the
+     app sets no 425px cap). */
   margin-top: 8px; display: flex; align-items: center;
-  justify-content: space-between; flex-wrap: nowrap; max-width: 425px;
+  justify-content: space-between; flex-wrap: nowrap;
 }
 .xact {
-  display: inline-flex; align-items: center; gap: 2px;
+  display: inline-flex; align-items: center; gap: 4px;
   background: transparent; border: 0; box-shadow: none;
   -webkit-appearance: none; appearance: none;
-  color: var(--sub); font-size: 13px; font-weight: 400; line-height: 1;
+  color: var(--sub); font-size: 12px; font-weight: 400; line-height: 1;
   padding: 4px 3px; margin: 0 0 0 -4px; min-height: 0; height: auto;
   border-radius: 999px; cursor: pointer; flex: 0 1 auto; min-width: 0;
 }
@@ -429,8 +448,8 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
   display: inline-flex; align-items: center; justify-content: center;
   padding: 5px; margin: -5px 0; border-radius: 50%; flex: 0 0 auto;
 }
-.xact .icring svg { width: 17px; height: 17px; display: block; }
-.xact .xcount { font-size: 13px; white-space: nowrap; }
+.xact .icring svg { width: 16px; height: 16px; display: block; } /* v37 (B-P1): the app's 16px glyphs */
+.xact .xcount { font-size: 12px; white-space: nowrap; }
 .xact:hover { background: transparent; color: var(--accent); }
 .xact:hover .icring { background: var(--accent-soft); }
 .x-recaw:hover { color: var(--recaw); }
@@ -455,9 +474,20 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
 /* the ONE record link, under the action row (the app's slot) */
 .recordline { margin-top: 6px; font-size: 13px; }
 .recordline a { color: var(--accent); text-decoration: none; }
-.recordline a:hover { text-decoration: underline; }
+/* v37 (B-D4): no underline-on-hover. */
 .post-status { margin-top: 4px; font-size: 13px; color: var(--sub); }
-.loadmore { text-align: center; padding: 14px 16px; }
+/* v37 (B-HM4): the app's LoadMore footer — a full-width dark
+   pill (52px tall, 16px type) in a padded container. The
+   button keeps its .ghost class in the shells; this rule
+   restyles it here. */
+.loadmore { text-align: center; padding: 20px 16px 28px; }
+.loadmore button {
+  width: 100%; min-height: 52px; border-radius: 999px;
+  background: var(--pill-bg); color: var(--pill-fg);
+  border: 1px solid var(--pill-bg);
+  font-size: 16px; font-weight: 700;
+}
+.loadmore button:hover { background: var(--pill-hover); }
 
 /* ---- quote frames / nested originals ---- */
 .quotebox {
@@ -476,7 +506,7 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
 .ctxrow { padding: 10px 16px; }
 
 /* ---- post detail (thread) ---- */
-.post-detail .ptext { font-size: 17px; line-height: 1.5; }
+.post-detail .ptext { font-size: 15px; line-height: 1.45; } /* v37 (B-PD1): same body size as the feed (the app) */
 .post-detail .detail-time { color: var(--sub); font-size: 14px; margin-top: 10px; }
 .counts {
   display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
@@ -484,7 +514,16 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
 }
 .counts .ic { vertical-align: -3px; }
 .dot-sep { color: var(--sub); font-weight: 400; }
-.detail-h { margin: 22px 0 4px; font-size: 16px; font-weight: 800; }
+/* v37 (B-PD1): section headings at the app's S.h2 (17px/700);
+   on the post page they lead with a filled circular kind badge
+   (the app's section-badge treatment). */
+.detail-h { margin: 22px 0 4px; font-size: 17px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+.sec-badge {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 50%; flex: 0 0 auto;
+  color: #fff; font-size: 12px; font-weight: 700; line-height: 1;
+}
+.sec-badge svg { width: 12px; height: 12px; display: block; }
 .reaction-h { padding: 0 16px; }
 .name-row {
   display: flex; align-items: center; gap: 10px;
@@ -554,9 +593,28 @@ footer { padding: 18px 16px 30px; color: var(--sub); font-size: .82rem; line-hei
   bottom: -1px; width: 70%; max-width: 120px; height: 3px;
   border-radius: 2px; background: var(--accent);
 }
+/* v37 (B-HM1): the HOME segment is the app's segBtn row — the
+   active tab's underline spans the full tab width at 2px (the
+   profile tabs keep the centred pill above). */
+.segtabs .ptab.on::after {
+  left: 0; transform: none; width: 100%; max-width: none; height: 2px;
+}
+/* the quiet refresh icon at the segment row's end (B-HM1) */
+.seg-refresh {
+  flex: 0 0 auto; align-self: center; margin: 0 8px;
+  width: 36px; height: 36px; min-height: 36px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: transparent; color: var(--sub); border: 0; border-radius: 50%;
+  box-shadow: none; cursor: pointer;
+}
+.seg-refresh svg { width: 19px; height: 19px; display: block; }
+.seg-refresh:hover { background: var(--hover); color: var(--ink); }
+/* v37 (B-HM3): the feeds own vertical scrolling; horizontal
+   drags are read by the swipe wiring. */
+#timeline, #followingFeed { touch-action: pan-y; }
 .sharebtn { min-height: 40px; padding: 8px 18px; font-size: .9rem; }
 .plink { color: inherit; text-decoration: none; }
-a.plink:hover { text-decoration: underline; }
+/* v37 (B-D4): no underline-on-hover. */
 
 /* ================= composer (the app's compose form) ================= */
 .composer-card { padding: 12px 16px; border-bottom: 1px solid var(--line); }
@@ -572,8 +630,22 @@ a.plink:hover { text-decoration: underline; }
 .composer-card textarea {
   width: 100%; box-sizing: border-box; border: 0; outline: none; resize: none;
   background: transparent; color: var(--ink);
-  font-size: 17px; font-family: inherit; padding: 8px 0 4px; margin: 0; min-height: 56px;
+  /* v37 (B-C1): the app's compose field — 16px type, a tall
+     140px minimum (the composer is a full sheet now). */
+  font-size: 16px; font-family: inherit; padding: 8px 0 4px; margin: 0; min-height: 140px;
 }
+/* v37 (B-C1): the composer header row (✕ left, Post pill right)
+   and the "Post as" label before the name chip. */
+.compose-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 10px;
+}
+.compose-x {
+  background: transparent; border: 0; box-shadow: none; color: var(--ink);
+  font-size: 19px; line-height: 1; padding: 6px; margin: -6px 0 -6px -6px;
+  min-height: 0; cursor: pointer; border-radius: 50%;
+}
+.comp-as { font-size: 13px; color: var(--sub); }
 .composer-foot { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 6px; }
 .comp-post-btn { min-height: 36px; padding: 7px 18px; font-size: 14.5px; }
 .charcount { color: var(--sub); font-size: 13px; }
@@ -656,18 +728,18 @@ a.plink:hover { text-decoration: underline; }
   background: var(--badge-bg); color: var(--ok); border-radius: 999px;
   padding: 2px 10px; font-size: .78rem; font-weight: 700;
 }
-button.big-connect { width: 100%; min-height: 56px; font-size: 1.06rem; }
+/* v37 (Audit A): the dead connected-wallet rules are gone —
+   button.big-connect and #walletArea had no markup left. */
 
 /* ================= mint / stats / misc =============================== */
-#walletArea { border-top: 1px solid var(--line); margin-top: 16px; padding-top: 14px; }
 #mintArea { margin-top: 4px; }
 .mint-preview { margin: 12px 0; }
 .nft-preview { width: 180px; height: 180px; display: block; border-radius: 14px; border: 1px solid var(--line2); }
 .mint-preview .small { margin-top: 6px; }
 #myNamesTitle { margin: 20px 0 4px; font-size: 1.05rem; font-weight: 800; }
 #mintStatus a, #walletStatus a { color: var(--accent); }
-.newpill { text-align: center; margin: 10px 0 2px; }
-.newpill button { min-height: 40px; padding: 9px 20px; font-size: .92rem; box-shadow: 0 4px 14px rgba(15,20,25,.22); }
+/* v37 (B-HM2): the new-posts pill markup + styles are gone
+   (the background head scan still runs silently). */
 mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius: 2px; }
 .stats-card { margin-bottom: 14px; }
 .stats-main { margin-bottom: 14px; }
@@ -679,19 +751,17 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
 .stats-row .cnt { margin-left: auto; color: var(--sub); font-size: .85rem; }
 .skel-block { background: var(--surface2); }
 .skel-line {
+  /* v37 (B-ST1): static bars — the app has no shimmer. */
   height: 12px; border-radius: 6px; margin: 9px 0;
-  background: linear-gradient(90deg, var(--surface2) 25%, var(--line2) 50%, var(--surface2) 75%);
-  background-size: 200% 100%;
-  animation: skel-shimmer 1.2s ease-in-out infinite;
+  background: var(--surface2);
 }
 .skel-line.w40 { width: 40%; }
 .skel-line.w70 { width: 70%; }
 .skel-line.w90 { width: 90%; }
-@keyframes skel-shimmer { to { background-position: -200% 0; } }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .skel-line { animation: none; }
   .post { transition: none; }
+  .overlay .sheet { animation: none; }
 }
 .followbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 .follow-open { min-height: 40px; padding: 8px 18px; font-size: .9rem; }
@@ -702,13 +772,16 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
   width: 56px; height: 56px; min-height: 56px; border-radius: 50%;
   padding: 0; display: flex; align-items: center; justify-content: center;
   font-size: 24px; line-height: 1;
-  box-shadow: 0 4px 14px rgba(15,20,25,.30);
+  /* v37 (B-D3): flat — no drop shadow (the app's FAB is flat). */
 }
 @media (min-width: 900px) { .fab { display: none; } }
 .bottomnav {
   position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-  background: var(--bottomnav-bg); backdrop-filter: blur(8px);
-  border-top: 1px solid var(--line2);
+  /* v37 (B-H2): solid bar, hairline top border, a soft upward
+     shadow (the app's tab bar); tab glyphs at 22px. */
+  background: var(--bg);
+  border-top: 1px solid var(--line);
+  box-shadow: 0 -2px 6px rgba(0,0,0,.08);
   display: none;
 }
 .bottomnav a {
@@ -716,16 +789,19 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
   padding: 10px 0 calc(10px + env(safe-area-inset-bottom));
   color: var(--sub); text-decoration: none; position: relative;
 }
+.bottomnav a svg { width: 22px; height: 22px; }
 /* the unread COUNT badge on the notifications tab (v33 —
    the app's badge): shown only when the since-last-open
    inbox scan counted unread reactions; 99+ is the cap. */
 .nav-badge {
-  position: absolute; top: 4px; left: calc(50% + 2px);
-  min-width: 18px; height: 18px; padding: 0 5px;
+  /* v37 (B-H2): the app's badge metrics (19px, 10.5px type,
+     1.5px ring, offset +3px from the glyph's centre). */
+  position: absolute; top: 4px; left: calc(50% + 3px);
+  min-width: 19px; height: 19px; padding: 0 5px;
   border-radius: 999px; box-sizing: border-box;
   background: var(--accent); color: #fff;
-  font-size: 11px; font-weight: 800; line-height: 18px; text-align: center;
-  border: 2px solid var(--bg);
+  font-size: 10.5px; font-weight: 800; line-height: 19px; text-align: center;
+  border: 1.5px solid var(--bg);
 }
 /* v33: the profile bio line (on-device custom, M5) and the
    My names screen (M7). */
@@ -739,7 +815,13 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
 .mn-head .grow { flex: 1 1 auto; min-width: 0; }
 .mn-bal { text-align: right; }
 .mn-actions { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
-.mn-badge { font-size: 13px; font-weight: 700; color: var(--accent); border: 1px solid var(--accent); border-radius: 999px; padding: 5px 12px; }
+.mn-badge { font-size: 12px; font-weight: 800; color: #fff; background: var(--accent); border: 0; border-radius: 999px; padding: 4px 10px; } /* v37 (B-MN1): the app's FILLED "posting as" badge */
+/* v37 (B-MN2): the app's outlined accent "use this name" button. */
+.mn-use {
+  background: transparent; color: var(--accent); border: 1px solid var(--accent);
+  border-radius: 999px; min-height: 34px; padding: 0 14px;
+  font-size: 13.5px; font-weight: 800; cursor: pointer; box-shadow: none;
+}
 .mn-acc { margin-top: 10px; }
 .mn-acc input { flex: 1 1 auto; min-width: 0; }
 #profEditOverlay input, #profEditOverlay textarea { width: 100%; box-sizing: border-box; margin: 4px 0 10px; }
@@ -765,7 +847,15 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
   border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 13.5px;
   font-weight: 700; cursor: pointer; flex: 0 0 auto;
 }
-.danger-btn { color: #d33; }
+/* v37 (B-W2): the app's danger button — an outlined red
+   control (surface background, red border + text), not a red
+   text link. Scoped to .danger-btn: .mini-btn also serves the
+   wallet-switch buttons and keeps its neutral look. */
+.danger-btn {
+  background: var(--surface); border: 1px solid #c62828; color: #c62828;
+  min-height: 44px; padding: 11px 18px; font-size: 15px; font-weight: 700;
+  border-radius: 999px;
+}
 .danger-card { border-color: #d33; }
 .set-check { color: var(--accent); font-weight: 800; }
 @media (max-width: 899.98px) {
@@ -776,7 +866,8 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
   position: fixed; right: 16px; bottom: 140px; z-index: 30;
   width: 44px; height: 44px; min-height: 44px; padding: 0; border-radius: 50%;
   background: var(--pill-bg); color: var(--pill-fg);
-  box-shadow: 0 6px 18px rgba(15,20,25,.30);
+  /* v37 (B-D3): flat — no drop shadow. The button itself stays:
+     a web-only utility with no app counterpart. */
 }
 .to-top:hover { background: var(--pill-hover); }
 @media (min-width: 900px) { .to-top { bottom: 24px; } }
@@ -803,9 +894,14 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
 .overlay .sheet {
   background: var(--surface); color: var(--ink); width: 100%; max-width: 560px;
   border-radius: 18px 18px 0 0; padding: 20px; max-height: 85vh; overflow: auto;
+  /* v37 (B-G2): sheets slide up from the bottom edge (the
+     app's sheet motion) — and stay bottom sheets at desktop
+     widths too (B-G3: the old >=700px centred-modal rule is
+     deleted; the app has no centred dialogs). */
+  animation: sheet-up .28s ease;
 }
+@keyframes sheet-up { from { transform: translateY(100%); } }
 .overlay .sheet h3 { margin: 0 0 6px; font-size: 17px; font-weight: 700; }
-@media (min-width: 700px) { .overlay { align-items: center; } .overlay .sheet { border-radius: 18px; } }
 .confirm-line { display: flex; gap: 12px; margin: 8px 0; }
 .confirm-line .ck { color: var(--muted); flex: none; min-width: 64px; font-size: .9rem; }
 .confirm-line .cv { word-break: break-word; white-space: pre-wrap; }
@@ -816,7 +912,7 @@ mark { background: var(--mark-bg); color: inherit; padding: 0 1px; border-radius
 
 /* ==== v13 completion: classes the new markup uses ==== */
 .post.clickable{cursor:pointer}
-.subline{display:flex;align-items:center;gap:2px;font-size:13px;color:var(--sub);margin-top:1px}
+.subline{display:flex;align-items:center;gap:2px;font-size:12px;color:var(--sub);margin-top:1px} /* v37 (B-P2) */
 .subline .handle{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .subline .time{color:var(--sub);white-space:nowrap}
 .frameslot:empty{display:none}
@@ -835,14 +931,14 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .pw-summary{display:flex;align-items:center;gap:10px;margin-bottom:12px}
 .pw-ava-slot .avatar{width:40px;height:40px}
 .pw-sum-name{font-size:17px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.addr-chip{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;font-weight:700;background:var(--hover);color:var(--ink);border-radius:999px;padding:5px 10px;border:0;cursor:pointer}
+.addr-chip{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12.5px;font-weight:700;background:var(--chip-bg);color:var(--ink);border-radius:999px;padding:5px 10px;border:0;cursor:pointer} /* v37 (B-W1): chip background token */
 .pw-actions{display:flex;gap:12px;margin-bottom:6px}
 .pw-action-btn{flex:1;background:var(--accent);color:#fff;border-radius:999px;padding:12px;font-size:15.5px;font-weight:700;border:0;cursor:pointer}
 .asset-list{margin-top:6px}
 .asset-row{display:flex;align-items:center;gap:10px;padding:12px 2px;border-bottom:1px solid var(--line)}
 .asset-row:last-child{border-bottom:0}
-.asset-sym{font-size:15px;font-weight:700}
-.asset-amt{margin-left:auto;font-size:15px;font-weight:700;font-variant-numeric:tabular-nums}
+.asset-sym{font-size:14px;font-weight:600} /* v37 (B-W1): the app's asset rows */
+.asset-amt{margin-left:auto;font-size:17px;font-weight:800;font-variant-numeric:tabular-nums}
 .acting-list{display:flex;flex-direction:column}
 .acting-row{display:flex;align-items:center;gap:10px;width:100%;background:none;border:0;border-bottom:1px solid var(--line);padding:10px 2px;cursor:pointer;font:inherit;color:var(--ink);text-align:left}
 .acting-row:last-child{border-bottom:0}
@@ -860,9 +956,9 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .comp-ava .avatar{width:40px;height:40px}
 .composer-main{flex:1;min-width:0}
 .composer-top{display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap}
-.name-chip-btn{border:1px solid var(--line);background:var(--bg);color:var(--accent);border-radius:999px;padding:4px 10px;font-size:13.5px;font-weight:700;cursor:pointer}
+.name-chip-btn{border:1px solid var(--line2);background:var(--bg);color:var(--accent);border-radius:999px;padding:4px 10px;font-size:13.5px;font-weight:700;cursor:pointer} /* v37 (B-C2): chip border is line2 (the app) */
 .composer-foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
-.comp-post{background:var(--accent);color:#fff;border:0;border-radius:999px;padding:8px 18px;font-size:14.5px;font-weight:700;cursor:pointer}
+.comp-post{background:var(--accent);color:#fff;border:0;border-radius:999px;padding:7px 18px;font-size:14.5px;font-weight:700;cursor:pointer} /* v37 (B-C1): the app's Post pill padding */
 .comp-post:disabled{opacity:.5;cursor:default}
 /* notifications view (v17): X-style reaction rows */
 .nt-note{padding:10px 16px 2px;color:var(--sub);font-size:13px;line-height:1.55}
@@ -874,12 +970,17 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .nt-row .avatar{width:40px;height:40px;flex-basis:40px}
 .nt-body{flex:1 1 auto;min-width:0}
 .nt-line{display:flex;align-items:flex-start;gap:6px;font-size:14.5px;line-height:1.45}
-.nt-ic{display:inline-flex;flex:0 0 auto;margin-top:1px}
-.nt-ic svg{width:16px;height:16px;display:block}
-.nt-ic.k-like{color:var(--like)}
-.nt-ic.k-recaw{color:var(--recaw)}
-.nt-ic.k-super{color:var(--gold)}
-.nt-ic.k-reply,.nt-ic.k-quote,.nt-ic.k-follow{color:var(--accent)}
+/* v37 (B-R1): the kind glyph rides as a badge on the avatar's
+   corner (the app's reaction rows) — a 20px filled circle with
+   a white glyph, ringed in the page background. Colours by
+   kind: pink like, green recaw, gold super, accent the rest. */
+.nt-ava{position:relative;flex:0 0 auto;align-self:flex-start}
+.nt-badge{position:absolute;bottom:-5px;inset-inline-end:-5px;width:20px;height:20px;border-radius:50%;border:1.5px solid var(--bg);color:#fff;display:flex;align-items:center;justify-content:center}
+.nt-badge svg{width:11px;height:11px;display:block}
+.nt-badge.k-like{background:var(--like)}
+.nt-badge.k-recaw{background:var(--recaw)}
+.nt-badge.k-super{background:var(--gold)}
+.nt-badge.k-reply,.nt-badge.k-quote,.nt-badge.k-follow{background:var(--accent)}
 .nt-txt{min-width:0}
 .nt-time{color:var(--sub);font-size:13px;white-space:nowrap;margin-left:2px}
 .nt-excerpt{color:var(--sub);font-size:13.5px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -938,8 +1039,15 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .book-saveoffer{margin-top:12px;border:1px solid var(--line);border-radius:14px;padding:12px}
 .faucet-pool{border:1px solid var(--line);border-radius:14px;padding:12px;margin-top:12px}
 .faucet-pool-head{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
-.lookup-match{display:flex;justify-content:space-between;align-items:center;gap:10px;width:100%;text-align:left;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:12px;padding:10px 12px;margin-top:8px;font-size:15px;font-weight:600;cursor:pointer}
-.lookup-match:hover{border-color:var(--accent)}
+/* v37 (B-S2): directory matches are flat hairline rows (the
+   app's name rows), bleeding to the section's edges. */
+.lookup-match{display:flex;justify-content:space-between;align-items:center;gap:10px;width:auto;text-align:left;border:0;border-bottom:1px solid var(--line);background:transparent;color:var(--text);border-radius:0;padding:10px 16px;margin:0 -16px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:none}
+/* v37 (B-S1): the search fields are filled pills with an inset
+   magnifier (the app's searchField); the input inside is
+   borderless. */
+.search-pill{display:flex;align-items:center;gap:8px;background:var(--surface2);border-radius:999px;min-height:42px;padding:0 14px;margin:6px 0}
+.search-pill svg{width:16px;height:16px;flex:0 0 auto;color:var(--sub)}
+.search-pill input{flex:1 1 auto;min-width:0;border:0;background:transparent;color:var(--ink);font:inherit;font-size:15px;padding:10px 0;margin:0;outline:none}
 .xact[disabled]{opacity:.45;cursor:default}
 
 /* v26: media server — header image, post attachments, profile audio + settings */
@@ -949,8 +1057,17 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .post-media.n2, .post-media.n3, .post-media.n4 { grid-template-columns: 1fr 1fr; }
 .post-media img { width: 100%; height: 100%; max-height: 320px; object-fit: cover; border-radius: 12px; display: block; }
 .post-media.n1 img { max-height: 420px; }
-.prof-audio { display: flex; align-items: center; gap: 10px; padding: 10px 16px; }
-.prof-audio audio { flex: 1; height: 36px; }
+/* v37 (B-PR2): the app's AudioChip — one outlined pill button
+   (glyph + label); the generic button rule must not reach it,
+   so background / border / shadow are set explicitly. */
+.prof-audio {
+  display: inline-flex; align-items: center; gap: 9px;
+  margin: 10px 16px; padding: 8px 14px; min-height: 0;
+  background: var(--surface); color: var(--ink);
+  border: 1px solid var(--line2); border-radius: 999px; box-shadow: none;
+  font-size: 14px; font-weight: 600; cursor: pointer;
+}
+.prof-audio .pa-glyph { color: var(--accent); font-size: 14px; font-weight: 700; }
 .media-settings { padding: 12px 16px; border-top: 1px solid var(--line, #e5e5e5); }
 .mset-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin: 6px 0; }
 .mset-lbl { min-width: 92px; font-weight: 700; }
@@ -963,14 +1080,13 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 .comp-cost { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.5; }
 .comp-draft-note { font-size: 12.5px; color: var(--muted); margin: 6px 0 0; }
 .comp-mentions { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-.mention-chip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 999px; padding: 4px 10px 4px 4px; font-size: 13.5px; font-weight: 600; cursor: pointer; }
-.mention-chip:hover { border-color: var(--accent); }
+.mention-chip { display: inline-flex; align-items: center; gap: 6px; border: 0; background: var(--chip-bg); color: var(--text); border-radius: 999px; padding: 4px 10px 4px 4px; font-size: 13.5px; font-weight: 600; cursor: pointer; } /* v37 (B-C3): filled chip, no border */
 .mention-ava { display: inline-flex; width: 22px; height: 22px; border-radius: 50%; overflow: hidden; flex: 0 0 auto; }
 .mention-ava img { width: 100%; height: 100%; object-fit: cover; }
 .comp-thumbs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .comp-thumb { position: relative; display: inline-block; width: 72px; height: 72px; }
 .comp-thumb img { width: 72px; height: 72px; object-fit: cover; border-radius: 10px; border: 1px solid var(--line); }
-.comp-thumb-x { position: absolute; top: -6px; right: -6px; width: 22px; height: 22px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--text); font-size: 12px; line-height: 1; cursor: pointer; padding: 0; }
+.comp-thumb-x { position: absolute; top: -6px; right: -6px; width: 20px; height: 20px; border-radius: 50%; border: 0; background: rgba(15,20,25,.75); color: #fff; font-size: 11px; font-weight: 700; line-height: 1; cursor: pointer; padding: 0; } /* v37 (B-C3): the app's dark remove badge */
 .name-pick-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
 .name-pick-row { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; border: 1px solid var(--line); background: var(--bg); color: var(--text); border-radius: 12px; padding: 8px 10px; cursor: pointer; }
 .name-pick-row.on { border-color: var(--accent); }
@@ -981,8 +1097,9 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
    the confirm panel must open over it when posting from it. */
 #composeOverlay { z-index: 75; }
 .compose-sheet { position: relative; }
-.compose-close { position: absolute; top: 8px; right: 8px; width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line); background: var(--bg); color: var(--text); cursor: pointer; z-index: 1; }
-.compose-sheet .composer-card { border-bottom: 0; padding-top: 20px; }
+/* v37 (B-C1): the sheet's ✕ is the composer's own header button
+   now (compHeadClose); the old floating .compose-close is gone. */
+.compose-sheet .composer-card { border-bottom: 0; padding-top: 4px; }
 
 /* ================= v36 (M14): language picker =================
    The .lang-slot in each nav is filled by viewer.js
@@ -1020,7 +1137,7 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 [dir="rtl"] .drawer-close { right: auto; left: 12px; }
 [dir="rtl"] .fab { right: auto; left: 18px; }
 [dir="rtl"] .to-top { right: auto; left: 16px; }
-[dir="rtl"] .nav-badge { left: auto; right: calc(50% + 2px); }
+[dir="rtl"] .nav-badge { left: auto; right: calc(50% + 3px); }
 [dir="rtl"] .nav-it, [dir="rtl"] .acting-row,
 [dir="rtl"] .menu-row, [dir="rtl"] .name-pick-row { text-align: right; }
 [dir="rtl"] .count-cell + .count-cell { border-left: 0; border-right: 1px solid var(--line); }
@@ -1031,7 +1148,59 @@ button.count-cell{font:inherit;text-align:left;cursor:pointer}
 [dir="rtl"] .bm-missing .bm-del { margin-left: 0; margin-right: auto; }
 [dir="rtl"] .nt-time { margin-left: 0; margin-right: 2px; }
 [dir="rtl"] .comp-thumb-x { right: auto; left: -6px; }
-[dir="rtl"] .compose-close { right: auto; left: 8px; }
 @media (min-width: 1100px) {
   [dir="rtl"] .side-logo { padding-left: 0; padding-right: 8px; }
 }
+
+/* ================= v37: app-feel states + press feedback =========
+   B-ST2: the feed's first paint is a centred spinner + label
+   (the app shows no skeleton rows); an empty feed is a filled
+   rounded card. B-W1: the wallet's asset list is a boxed card.
+   B-W2: the current language's settings row is highlighted.
+   B-G1: PRESS FEEDBACK — the app gives every Pressable a
+   pressed state (action buttons tint #f7f9f9 = var(--hover);
+   filled buttons fade to opacity .85; the My-names "use"
+   button to .7); the web had no :active rules at all before
+   v37. These rules come last so they win over the hover rules
+   above when both apply; disabled buttons never react. */
+.feed-loading {
+  display: flex; align-items: center; justify-content: center; gap: 10px;
+  padding: 36px 16px; color: var(--sub); font-size: 14.5px;
+}
+.spinner {
+  width: 20px; height: 20px; border-radius: 50%; flex: 0 0 auto;
+  border: 2.5px solid var(--line2); border-top-color: var(--accent);
+  animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .spinner { animation-duration: 2.4s; } }
+.empty-card {
+  background: var(--surface2); border: 1px solid var(--line);
+  border-radius: 16px; padding: 26px 18px; margin: 14px 16px;
+  text-align: center; color: var(--sub); font-size: 14.5px; line-height: 1.55;
+}
+#pwallet .asset-list {
+  border: 1px solid var(--line2); border-radius: 12px; overflow: hidden;
+  margin-top: 16px; padding: 0 12px;
+}
+.menu-row.lang-on {
+  border: 1px solid var(--accent); border-radius: 12px;
+  padding-left: 10px; padding-right: 10px;
+  background: #fff7f2;
+}
+html[data-theme="dark"] .menu-row.lang-on { background: var(--accent-soft); }
+/* the app's actionBtnOn: the whole pill tints #f7f9f9
+   (var(--hover)) while pressed */
+.xact:active:not(:disabled) { background: var(--hover); }
+.post.clickable:active, .name-row:active, .menu-row:active,
+.acting-row:active, .count-cell:active, .lookup-match:active,
+.name-pick-row:active, .lang-it:active, .nav-it:active,
+.nt-row.clickable:active, .quotebox:active, .back-link:active,
+.ptab:active, .bottomnav a:active, .side-summary:active,
+.addr-chip:active { background: var(--hover); }
+.loadmore button:active { opacity: .85; }
+button:not(.xact):active:not(:disabled), .cta-btn:active,
+.pill:active, .tokchip:active, .bookchip:active,
+.follow-pill:active, .comp-post:active:not(:disabled),
+.pw-action-btn:active { opacity: .85; }
+.mn-use:active { opacity: .7; }

@@ -95,8 +95,6 @@ const T_EMBEDDED = {
   en: {
     loading: 'Loading…', loadFail: 'Could not load. Please try again later.',
     empty: 'No posts found yet.', viewTx: 'see the record', moreBtn: 'See more',
-    noticeTitle: 'Reading is free — and you can get a name here',
-    noticeText: 'You are reading the CAW timeline on QL1. Viewing is free and needs no wallet or account. You can get a name here with your wallet app, and post here with the built-in posting wallet — or use the Android app.',
     appBtn: 'Get the Android app',
     lookupTitle: 'Look up a name', lookupPh: 'e.g. neptune', lookupBtn: 'Look up',
     checking: 'Looking…', notFound: 'That name was not found.',
@@ -143,12 +141,7 @@ const T_EMBEDDED = {
     getAvailable: 'This name is available!', getPrice: 'Price',
     getCheckFail: 'Could not check that name. Please check your connection and try again.',
     getPreviewLbl: 'This is how the name will look',
-    noWallet: 'No wallet app was found yet. To get a name, open this page in a wallet app’s browser (such as MetaMask or FoxWallet). Reading works anywhere.',
     recheckBtn: 'Check again',
-    connectBtn: 'Connect wallet', connectFail: 'The wallet did not connect.',
-    connectedLbl: 'Connected',
-    wrongChain: 'Your wallet is set to a different network.', switchBtn: 'Switch to QL1',
-    switchFail: 'The network could not be switched.',
     yourQcaw: 'Your qCAW', yourQom: 'QOM (for the small fees)',
     needWalletForName: 'Unlock the posting wallet above to get this name.',
     getBuyCaw: 'Buy CAW',
@@ -160,14 +153,12 @@ const T_EMBEDDED = {
     approveBtn: 'OK, allow it',
     step2: 'Step 2 of 2 — one more tap and the name is yours',
     mintBtn: 'Get this name',
-    sendingWallet: 'Check your wallet…', recording: 'Recording it…',
+    recording: 'Recording it…',
     sendFail: 'That did not go through.',
     mintDone: 'Done — this name is yours!', viewProfileBtn: 'See your new name’s page',
     mintChanged: 'Just now, that name was taken or stopped being available. Please check it again.',
     priceChanged: 'The price changed to {p} qCAW. Look it over, and try again when you are ready.',
-    sentUnconfirmed: 'Your wallet sent it, but the record is slow to settle. Give it a moment, then check “My names”.',
     myNamesTitle: 'Your names', noNames: 'This wallet has no CAW names yet.',
-    myNamesConnect: 'Connect your wallet to see the names you own.',
     pwTitle: 'Posting wallet',
     pwIntro: 'Posting, liking, Recaws, follows and getting a name are signed inside this page by this built-in wallet — the same way the Android app works.',
     pwSafetyCreate: 'Use a separate wallet here, made only for CAW. Never type the recovery phrase of your main wallet.',
@@ -213,7 +204,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'About',
     setAboutBody: 'CAW is a social app on QL1, a chain that runs without a central operator. Posts and follows are written to the public record — nobody can quietly rewrite them. Names are NFTs: yours stays yours.',
     setViewsNote: 'View counts are not public. Nobody — not the app, not this page — can see how many people looked at a post. Only on-chain actions (posts, likes, follows) are public.',
-    setVersionLbl: 'CAW Social — web v36',
+    setVersionLbl: 'CAW Social — web v37',
     setDangerTitle: 'Danger zone',
     setNoWallet: 'No posting wallet in this browser yet.',
     setSetupBtn: 'Set up the posting wallet',
@@ -325,7 +316,6 @@ const T_EMBEDDED = {
     actUnconfirmed: 'Sent, but the record is slow to confirm it.',
     actNotOwner: 'This name does not belong to the posting wallet right now, so signing stopped.',
     actSelfFollow: 'That name belongs to this same wallet, so it cannot be followed from here.',
-    mintNote: 'Getting a name uses your wallet app (MetaMask or FoxWallet) — that is separate from the posting wallet higher up, which is only for posting.',
     navHome: 'Home', navSearch: 'Search', navProfile: 'Profile',
     navWallet: 'Wallet', navMyNames: 'My names', navGetName: 'Get a name',
     navBookmarks: 'Bookmarks', navSettings: 'Settings',
@@ -472,8 +462,6 @@ const T_EMBEDDED = {
   ja: {
     loading: '読み込み中…', loadFail: '読み込めませんでした。しばらくしてからお試しください。',
     empty: 'まだ投稿がありません。', viewTx: '記録を見る', moreBtn: 'もっと見る',
-    noticeTitle: '閲覧は無料 — 名前もここで取れます',
-    noticeText: 'QL1 の CAW のタイムラインを読んでいます。閲覧は無料で、ウォレットもアカウントも要りません。名前はウォレットアプリで取れて、投稿はこのページの内蔵ウォレットでも、Android アプリでもできます。',
     appBtn: 'Android アプリを入れる',
     lookupTitle: '名前をさがす', lookupPh: '例：neptune', lookupBtn: 'さがす',
     checking: '調べています…', notFound: 'その名前は見つかりませんでした。',
@@ -520,12 +508,7 @@ const T_EMBEDDED = {
     getAvailable: 'この名前は取れます！', getPrice: '価格',
     getCheckFail: '調べられませんでした。通信を確認してもう一度お試しください。',
     getPreviewLbl: '名前の見た目です',
-    noWallet: 'ウォレットアプリがまだ見つかりません。名前を取るには、ウォレットアプリ（MetaMask や FoxWallet など）のブラウザでこのページを開いてください。読むだけならどこでもできます。',
     recheckBtn: 'もう一度確認',
-    connectBtn: 'ウォレットをつなぐ', connectFail: 'ウォレットがつながりませんでした。',
-    connectedLbl: '接続中',
-    wrongChain: 'ウォレットが別のネットワークになっています。', switchBtn: 'QL1 に切り替える',
-    switchFail: 'ネットワークを切り替えられませんでした。',
     yourQcaw: 'あなたの qCAW', yourQom: 'QOM（手数料用）',
     needWalletForName: 'この名前を取るには、上の投稿用ウォレットを開いてください。',
     getBuyCaw: 'CAWを買う',
@@ -537,14 +520,12 @@ const T_EMBEDDED = {
     approveBtn: '許可する',
     step2: 'ステップ 2/2：あと1タップで名前が取れます',
     mintBtn: 'この名前を取る',
-    sendingWallet: 'ウォレットで確認してください…', recording: '記録しています…',
+    recording: '記録しています…',
     sendFail: '送信できませんでした。',
     mintDone: 'できました — この名前はあなたのものです！', viewProfileBtn: '新しい名前のページを見る',
     mintChanged: 'たった今、その名前が取られてしまったか、取れなくなりました。もう一度調べてください。',
     priceChanged: '価格が {p} qCAW に変わりました。確認してから、もう一度どうぞ。',
-    sentUnconfirmed: 'ウォレットからは送られましたが、記録の確定が遅れています。少し待ってから、「自分の名前」を見てください。',
     myNamesTitle: 'あなたの名前', noNames: 'このウォレットには、まだ CAW の名前がありません。',
-    myNamesConnect: 'ウォレットをつなぐと、あなたの名前が表示されます。',
     pwTitle: '投稿用ウォレット',
     pwIntro: '投稿・いいね・Recaw・フォロー・名前を取る手続きは、このページ内蔵のウォレットで、このページの中で署名します。Android アプリと同じ方式です。',
     pwSafetyCreate: 'ここでは CAW 専用の別のウォレットを使ってください。本命ウォレットの復元フレーズは絶対に入力しないでください。',
@@ -589,7 +570,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'このアプリについて',
     setAboutBody: 'CAW は QL1 上のソーシャルアプリです。QL1 は中央の運営者なしに動くチェーンで、投稿やフォローは公開記録に書かれ、誰もこっそり書き換えられません。名前は NFT で、あなたの名前はあなたのものです。',
     setViewsNote: '閲覧数は公開されません。アプリにもこのページにも、投稿が何回見られたかを知る方法はありません。公開されるのはオンチェーンの操作（投稿・いいね・フォロー）だけです。',
-    setVersionLbl: 'CAW Social — web v36',
+    setVersionLbl: 'CAW Social — web v37',
     setDangerTitle: '危険ゾーン',
     setNoWallet: 'このブラウザには、まだ投稿用ウォレットがありません。',
     setSetupBtn: '投稿用ウォレットを作る',
@@ -701,7 +682,6 @@ const T_EMBEDDED = {
     actUnconfirmed: '送りましたが、記録の確定が遅れています。',
     actNotOwner: 'この名前は今の投稿用ウォレットのものではないため、署名を止めました。',
     actSelfFollow: 'その名前は同じウォレットのものなので、ここからはフォローできません。',
-    mintNote: '名前を取る手続きはウォレットアプリ（MetaMask や FoxWallet）を使います。上の投稿用ウォレットとは別で、あちらは投稿専用です。',
     navHome: 'ホーム', navSearch: '検索', navProfile: 'プロフィール',
     navWallet: 'ウォレット', navMyNames: '自分の名前', navGetName: '名前を取る',
     navBookmarks: 'ブックマーク', navSettings: '設定',
@@ -1051,23 +1031,44 @@ function linkify(body) {
     return pre + '<a class="plink mention" href="' + PAGE_FILE + '?name=' + encodeURIComponent(mention.toLowerCase()) + '">@' + mention + '</a>';
   });
 }
-/* Compact relative time ("5m" / "3h" / "2d"; JA「5分」「3時間」
-   「2日」); from ~30 days on, the plain date. Deterministic when
-   nowSec is passed (the harness uses that). */
+/* Compact relative time — v37 (B-P2): the app's
+   formatRelativeTime verbatim ("12s" / "2m" / "5h" / "3d",
+   identical in every language, as on X); from a week on, the
+   localised date + time (the app's formatTime). Before v37 the
+   suffixes were localised table strings (T.relMin / relHour /
+   relDay — the keys stay in the tables, unused). Deterministic
+   when nowSec is passed (the harness uses that). */
 function relTime(ts, nowSec) {
   const t = Number(ts) || 0;
   const now = nowSec || Math.floor(Date.now() / 1000);
   const diff = Math.max(0, now - t);
-  if (diff < 60) return T.justNow;
-  if (diff < 3600) { const m = Math.floor(diff / 60); return m + T.relMin; }
-  if (diff < 86400) { const h = Math.floor(diff / 3600); return h + T.relHour; }
-  if (diff < 30 * 86400) { const d = Math.floor(diff / 86400); return d + T.relDay; }
-  return new Date(t * 1000).toLocaleDateString(CAW_LOCALES[LANG],
-    { year: 'numeric', month: 'numeric', day: 'numeric' });
+  if (diff < 60) return diff + 's';
+  if (diff < 3600) { const m = Math.floor(diff / 60); return m + 'm'; }
+  if (diff < 86400) { const h = Math.floor(diff / 3600); return h + 'h'; }
+  if (diff < 7 * 86400) { const d = Math.floor(diff / 86400); return d + 'd'; }
+  return fullTimeStr(t);
 }
 function fullTimeStr(ts) {
   return new Date((ts || 0) * 1000).toLocaleString(CAW_LOCALES[LANG],
     { year: 'numeric', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+/* Feed swipe decisions (v37, B-HM3) — the app's lib/feedSwipe.ts
+   rules verbatim: a drag may claim the gesture once it is at
+   least 24px horizontal AND clearly horizontal-dominant (2.2x);
+   on release, a claimed gesture switches feeds only at 60px of
+   travel. Direction follows the reading direction: in LTR a
+   leftward swipe moves to Following, a rightward swipe back to
+   Latest; RTL inverts. Pure, so the harness tests the real
+   functions. */
+const SWIPE_CLAIM_MIN_DX = 24, SWIPE_CLAIM_DOMINANCE = 2.2, SWIPE_SWITCH_MIN_DX = 60;
+function swipeShouldClaim(dx, dy) {
+  const adx = Math.abs(dx);
+  return adx > SWIPE_CLAIM_MIN_DX && adx > SWIPE_CLAIM_DOMINANCE * Math.abs(dy);
+}
+function swipeTargetMode(dx, isRTL) {
+  if (Math.abs(dx) < SWIPE_SWITCH_MIN_DX) return null;
+  const toFollowing = isRTL ? dx > 0 : dx < 0;
+  return toFollowing ? 'following' : 'latest';
 }
 /* Wrap keyword matches in <mark> WITHOUT touching tags: the input
    is already-escaped, already-linkified HTML, and the string is
@@ -3986,7 +3987,11 @@ async function applyProfileMedia(id) {
   if (!chips) return;
   let html = '';
   if (m && m.audio && m.audio.url) {
-    html += '<div class="prof-audio"><span class="small">' + esc(T.mediaAudio) + '</span><audio controls preload="none" src="' + esc(m.audio.url) + '"></audio></div>';
+    /* v37 (B-PR2): the app's AudioChip — one outlined pill
+       (play/pause glyph + label) driving a hidden Audio
+       element, instead of the browser's native controls bar. */
+    html += '<button type="button" class="prof-audio" data-audio-src="' + esc(m.audio.url) + '">' +
+      '<span class="pa-glyph">▶</span><span>' + esc(T.mediaAudio) + '</span></button>';
   }
   const acting = pwUnlocked() ? pwActing() : null;
   const own = !!(acting && String(acting.id) === String(id));
@@ -4002,6 +4007,17 @@ async function applyProfileMedia(id) {
   slot.id = 'profMedia';
   slot.innerHTML = html;
   chips.after(slot);
+  const paBtn = slot.querySelector('.prof-audio');
+  if (paBtn) {
+    const glyph = paBtn.querySelector('.pa-glyph');
+    const au = new Audio(paBtn.dataset.audioSrc);
+    au.preload = 'none';
+    const syncGlyph = () => { if (glyph) glyph.textContent = au.paused ? '▶' : '❚❚'; };
+    au.addEventListener('play', syncGlyph);
+    au.addEventListener('pause', syncGlyph);
+    au.addEventListener('ended', syncGlyph);
+    paBtn.onclick = () => { if (au.paused) { const p = au.play(); if (p && p.catch) p.catch(() => {}); } else { au.pause(); } };
+  }
   if (own) wireMediaSettings();
 }
 async function shortenViaCawl(url) {
@@ -4195,11 +4211,22 @@ async function recawCard(a) {
   div.dataset.cawid = (a.cawId || '').toLowerCase();
   const [name, img] = await Promise.all([resolveName(a.senderId), avatarFor(a.senderId)]);
   const who = name ? '@' + name : T.unknownName + a.senderId;
-  let html = '<div class="recaw-attr"><span class="ra-ic">' + IC_REPEAT + '</span><span class="ra-txt">' +
-    esc(T.recawedBy.replace('{name}', who)) + '</span>' +
-    '<span class="time" title="' + esc(fullTimeStr(a.ts)) + '">· ' + esc(whenStr(a.ts)) + '</span></div>' +
+  /* v37 (B-P3): the app's RecawCard anatomy — the Recawer's own
+     44px avatar at the left of the whole row; the attribution
+     line (14px icon + 12px bold text) heads the body column,
+     the nested original sits under it, and the one record link
+     closes the column. (v16–v36 stacked the attribution as a
+     full-width line and dropped the avatar entirely.) */
+  const profHref = name ? profUrl(name) : null;
+  let html = (profHref
+    ? '<a class="plink" href="' + profHref + '">' + avatarHtml(img, name) + '</a>'
+    : avatarHtml(img, name)) +
+    '<div class="pbody">' +
+    '<div class="recaw-attr"><span class="ra-ic">' + IC_REPEAT + '</span><span class="ra-txt">' +
+    esc(T.recawedBy.replace('{name}', who)) + '</span></div>' +
     '<div class="frameslot"></div>' +
-    recordLineHtml(a.hash);
+    recordLineHtml(a.hash) +
+    '</div>';
   div.innerHTML = html;
   const slot = div.querySelector('.frameslot');
   (async () => {
@@ -4241,6 +4268,17 @@ function skeletonHtml(n) {
       '<div class="pbody"><div class="skel-line w40"></div><div class="skel-line w90"></div><div class="skel-line w70"></div></div></div>';
   }
   return s;
+}
+/* v37 (B-ST2): the app's two state shapes — a centred spinner
+   + "Loading…" for a feed's first paint (the app shows no
+   skeleton rows), and a filled rounded card for an empty feed
+   (the app's emptyState). Skeletons stay where a scan is
+   already running (profile / search / following rebuilds). */
+function feedLoadingHtml() {
+  return '<div class="feed-loading"><span class="spinner"></span><span>' + esc(T.loading) + '</span></div>';
+}
+function emptyCardHtml(text) {
+  return '<div class="empty-card">' + esc(text) + '</div>';
 }
 let tlCursor = null, tlDone = false, tlLoading = false, tlTopItem = null;
 /* ---------- own-post insertion (v32, D4; the app's feedSync) ----------
@@ -4291,7 +4329,7 @@ async function loadTimeline(append) {
         if (cached[0]) tlTopItem = cached[0];
         if (rows.some(r => r)) hydrateAttachmentsIn(box).catch(() => {});
       } else {
-        box.innerHTML = skeletonHtml(5);
+        box.innerHTML = feedLoadingHtml();
       }
     }
     let rendered = 0, pages = 0, cleared = append;
@@ -4326,7 +4364,7 @@ async function loadTimeline(append) {
     /* v35 (D20): the fresh head becomes the next visit's
        instant paint. */
     if (!append && freshItems.length) feedCacheSave(freshItems.slice(0, 40));
-    if (!box.children.length && tlDone) box.innerHTML = '<p>' + T.empty + '</p>';
+    if (!box.children.length && tlDone) box.innerHTML = emptyCardHtml(T.empty);
     $('moreBtn').style.display = tlDone ? 'none' : '';
   } catch (e) {
     if (!box.querySelector('.post:not(.skel)')) {
@@ -4362,10 +4400,9 @@ function startNewPostPolling() {
         pendingOwn.has(String(page.items[0].hash || '').toLowerCase());
       reconcileOwnPosts(page.items);
       if (headIsMine) tlTopItem = page.items[0];
-      else if (page.items.length && isNewerItem(page.items[0], tlTopItem)) {
-        const pill = $('newPostsPill');
-        if (pill) pill.style.display = '';
-      }
+      /* v37 (B-HM2): a newer head no longer raises a pill (the
+         element is gone); the scan's side effects above are the
+         point of the poll now. */
     } catch (e) { /* a failed check just waits for the next tick */ }
   }, 60000);
 }
@@ -4429,11 +4466,6 @@ function switchFeedMode(mode) {
   if (tl) tl.style.display = fol ? 'none' : '';
   const mb = $('moreBtn');
   if (mb && mb.parentElement) mb.parentElement.style.display = fol ? 'none' : '';
-  const pill = $('newPostsPill');
-  if (pill) {
-    if (fol) { pill.dataset.was = pill.style.display || ''; pill.style.display = 'none'; }
-    else if (pill.dataset.was !== undefined) { pill.style.display = pill.dataset.was; delete pill.dataset.was; }
-  }
   const fa = $('followingArea');
   if (fa) fa.style.display = fol ? '' : 'none';
   if (fol) setupFollowing();
@@ -4459,7 +4491,7 @@ async function setupFollowing() {
   }
   if (folStarted && folSet && folSetFor === acting.id.toString()) return; /* already built for this name */
   folSet = null; folSetFor = acting.id.toString(); folCursor = null; folDone = false; folStarted = false;
-  box.innerHTML = skeletonHtml(5);
+  box.innerHTML = feedLoadingHtml();
   const prog = document.createElement('p');
   prog.className = 'small fol-prog';
   box.appendChild(prog);
@@ -4773,7 +4805,7 @@ function renderProfBucket() {
   box.innerHTML = '';
   const rows = profBuckets[profTab];
   if (!rows.length) {
-    if (profDone) box.innerHTML = '<p>' + T.empty + '</p>';
+    if (profDone) box.innerHTML = emptyCardHtml(T.empty);
     return;
   }
   for (const r of rows) box.appendChild(r);
@@ -4953,7 +4985,7 @@ async function runSearch(append) {
       prog.textContent = T.searchingPosts.replace('{n}', String(searchState.scanned));
       if (!page.items.length) searchState.done = true;
     }
-    if (!box.querySelector('.post:not(.skel)')) box.innerHTML = '<p>' + T.searchNone + '</p>';
+    if (!box.querySelector('.post:not(.skel)')) box.innerHTML = emptyCardHtml(T.searchNone);
     prog.textContent = T.searchFound.replace('{n}', String(searchState.found)) +
       (searchState.done ? ' ' + T.searchEnd : '');
     $('searchMoreBtn').style.display = searchState.done ? 'none' : '';
@@ -6171,7 +6203,7 @@ function renderSettings() {
   let h = '<div class="pw-card"><h3 class="detail-h">' + esc(T.setLanguage) + '</h3>' +
     '<div class="menu-list">' +
     CAW_LANGS.map(l => l.code === LANG
-      ? '<span class="menu-row"><span>' + esc(l.label) + '</span><span class="set-check">✓</span></span>'
+      ? '<span class="menu-row lang-on"><span>' + esc(l.label) + '</span><span class="set-check">✓</span></span>'
       : '<a class="menu-row" href="' + l.code + '.html' + langQ + '"><span>' + esc(l.label) + '</span><span>' + chev + '</span></a>').join('') +
     '</div></div>';
   if (pwSession) {
@@ -6257,7 +6289,7 @@ async function renderNamesScreen() {
       '<div class="mn-actions">' +
       (isActing
         ? '<span class="mn-badge">' + esc(T.mineActive) + '</span>'
-        : '<button type="button" class="ghost" data-mn-use="' + t.id.toString() + '">' + esc(T.mineUseBtn) + '</button>') +
+        : '<button type="button" class="mn-use" data-mn-use="' + t.id.toString() + '">' + esc(T.mineUseBtn) + '</button>') +
       '<button type="button" class="ghost" data-mn-toggle="' + t.id.toString() + '">' + esc(T.depostLbl) + '</button>' +
       '</div>' +
       (open
@@ -7222,22 +7254,17 @@ let compDirState = null;        // v32 (M3): name-directory progress {done, tota
 let compNoteState = '';         // v32 (D1): what the draft note currently shows
 let composeHomeSlot = null;     // v32 (D7): #composerArea's home position
 function setComposerRef(kind, post) {
-  const homeVisible = $('viewHome') && $('viewHome').style.display !== 'none';
-  if (!homeVisible) {
-    /* v32 (D7): reply/quote in place — the composer opens as a
-       sheet over the current view (the app's behaviour) instead
-       of navigating home. The ?compose= navigation remains as
-       the fallback for shells without the sheet. */
-    composerRef = { kind, post };
-    if (openComposeModal()) return;
-    composerRef = null;
-    location.href = pageFile + '?compose=' + kind + ':' + post.cawId;
-    return;
-  }
+  /* v32 (D7): reply/quote in place — the composer opens as a
+     sheet over the current view (the app's behaviour) instead
+     of navigating home. v37 (B-C1): the composer is ALWAYS the
+     sheet now (the inline home card is gone — the app has no
+     inline composer), so the home view takes the same path.
+     The ?compose= navigation remains as the fallback for
+     shells without the sheet. */
   composerRef = { kind, post };
-  renderComposer();
-  const ta = $('compText');
-  if (ta) { ta.focus(); ta.scrollIntoView({ block: 'center' }); }
+  if (openComposeModal()) return;
+  composerRef = null;
+  location.href = pageFile + '?compose=' + kind + ':' + post.cawId;
 }
 function renderComposer() {
   const area = $('composerArea');
@@ -7255,7 +7282,11 @@ function renderComposer() {
   }
   if (pendingComposeRef && !composerRef) {
     composerRef = pendingComposeRef; pendingComposeRef = null;
-    setTimeout(() => { const ta = $('compText'); if (ta) ta.scrollIntoView({ block: 'center' }); }, 60);
+    /* v37 (B-C1): a ?compose= landing opens the composer sheet
+       (there is no inline home composer left to scroll to).
+       Deferred a tick so the boot renders settle first;
+       openComposeModal is re-entry-guarded. */
+    setTimeout(() => { if (composerRef && !composerInModal()) openComposeModal(); }, 60);
   }
   const acting = pwActing();
   if (!acting) {
@@ -7286,10 +7317,19 @@ function renderComposer() {
      name as a chip, then the input. v32 (D2): the chip opens
      the in-composer name picker instead of leaving for the
      wallet view; the balance moved to the cost line (D6). */
-  let html = '<div class="composer-card"><div class="composer-row">' +
+  /* v37 (B-C1): the app's ComposeScreen anatomy — a header row
+     (✕ at the left, the blue Post pill at the right), then the
+     "Post as" name chip row, then the avatar + field row. The
+     Post pill lives in the header now; the old footer button is
+     gone (the char count keeps the footer row). */
+  let html = '<div class="composer-card"><div class="compose-head">' +
+    '<button type="button" class="compose-x" id="compHeadClose" aria-label="' + esc(T.compCloseLbl) + '">✕</button>' +
+    '<button type="button" class="comp-post" id="compPostBtn">' + esc(T.compPostBtn) + '</button></div>' +
+    '<div class="composer-top"><span class="comp-as">' + esc(T.compPostAs) + ':</span>' +
+    '<button type="button" class="name-chip-btn" id="compNameChip">@' + esc(acting.username) + ' ▾</button></div>' +
+    '<div class="composer-row">' +
     '<span class="comp-ava" id="compAva"></span>' +
-    '<div class="composer-main">' +
-    '<div class="composer-top"><button type="button" class="name-chip-btn" id="compNameChip">@' + esc(acting.username) + ' ▾</button></div>';
+    '<div class="composer-main">';
   if (acting.balance === 0n) html += '<p class="warn">' + esc(T.compZeroBalance) + '</p>';
   if (ref) {
     const lbl = ref.kind === 'reply' ? T.compReplyingTo : T.compQuoting;
@@ -7299,8 +7339,7 @@ function renderComposer() {
   html += '<textarea id="compText" rows="3" placeholder="' + esc(T.compPh) + '">' + esc(compDraft) + '</textarea>' +
     '<div class="comp-mentions" id="compMentions" style="display:none"></div>' +
     '<div class="comp-thumbs" id="compThumbs" style="display:none"></div>' +
-    '<div class="composer-foot"><span class="charcount" id="compCount"></span>' +
-    '<button type="button" class="comp-post" id="compPostBtn">' + esc(T.compPostBtn) + '</button></div>' +
+    '<div class="composer-foot"><span class="charcount" id="compCount"></span></div>' +
     '<p class="comp-draft-note" id="compDraftNote" style="display:none"></p>' +
     '<p class="comp-cost" id="compCostLine">' + costLineHtml + '</p>' +
     '<p id="compStatus"></p></div></div></div>';
@@ -7316,6 +7355,10 @@ function renderComposer() {
      in-composer picker; with a single name there is nothing to
      pick, so it stays a plain label (the app's behaviour). */
   if (chipBtn && pwNames.length > 1) chipBtn.onclick = () => openNamePicker();
+  /* v37 (B-C1): the header ✕ closes the composer sheet (the
+     app's ComposeScreen header). */
+  const headClose = $('compHeadClose');
+  if (headClose) headClose.onclick = () => closeComposeModal();
   if (ref) {
     (async () => {
       const nm = await resolveName(ref.post.senderId).catch(() => null);
@@ -7629,10 +7672,16 @@ function openNamePicker() {
   if (cancel) cancel.onclick = () => { ov.style.display = 'none'; };
   ov.style.display = '';
 }
-/* v32 (D7): the in-place composer sheet. The sheet MOVES the
-   one #composerArea node — there is never a second composer,
-   so ids and wiring stay single. Closing moves it back home
-   and re-renders, so the home composer is as it was. */
+/* v32 (D7): the in-place composer sheet — there is never a
+   second composer, so ids and wiring stay single.
+   v37 (B-C1): the app has no inline composer, so the sheet is
+   the composer's ONLY home now: #composerArea lives inside
+   #composeModalSlot in the shell markup itself, and opening /
+   closing just shows / hides the overlay (before v37 opening
+   MOVED the node in from the home view and closing moved it
+   back). composeHomeSlot is still recorded for the harness's
+   sake; nothing moves any more. */
+let compOpening = false; // re-entry guard: renderComposer may ask to open
 function composerInModal() {
   const area = $('composerArea'), slot = $('composeModalSlot'), ov = $('composeOverlay');
   return !!(area && slot && ov && ov.style.display !== 'none' && area.parentNode === slot);
@@ -7641,21 +7690,20 @@ function openComposeModal() {
   const area = $('composerArea'), slot = $('composeModalSlot'), ov = $('composeOverlay');
   if (!area || !slot || !ov) return false;
   if (!composeHomeSlot) composeHomeSlot = { parent: area.parentNode, next: area.nextSibling };
-  slot.appendChild(area);
-  ov.style.display = '';
-  const closeBtn = $('composeModalClose');
-  if (closeBtn) closeBtn.onclick = () => closeComposeModal();
-  renderComposer();
-  const ta = $('compText');
-  if (ta) ta.focus();
+  if (compOpening) return true;
+  compOpening = true;
+  try {
+    if (area.parentNode !== slot) slot.appendChild(area); /* legacy shells: adopt the node once */
+    ov.style.display = '';
+    renderComposer();
+    const ta = $('compText');
+    if (ta) ta.focus();
+  } finally { compOpening = false; }
   return true;
 }
 function closeComposeModal() {
-  const area = $('composerArea'), ov = $('composeOverlay');
+  const ov = $('composeOverlay');
   if (ov) ov.style.display = 'none';
-  if (area && composeHomeSlot && composeHomeSlot.parent) {
-    composeHomeSlot.parent.insertBefore(area, composeHomeSlot.next);
-  }
   renderComposer();
 }
 /* v32 (D7): after a post lands from the sheet, the view
@@ -8424,7 +8472,7 @@ async function loadBookmarksView() {
   }
   const ids = bmList(pwSession.address);
   if (!ids.length) {
-    box.innerHTML = '<p class="bm-note">' + esc(T.bmEmpty) + '</p>';
+    box.innerHTML = emptyCardHtml(T.bmEmpty);
     return;
   }
   for (const id of ids) {
@@ -8446,7 +8494,7 @@ async function loadBookmarksView() {
         wrap.querySelector('.bm-del').onclick = () => {
           if (pwSession) bmToggle(pwSession.address, id);
           wrap.remove();
-          if (!box.querySelector('.bm-row')) box.innerHTML = '<p class="bm-note">' + esc(T.bmEmpty) + '</p>';
+          if (!box.querySelector('.bm-row')) box.innerHTML = emptyCardHtml(T.bmEmpty);
         };
       }
     })();
@@ -8753,8 +8801,12 @@ async function ntRow(ev) {
      target name's HTML; the template text around it is escaped
      piece by piece, as the {name} split above does. */
   const tailHtml = (parts[1] || '').split('{target}').map(p => esc(p)).join(targetHtml);
-  div.innerHTML = actorHtml +
-    '<div class="nt-body"><div class="nt-line"><span class="nt-ic ' + meta.cls + '">' + meta.icon + '</span>' +
+  /* v37 (B-R1): the app's reaction-row anatomy — the kind glyph
+     rides as a small badge on the avatar's corner (coloured by
+     kind: pink like, green recaw, gold super, blue the rest)
+     instead of an inline icon before the sentence. */
+  div.innerHTML = '<span class="nt-ava">' + actorHtml + '<span class="nt-badge ' + meta.cls + '">' + meta.icon + '</span></span>' +
+    '<div class="nt-body"><div class="nt-line">' +
     '<span class="nt-txt">' + esc(parts[0] || '') + nameHtml + tailHtml + '</span>' +
     (timeTs ? '<span class="nt-time" title="' + esc(fullTimeStr(timeTs)) + '">· ' + esc(whenStr(timeTs)) + '</span>' : '') +
     '</div>' +
@@ -8783,8 +8835,10 @@ async function ntRender(events, capped) {
     if (owner && superRecawCached(ev.item.cawId, owner)) ev.kind = 'superrecaw';
   }));
   if (!events.length) {
-    box.innerHTML = '<p class="bm-note">' + esc(T.ntEmpty) + '</p>' +
-      (capped ? '<p class="bm-note">' + esc(T.ntCapped) + '</p>' : '');
+    /* v37 (B-ST2): one app-style empty card; the capped-scan
+       note rides inside it as a second line. */
+    box.innerHTML = '<div class="empty-card">' + esc(T.ntEmpty) +
+      (capped ? '<div class="small" style="margin-top:6px">' + esc(T.ntCapped) + '</div>' : '') + '</div>';
     return;
   }
   const rows = await Promise.all(events.slice(0, 200).map(ev => ntRow(ev).catch(() => null)));
@@ -9374,29 +9428,50 @@ if (postQuery && /^0x[0-9a-fA-F]{64}$/.test(postQuery)) {
   if (fmb) fmb.onclick = () => loadFollowing(true);
   const rb = $('refreshBtn');
   if (rb) rb.onclick = () => refreshHomeFeed();
-  const npb = $('newPostsBtn');
-  if (npb) npb.onclick = () => {
-    const pill = $('newPostsPill');
-    if (pill) pill.style.display = 'none';
-    loadTimeline(false);
-    const vh = $('viewHome');
-    if (vh) vh.scrollIntoView();
-  };
+  /* v37 (B-HM2): the "new posts" pill is gone — the app shows no
+     such affordance; the 60-second head scan below still runs
+     (it also feeds the Reactions dot and graduates my pending
+     posts), it just no longer surfaces a pill. */
   startNewPostPolling();
-  /* Auto-load more when the "See more" area scrolls into view;
-     the button stays as the manual fallback. */
-  if (typeof IntersectionObserver !== 'undefined') {
-    const io = new IntersectionObserver(entries => {
-      if (entries.some(e => e.isIntersecting)) loadTimeline(true);
-    }, { rootMargin: '600px' });
-    io.observe($('moreBtn'));
-    const ioF = new IntersectionObserver(entries => {
-      if (entries.some(e => e.isIntersecting)) loadFollowing(true);
-    }, { rootMargin: '600px' });
-    if (fmb) ioF.observe(fmb);
-  }
+  /* v37 (B-HM4): no scroll-triggered auto-loading — the app's
+     feeds end at an explicit "Load more" button, and so do the
+     web's now (the buttons were always the manual path). */
+  /* v37 (B-HM3): a horizontal swipe on the feed switches
+     Latest / Following, the app's gesture. The claim rule is
+     strict (24px + clearly horizontal-dominant), so vertical
+     scrolling is never stolen; the switch needs 60px of travel.
+     touch-action: pan-y (style.css) keeps the browser from
+     claiming the gesture itself. */
+  const wireFeedSwipe = el => {
+    if (!el || !el.addEventListener) return;
+    let sx = 0, sy = 0, claimed = false, tracking = false;
+    el.addEventListener('touchstart', e => {
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      sx = t.clientX; sy = t.clientY; claimed = false; tracking = true;
+    }, { passive: true });
+    el.addEventListener('touchmove', e => {
+      if (!tracking) return;
+      const t = e.touches && e.touches[0];
+      if (!t) return;
+      if (!claimed && swipeShouldClaim(t.clientX - sx, t.clientY - sy)) claimed = true;
+    }, { passive: true });
+    el.addEventListener('touchend', e => {
+      if (!tracking) return;
+      tracking = false;
+      if (!claimed) return;
+      const t = e.changedTouches && e.changedTouches[0];
+      if (!t) return;
+      const target = swipeTargetMode(t.clientX - sx, CAW_RTL.includes(LANG));
+      if (target && target !== tlMode) switchFeedMode(target);
+    }, { passive: true });
+  };
+  wireFeedSwipe($('timeline'));
+  wireFeedSwipe($('followingFeed'));
 }
-$('lookupBtn').onclick = doLookup;
+/* v37 (B-S1): the lookup button row is gone (the pill input's
+   Enter key submits, as before) — guard the wiring. */
+const lkBtn = $('lookupBtn'); if (lkBtn) lkBtn.onclick = doLookup;
 $('lookupInput').addEventListener('keydown', e => { if (e.key === 'Enter') doLookup(); });
 $('lookupInput').addEventListener('input', onLookupInput); /* v35 (M12): directory partial matches while typing */
 const sb = $('searchBtn');
@@ -9470,9 +9545,14 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(
 document.querySelectorAll('#drawer a').forEach(a => a.addEventListener('click', closeDrawer));
 const goCompose = () => {
   closeDrawer();
+  /* v37 (B-C1): the FAB / sidebar Post opens the composer sheet
+     in place from ANY view — the app's model (a full-screen
+     composer over whatever you were reading). Locked and
+     nameless users get the same sheet, which shows the existing
+     guidance (unlock / get-a-name) inside it. Navigation home
+     remains only as the fallback for shells without the sheet. */
+  if (openComposeModal()) return;
   if ($('viewHome') && $('viewHome').style.display !== 'none') {
-    const ca = $('composerArea');
-    if (ca) ca.scrollIntoView({ block: 'start' });
     const ta = $('compText');
     if (ta) ta.focus();
   } else {
@@ -9514,6 +9594,7 @@ if (typeof module !== 'undefined' && module.exports) {
     decodeActions, parsePostText, b64UrlToHex, metaFromUri,
     readCardName, resolveName, resolveNameId, avatarFor,
     cardFor, cardStats, resetCardCacheForTest, linkify, escapeHtml, relTime, fullTimeStr,
+    SWIPE_CLAIM_MIN_DX, SWIPE_CLAIM_DOMINANCE, SWIPE_SWITCH_MIN_DX, swipeShouldClaim, swipeTargetMode,
     highlightKeyword, isNewerItem,
     actionDigest, encodeBatch, keccakHex,
     buildFollowIndex, followListsOf, refinedFollowListsOf,
