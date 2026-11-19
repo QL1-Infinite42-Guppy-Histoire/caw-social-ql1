@@ -9,7 +9,10 @@
    carries exactly the placeholders of the English string;
    a mismatch fails the build. Proper nouns and token names
    (CAW, QL1, QOM, qCAW, PHOENIX, HAWK, Recaw, SuperLike,
-   HuntersDEX, BurnHawk) stay as-is in every language. */
+   HuntersDEX, BurnHawk) stay as-is in every language.
+   v43: the three tip keys left this table — the web tip
+   strings match the app's HAWK strings again, so they map
+   to the app table like the rest. */
 export const KEY_L10N = {
  "appBtn": {
   "zh": "获取 Android 应用",
@@ -3390,66 +3393,6 @@ export const KEY_L10N = {
   "ar": "حرق هذا HAWK؟",
   "hi": "इस HAWK को जलाएँ?",
   "fr": "Burner ces HAWK ?"
- },
- "tipBody": {
-  "zh": "向此帖子的作者 {name} 发送 PHOENIX。PHOENIX 是打赏币。",
-  "ko": "이 게시물의 작성자 {name}님에게 PHOENIX를 보냅니다. PHOENIX는 팁 전용 코인입니다.",
-  "es": "Envía PHOENIX a {name}, el autor de esta publicación. PHOENIX es la moneda de propina.",
-  "tr": "Bu gönderinin yazarı {name} kullanıcısına PHOENIX gönderin. PHOENIX bahşiş parasıdır.",
-  "fa": "به {name}، نویسنده این پست، PHOENIX بفرستید. PHOENIX سکه انعام است.",
-  "id": "Kirim PHOENIX ke {name}, penulis postingan ini. PHOENIX adalah koin tip.",
-  "vi": "Gửi PHOENIX cho {name}, tác giả của bài đăng này. PHOENIX là đồng xu tiền boa.",
-  "th": "ส่ง PHOENIX ให้ {name} ผู้เขียนโพสต์นี้ PHOENIX คือเหรียญทิป",
-  "it": "Invia PHOENIX a {name}, l’autore di questo post. PHOENIX è la moneta da mancia.",
-  "pt": "Envie PHOENIX para {name}, o autor desta publicação. PHOENIX é a moeda de gorjeta.",
-  "nl": "Stuur PHOENIX naar {name}, de auteur van dit bericht. PHOENIX is de fooienmunt.",
-  "pl": "Wyślij PHOENIX do {name}, autora tego posta. PHOENIX to moneta napiwkowa.",
-  "uk": "Надішліть PHOENIX користувачу {name}, автору цього допису. PHOENIX — це монета чайових.",
-  "de": "Sende PHOENIX an {name}, den Autor dieses Beitrags. PHOENIX ist die Tipp-Münze.",
-  "ru": "Отправьте PHOENIX пользователю {name}, автору этого поста. PHOENIX — это монета чаевых.",
-  "ar": "أرسل PHOENIX إلى {name}، مؤلف هذا المنشور. PHOENIX هي عملة الإكرامية.",
-  "hi": "{name} को PHOENIX भेजें, इस पोस्ट के लेखक। PHOENIX टिप सिक्का है।",
-  "fr": "Envoyez des PHOENIX à {name}, l’auteur de cette publication. PHOENIX est la monnaie de pourboire."
- },
- "tipBalance": {
-  "zh": "你的 PHOENIX 余额：{balance}",
-  "ko": "당신의 PHOENIX 잔액: {balance}",
-  "es": "Tu saldo de PHOENIX: {balance}",
-  "tr": "PHOENIX bakiyeniz: {balance}",
-  "fa": "موجودی PHOENIX شما: {balance}",
-  "id": "Saldo PHOENIX Anda: {balance}",
-  "vi": "Số dư PHOENIX của bạn: {balance}",
-  "th": "ยอดคงเหลือ PHOENIX ของคุณ: {balance}",
-  "it": "Il tuo saldo PHOENIX: {balance}",
-  "pt": "Seu saldo de PHOENIX: {balance}",
-  "nl": "Je PHOENIX-saldo: {balance}",
-  "pl": "Twoje saldo PHOENIX: {balance}",
-  "uk": "Ваш баланс PHOENIX: {balance}",
-  "de": "Dein PHOENIX-Guthaben: {balance}",
-  "ru": "Ваш баланс PHOENIX: {balance}",
-  "ar": "رصيدك من PHOENIX: {balance}",
-  "hi": "आपका PHOENIX बैलेंस: {balance}",
-  "fr": "Votre solde en PHOENIX : {balance}"
- },
- "tipShortfall": {
-  "zh": "PHOENIX 不足。在 QL1 上获取 PHOENIX（例如通过兑换，或使用 BurnHawk 销毁 HAWK），然后再试一次。",
-  "ko": "PHOENIX가 부족합니다. QL1에서 PHOENIX를 마련한 뒤(교환이나 BurnHawk로 HAWK 소각 등) 다시 시도하세요.",
-  "es": "No hay suficiente PHOENIX. Consigue PHOENIX en QL1 (por ejemplo intercambiando, o quemando HAWK con BurnHawk), y luego inténtalo de nuevo.",
-  "tr": "Yeterli PHOENIX yok. QL1’de PHOENIX edinin (örneğin takas yaparak veya BurnHawk ile HAWK yakarak), sonra tekrar deneyin.",
-  "fa": "PHOENIX کافی نیست. روی QL1 ‏PHOENIX بگیرید (مثلاً با مبادله، یا با سوزاندن HAWK با BurnHawk)، سپس دوباره تلاش کنید.",
-  "id": "PHOENIX tidak cukup. Dapatkan PHOENIX di QL1 (misalnya dengan menukar, atau dengan membakar HAWK dengan BurnHawk), lalu coba lagi.",
-  "vi": "Không đủ PHOENIX. Hãy lấy PHOENIX trên QL1 (ví dụ bằng cách hoán đổi, hoặc bằng cách đốt HAWK bằng BurnHawk), rồi thử lại.",
-  "th": "PHOENIX ไม่เพียงพอ หา PHOENIX บน QL1 (เช่น โดยการแลกเปลี่ยน หรือโดยการเผา HAWK ด้วย BurnHawk) แล้วลองอีกครั้ง",
-  "it": "PHOENIX non bastano. Ottieni PHOENIX su QL1 (per esempio scambiando, o burnando HAWK con BurnHawk), poi riprova.",
-  "pt": "PHOENIX insuficiente. Consiga PHOENIX na QL1 (por exemplo trocando, ou queimando HAWK com BurnHawk), e tente de novo.",
-  "nl": "Niet genoeg PHOENIX. Krijg PHOENIX op QL1 (bijvoorbeeld door te swappen, of door HAWK te verbranden met BurnHawk), en probeer het dan opnieuw.",
-  "pl": "Za mało PHOENIX. Zdobądź PHOENIX na QL1 (na przykład wymieniając, albo spalając HAWK przez BurnHawk), a potem spróbuj ponownie.",
-  "uk": "Не вистачає PHOENIX. Отримайте PHOENIX на QL1 (наприклад, обмінявши, або спаливши HAWK через BurnHawk), а потім спробуйте ще раз.",
-  "de": "Nicht genug PHOENIX. Besorge PHOENIX auf QL1 (zum Beispiel durch Swappen oder durch Burnen von HAWK mit BurnHawk) und versuche es dann erneut.",
-  "ru": "Не хватает PHOENIX. Получите PHOENIX на QL1 (например, обменяв, или сжигая HAWK через BurnHawk), а затем попробуйте ещё раз.",
-  "ar": "لا يوجد PHOENIX كافٍ. احصل على PHOENIX على QL1 (على سبيل المثال بالمبادلة، أو بحرق HAWK باستخدام BurnHawk)، ثم حاول مجدداً.",
-  "hi": "पर्याप्त PHOENIX नहीं है। QL1 पर PHOENIX पाएं (उदाहरण के लिए स्वैप करके, या BurnHawk से HAWK जलाकर), फिर फिर से कोशिश करें।",
-  "fr": "Pas assez de PHOENIX. Obtenez des PHOENIX sur QL1 (par exemple en échangeant, ou en burnant des HAWK avec BurnHawk), puis réessayez."
  }
 };
 export const CHUNK_L10N = {

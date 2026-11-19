@@ -73,6 +73,8 @@
    25/50/75/MAX chips, recipient spot-check line with the last
    four emphasised, balance line, over-balance error, self-tip
    blocked) sending a plain PHOENIX transfer through the
+   [v43: the tip currency is HAWK now, presets 1,000 / 5,000 /
+   10,000 — the v31 checks below pin the HAWK shape]
    shared confirm panel, the recipient re-resolved at send
    and cross-checked against the panel's resolution. The tip
    money rules are exported and unit-checked; the sheet, the
@@ -411,8 +413,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=42') && jaHtml.includes('?v=42'), 'shells reference ?v=42 assets');
-ok(swSrc.includes("caw-view-v42"), 'sw.js cache name is caw-view-v42');
+ok(enHtml.includes('?v=43') && jaHtml.includes('?v=43'), 'shells reference ?v=43 assets');
+ok(swSrc.includes("caw-view-v43"), 'sw.js cache name is caw-view-v43');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1348,7 +1350,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v42'), 'sw cache is caw-view-v42');
+  ok(swJs.includes('caw-view-v43'), 'sw cache is caw-view-v43');
 }
 
 /* ---- v28: plain send out of the posting wallet ----
@@ -1765,8 +1767,8 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok(confirmBody.includes("throw new Error('tip-mismatch')") && confirmBody.includes("throw new Error('self-tip')") &&
      confirmBody.includes("throw new Error('shortfall-tip')"),
     'v31: the send refuses on recipient disagreement, self-tip and shortfall');
-  ok(confirmBody.includes('sendLocalTx(pwSession.keyBytes, { to: PHOENIX_TOKEN, data: buildTransferData(fresh, amountRaw), gasFallback: 60000 })'),
-    'v31: the tip is a plain PHOENIX transfer through sendLocalTx + buildTransferData');
+  ok(confirmBody.includes('sendLocalTx(pwSession.keyBytes, { to: HAWK_TOKEN, data: buildTransferData(fresh, amountRaw), gasFallback: 60000 })'),
+    'v31+v43: the tip is a plain HAWK transfer through sendLocalTx + buildTransferData');
   const errBody = VS.slice(VS.indexOf('function confirmErrHtml(e)'), VS.indexOf('/* ================= v22'));
   ok(errBody.includes("e.message === 'self-tip'") && errBody.includes("e.message === 'tip-mismatch'") &&
      errBody.includes("e.message === 'shortfall-tip'"),
@@ -1779,9 +1781,9 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     'v31: the sheet spot-check line emphasises the recipient last four');
 
   /* unit checks: the exported money / filter rules (the app's lib/tip.ts) */
-  ok(JSON.stringify(V.TIP_PRESETS) === '[10,50,100]', 'v31: TIP_PRESETS are 10 / 50 / 100 PHOENIX');
-  ok(V.tipPresetRaw(10) === 10n * E18 && V.tipPresetRaw(50) === 50n * E18 && V.tipPresetRaw(100) === 100n * E18,
-    'v31: preset raw amounts are whole PHOENIX at 18 decimals');
+  ok(JSON.stringify(V.TIP_PRESETS) === '[1000,5000,10000]', 'v31+v43: TIP_PRESETS are 1,000 / 5,000 / 10,000 HAWK');
+  ok(V.tipPresetRaw(1000) === 1000n * E18 && V.tipPresetRaw(5000) === 5000n * E18 && V.tipPresetRaw(10000) === 10000n * E18,
+    'v31+v43: preset raw amounts are whole HAWK at 18 decimals');
   ok(V.parseTipAmount('10') === 10n * E18 && V.parseTipAmount('0.5') === 5n * 10n ** 17n &&
      V.parseTipAmount('1.123456789012345678') === 1123456789012345678n,
     'v31: custom tip amounts parse at 18 decimals');
@@ -1807,8 +1809,8 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok(V.folFeedItem({ type: 1, senderId: 11n }, fset) === false && V.folFeedItem({ type: 3, senderId: 11n }, fset) === false &&
      V.folFeedItem({ type: 0, senderId: 99n }, fset) === false && V.folFeedItem({ type: 0, senderId: 11n }, null) === false,
     'v31: the Following filter drops likes, follow rows, unfollowed authors and a missing set');
-  const deadBal = await V.phoenixBalanceOf('0x000000000000000000000000000000000000dEaD');
-  ok(typeof deadBal === 'bigint' && deadBal >= 0n, 'v31: phoenixBalanceOf reads the live PHOENIX balanceOf');
+  const deadBal = await V.hawkBalanceOf('0x000000000000000000000000000000000000dEaD');
+  ok(typeof deadBal === 'bigint' && deadBal >= 0n, 'v31+v43: hawkBalanceOf reads the live HAWK balanceOf');
 
   /* behavioural: the Following segment + walk against a stub DOM */
   const folSrc = VS.slice(VS.indexOf("let tlMode = 'latest';"), VS.indexOf('/* ---------- "CAW right now" stats card'));
@@ -1909,17 +1911,17 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       onclick: null, oninput: null, classList: { toggle() {} } });
     const $id = id => (els[id] = els[id] || mkEl());
     const chip = v => ({ _v: v, onclick: null, getAttribute() { return this._v; }, classList: { toggle() {} } });
-    const chips = { '#tipPresets [data-tippreset]': ['10', '50', '100', 'custom'].map(chip),
+    const chips = { '#tipPresets [data-tippreset]': ['1000', '5000', '10000', 'custom'].map(chip),
                     '#tipPctChips [data-tipchip]': ['25', '50', '75', '100'].map(chip) };
     const doc = { querySelectorAll: sel => chips[sel] || [] };
     const api = new Function('$', 'document', 'esc', 'T', 'TIP_PRESETS', 'tipPresetRaw', 'parseTipAmount',
       'tipChipAmount', 'tipShortfall', 'tipBlockReason', 'pctChipsHtml', 'rawToInputStr', 'resolveName',
-      'nameOwnerOf', 'phoenixBalanceOf', 'postTargetLabel', 'openConfirmPanel', 'openMessagePanel',
-      'pwSession', 'pwNames', 'pwTouch', 'sendLocalTx', 'buildTransferData', 'PHOENIX_TOKEN', 'fmtAmt',
+      'nameOwnerOf', 'hawkBalanceOf', 'postTargetLabel', 'openConfirmPanel', 'openMessagePanel',
+      'pwSession', 'pwNames', 'pwTouch', 'sendLocalTx', 'buildTransferData', 'HAWK_TOKEN', 'fmtAmt',
       'shortAddr', 'scrollToWallet',
       tipSrc + '\nreturn { onTipTap, openTipSheet, tipAmountRaw, state: () => tipState };')(
       $id, doc, s => String(s),
-      { tipTitle: 'TIPTITLE', tipBody: 'Send PHOENIX to {name}.', tipBalance: 'Balance: {balance}',
+      { tipTitle: 'TIPTITLE', tipBody: 'Send HAWK to {name}.', tipBalance: 'Balance: {balance}',
         tipCustom: 'CUSTOM', tipOver: 'OVER', tipSend: 'SENDTIP', tipTo: 'SENDTO', tipMismatch: 'MISMATCH',
         tipDone: 'TIPDONE', tipSelf: 'SELF', tipShortfall: 'SHORTFALL', unknownName: 'name #',
         slTarget: 'POST', confirmAmountLbl: 'AMOUNT', confirmCancelBtn: 'CANCEL', actFail: 'FAIL' },
@@ -1935,7 +1937,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
       (title, lines, err) => { captured.messages.push({ title, lines, err }); },
       { address: ME, keyBytes: new Uint8Array([7]) }, names, () => {},
       async (kb, o) => { captured.sends.push(o); return { hash: '0xhash' }; },
-      V.buildTransferData, V.PHOENIX_TOKEN, V.fmtAmt,
+      V.buildTransferData, V.HAWK_TOKEN, V.fmtAmt,
       a => a.slice(0, 6) + '…' + a.slice(-4), () => {});
     return { api, els, captured, chips };
   };
@@ -1952,12 +1954,12 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     const t = bootTip({ names: [], ownerSeq: [OWNER], balance: 1000n * E18 });
     t.api.onTipTap(post9);
     await tick();
-    ok(t.els.tipOverlay.style.display === '' && t.api.state() && t.api.state().preset === 10 &&
-       t.api.tipAmountRaw() === 10n * E18,
-      'v31 behaviour: the sheet opens on the first preset (10 PHOENIX)');
+    ok(t.els.tipOverlay.style.display === '' && t.api.state() && t.api.state().preset === 1000 &&
+       t.api.tipAmountRaw() === 1000n * E18,
+      'v31+v43 behaviour: the sheet opens on the first preset (1,000 HAWK)');
     ok(t.els.tipToLine.innerHTML.includes('<b>5678</b>') && t.els.tipToLine.innerHTML.includes('0x1234…'),
       'v31 behaviour: the recipient line shows the short address with the last four emphasised');
-    ok(t.els.tipBalLine.textContent.includes('1,000'), 'v31 behaviour: the balance line shows my PHOENIX balance');
+    ok(t.els.tipBalLine.textContent.includes('1,000'), 'v31+v43 behaviour: the balance line shows my HAWK balance');
     t.chips['#tipPresets [data-tippreset]'][3].onclick(); /* Custom */
     t.els.tipAmount.value = '2.5';
     t.els.tipAmount.oninput();
@@ -1977,12 +1979,12 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     ok(t.els.tipOverlay.style.display === 'none' && t.captured.confirms.length === 1,
       'v31 behaviour: Send closes the sheet into the confirm panel');
     const lines = t.captured.confirms[0].lines.map(l => l.join('=')).join('|');
-    ok(lines.includes('50 PHOENIX') && lines.includes('0x1234…5678'),
-      'v31 behaviour: the panel shows the amount and the resolved recipient');
+    ok(lines.includes('50 HAWK') && lines.includes('0x1234…5678'),
+      'v31+v43 behaviour: the panel shows the amount and the resolved recipient');
     ok(t.captured.ownerCalls === 2, 'v31 behaviour: the recipient was resolved for the sheet and re-resolved for the panel');
     await t.captured.confirms[0].onSign();
     ok(t.captured.ownerCalls === 3 && t.captured.sends.length === 1 &&
-       t.captured.sends[0].to === V.PHOENIX_TOKEN &&
+       t.captured.sends[0].to === V.HAWK_TOKEN &&
        t.captured.sends[0].data === V.buildTransferData(OWNER, 50n * E18) &&
        t.captured.sends[0].gasFallback === 60000,
       'v31 behaviour: the send re-resolves a third time and transfers to that address through sendLocalTx');
@@ -2014,7 +2016,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
     const t = bootTip({ names: [], ownerSeq: [OWNER], balance: 5n * E18 });
     t.api.onTipTap(post9);
     await tick();
-    t.els.tipSendBtn.onclick(); /* preset 10 > balance 5 — the panel still opens; the send is the guard */
+    t.els.tipSendBtn.onclick(); /* preset 1,000 > balance 5 — the panel still opens; the send is the guard */
     await tick();
     let threw = null;
     try { await t.captured.confirms[0].onSign(); } catch (e) { threw = e; }
@@ -3081,8 +3083,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     const rtl = B.RTL_LANGS.includes(code);
     ok(html.includes('<html lang="' + code + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">'),
       'v36 M14: ' + code + '.html declares lang=' + code + ' dir=' + (rtl ? 'rtl' : 'ltr'));
-    ok(html.includes('viewer.js?v=42') && html.includes('style.css?v=42') && html.includes('__cawViewerBooted'),
-      'v36 M14: ' + code + '.html loads the v42 assets + watchdog');
+    ok(html.includes('viewer.js?v=43') && html.includes('style.css?v=43') && html.includes('__cawViewerBooted'),
+      'v36 M14: ' + code + '.html loads the v43 assets + watchdog');
     ok([...html.matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',') === enNavSeq,
       'v36 M14: ' + code + '.html nav rows match the en shell, row for row');
     ok((html.match(/class="lang-slot"/g) || []).length === 2,
@@ -3092,8 +3094,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     if (rtl) ok(html.includes('>→<') && !html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point forward (RTL)');
     else ok(html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point back');
     if (code !== 'en' && code !== 'ja') {
-      const at = html.indexOf('dict-' + code + '.js?v=42');
-      ok(at >= 0 && at < html.indexOf('viewer.js?v=42'),
+      const at = html.indexOf('dict-' + code + '.js?v=43');
+      ok(at >= 0 && at < html.indexOf('viewer.js?v=43'),
         'v36 M14: ' + code + '.html loads its dict before viewer.js');
       ok(!html.includes('var ja ='), 'v36 M14: ' + code + '.html theme script has its labels baked in');
     }
@@ -3150,7 +3152,7 @@ console.log('— v36: twenty languages + RTL (M14) —');
      viewerSrc.includes("return h + 'h'") && viewerSrc.includes("return d + 'd'") &&
      !viewerSrc.includes('m + T.relMin'),
     'v37: relTime uses the app\u2019s compact literals, not the localised suffixes');
-  ok((viewerSrc.match(/CAW Social — web v42/g) || []).length === 2, 'v42: the version label reads web v42 in both embedded languages');
+  ok((viewerSrc.match(/CAW Social — web v43/g) || []).length === 2, 'v43: the version label reads web v43 in both embedded languages');
 
   /* stub-DOM boots: es and ar render from their dicts */
   const headSrc = viewerSrc.slice(0, viewerSrc.indexOf('/* ---------- minimal ABI helpers'));
@@ -3811,8 +3813,8 @@ console.log('— v42: full translation coverage (l10n overrides) —');
   ok(Object.entries(O42.KEY_L10N).every(([k, byLang]) =>
     Object.values(byLang).every(v => tok42(v) === tok42(web42.en[k]))),
     'v42: every KEY_L10N string carries exactly the English placeholders');
-  ok(Object.keys(O42.KEY_L10N).length === 172 && Object.keys(O42.CHUNK_L10N).length === 67,
-    'v42: the override tables cover the whole v42 fallback set (172 keys, 67 chunks)');
+  ok(Object.keys(O42.KEY_L10N).length === 169 && Object.keys(O42.CHUNK_L10N).length === 67,
+    'v42+v43: the override tables cover the fallback set (169 keys — the 3 tip keys left at v43, back on the app mapping — and 67 chunks)');
   /* spot checks: strings a user sees immediately, per language */
   const de42 = B42.buildDict('de', web42, app42, map42).dict;
   const fa42 = B42.buildDict('fa', web42, app42, map42).dict;
@@ -3828,6 +3830,44 @@ console.log('— v42: full translation coverage (l10n overrides) —');
     'v42: the German shell bakes its own theme labels');
   ok(arShell42.includes('🌙 داكن') && deShell42.includes('Lies die CAW-Timeline'),
     'v42: the Arabic shell bakes its theme labels; the German meta description is translated');
+}
+
+/* ---------- v43: the tip currency is HAWK ----------
+   User decision (2026-11-19): tips switch PHOENIX -> HAWK,
+   presets 1,000 / 5,000 / 10,000 (the same value steps as
+   10 / 50 / 100 PHOENIX at the 100:1 burnToMint anchor);
+   custom amounts unchanged. Mirrors the app's v0.7.8
+   lib/tip.ts. Legacy scope, per the app: a tip is JUST a
+   plain transfer — nothing detects or displays tips by
+   currency, so past PHOENIX (and CAT42) tips need no
+   migration and there is nothing to break; PHOENIX stays
+   in HuntersDEX, the wallet display and BurnHawk. The v31
+   block above pins the send mechanics (HAWK target, preset
+   amounts, the sheet simulation); this block pins the
+   currency switch's edges. */
+console.log('— v43: tip currency PHOENIX -> HAWK —');
+{
+  const B43 = await import('./build-i18n.mjs');
+  const web43 = B43.loadWebDicts(viewerSrc);
+  const app43 = B43.loadAppDicts(fs.readFileSync(new URL('../../caw-social-app/src/i18n.ts', import.meta.url), 'utf8'));
+  ok(web43.en.tipBody === app43.en['tip.body'] && web43.ja.tipBody === app43.ja['tip.body'] &&
+     web43.en.tipBalance === app43.en['tip.balance'] && web43.ja.tipBalance === app43.ja['tip.balance'] &&
+     web43.en.tipShortfall === app43.en['tip.shortfall'] && web43.ja.tipShortfall === app43.ja['tip.shortfall'],
+    'v43: the web tip strings are the app\'s HAWK strings, EN + JA');
+  const map43 = B43.buildMapping(web43, app43);
+  ok(map43.tipBody === 'tip.body' && map43.tipBalance === 'tip.balance' && map43.tipShortfall === 'tip.shortfall',
+    'v43: the tip keys map to the app table again (all 18 languages take the app HAWK translations)');
+  const tipSrc43 = viewerSrc.slice(viewerSrc.indexOf('/* --- Tip money rules'), viewerSrc.indexOf('/* --- Composer parity'));
+  ok(!tipSrc43.includes('PHOENIX_TOKEN') && tipSrc43.includes('HAWK_TOKEN') &&
+     viewerSrc.includes('past PHOENIX tips were plain'),
+    'v43: the tip money rules move on HAWK; the legacy note (plain transfers, no per-currency detection) is recorded');
+  const sheet43 = viewerSrc.slice(viewerSrc.indexOf('function openTipSheet(a)'), viewerSrc.indexOf('async function openTipConfirm(a, amountRaw)'));
+  ok(sheet43.includes("p.toLocaleString('en-US') + ' HAWK</button>'") && !sheet43.includes('PHOENIX'),
+    'v43: the preset chips read 1,000 / 5,000 / 10,000 HAWK (the app\'s grouped format); no PHOENIX left in the sheet');
+  /* scope guard: PHOENIX is untouched outside the tip feature */
+  ok(JSON.stringify(V.DEX_TOKENS.map(t => t.sym)) === JSON.stringify(['QOM', 'WQOM', 'qCAW', 'O', 'KET', 'HAWK', 'PHOENIX']) &&
+     web43.en.bhIntro.includes('PHOENIX') && viewerSrc.includes('id="pwPhoenixBal"'),
+    'v43: PHOENIX stays in HuntersDEX, BurnHawk and the wallet display');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

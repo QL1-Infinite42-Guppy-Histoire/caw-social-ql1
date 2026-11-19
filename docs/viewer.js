@@ -204,7 +204,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'About',
     setAboutBody: 'CAW is a social app on QL1, a chain that runs without a central operator. Posts and follows are written to the public record — nobody can quietly rewrite them. Names are NFTs: yours stays yours.',
     setViewsNote: 'View counts are not public. Nobody — not the app, not this page — can see how many people looked at a post. Only on-chain actions (posts, likes, follows) are public.',
-    setVersionLbl: 'CAW Social — web v42',
+    setVersionLbl: 'CAW Social — web v43',
     setDangerTitle: 'Danger zone',
     setNoWallet: 'No posting wallet in this browser yet.',
     setSetupBtn: 'Set up the posting wallet',
@@ -434,8 +434,8 @@ const T_EMBEDDED = {
     followingNeedName: 'Get a name first — then follow names, and their posts will show up here.',
     tipBtn: 'Tip',
     tipTitle: 'Send a tip',
-    tipBody: 'Send PHOENIX to {name}, the author of this post. PHOENIX is the tip coin.',
-    tipBalance: 'Your PHOENIX balance: {balance}',
+    tipBody: 'Send HAWK to {name}, the author of this post. HAWK is the tip coin.',
+    tipBalance: 'Your HAWK balance: {balance}',
     tipCustom: 'Custom',
     tipOver: 'That is more than your balance.',
     tipSend: 'Send tip',
@@ -443,7 +443,7 @@ const T_EMBEDDED = {
     tipMismatch: 'The recipient check disagreed, so the tip was not sent. Please try again.',
     tipDone: 'Tip sent 🎁',
     tipSelf: "You can't tip your own post.",
-    tipShortfall: 'Not enough PHOENIX. Get PHOENIX on QL1 (for example by swapping, or by burning HAWK with BurnHawk), then try again.',
+    tipShortfall: 'Not enough HAWK. Get HAWK on QL1 (for example by swapping), then try again.',
     /* v32: composer parity — costs, drafts, mentions, the name
        picker (the app's compose.* / draft.* wording; the web
        names the in-name token qCAW, as everywhere else here) */
@@ -600,7 +600,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'このアプリについて',
     setAboutBody: 'CAW は QL1 上のソーシャルアプリです。QL1 は中央の運営者なしに動くチェーンで、投稿やフォローは公開記録に書かれ、誰もこっそり書き換えられません。名前は NFT で、あなたの名前はあなたのものです。',
     setViewsNote: '閲覧数は公開されません。アプリにもこのページにも、投稿が何回見られたかを知る方法はありません。公開されるのはオンチェーンの操作（投稿・いいね・フォロー）だけです。',
-    setVersionLbl: 'CAW Social — web v42',
+    setVersionLbl: 'CAW Social — web v43',
     setDangerTitle: '危険ゾーン',
     setNoWallet: 'このブラウザには、まだ投稿用ウォレットがありません。',
     setSetupBtn: '投稿用ウォレットを作る',
@@ -830,8 +830,8 @@ const T_EMBEDDED = {
     followingNeedName: '先に名前を取ってください。名前をフォローすると、その投稿がここに表示されます。',
     tipBtn: 'チップ',
     tipTitle: 'チップを送る',
-    tipBody: 'この投稿の作者 {name} さんに PHOENIX を送ります。PHOENIX はチップ専用のコインです。',
-    tipBalance: 'あなたの PHOENIX 残高: {balance}',
+    tipBody: 'この投稿の作者 {name} さんに HAWK を送ります。HAWK はチップ専用のコインです。',
+    tipBalance: 'あなたの HAWK 残高: {balance}',
     tipCustom: '自分で入力',
     tipOver: '残高を超えています。',
     tipSend: 'チップを送る',
@@ -839,7 +839,7 @@ const T_EMBEDDED = {
     tipMismatch: '送り先の確認が一致しなかったため、チップは送りませんでした。もう一度お試しください。',
     tipDone: 'チップを送りました 🎁',
     tipSelf: '自分の投稿にはチップできません。',
-    tipShortfall: 'PHOENIX が足りません。QL1 で PHOENIX を用意して（交換や、BurnHawk で HAWK をバーンするなど）もう一度お試しください。',
+    tipShortfall: 'HAWK が足りません。QL1 で HAWK を用意して（交換など）もう一度お試しください。',
     /* v32: composer parity (the app's compose.* / draft.*) */
     compCost: '投稿コスト： {cost} qCAW',
     compCostFrom: '名前の預け入れ残高から差し引かれます（残高： {balance} qCAW）',
@@ -2121,14 +2121,22 @@ function parseAmountDec(str, decimals) {
   return BigInt(m[1]) * 10n ** BigInt(dec) + BigInt((m[2] || '').padEnd(dec, '0'));
 }
 /* --- Tip money rules (v31; the app's lib/tip.ts) ---
-   A tip is a plain PHOENIX transfer from the reader to a
-   post's author: no marker, no counting, no split, no burn.
-   The amount is the tipper's choice: the presets below, or a
-   custom amount with the usual 25 / 50 / 75 / MAX balance
-   chips. PHOENIX has 18 decimals. */
-const TIP_PRESETS = [10, 50, 100];
-/** The raw units for one preset (whole PHOENIX). */
-const tipPresetRaw = phoenix => BigInt(phoenix) * 10n ** 18n;
+   A tip is a plain HAWK transfer from the reader to a post's
+   author: no marker, no counting, no split, no burn. HAWK is
+   the tip currency since v43 (user decision 2026-11-19; the
+   app switched in v0.7.8). The role's history: CAT42, then
+   PHOENIX (v31–v42 here) — past PHOENIX tips were plain
+   transfers too and nothing detects or displays tips by
+   currency, so they need no migration; PHOENIX itself stays
+   in HuntersDEX, the wallet display and BurnHawk. The amount
+   is the tipper's choice: the presets below (1,000 / 5,000 /
+   10,000 HAWK — the same value steps as 10 / 50 / 100
+   PHOENIX at the 100:1 burnToMint anchor), or a custom
+   amount with the usual 25 / 50 / 75 / MAX balance chips.
+   HAWK has 18 decimals. */
+const TIP_PRESETS = [1000, 5000, 10000];
+/** The raw units for one preset (whole HAWK). */
+const tipPresetRaw = hawk => BigInt(hawk) * 10n ** 18n;
 /** Parse a custom tip amount into raw units. Null for
  *  anything malformed or not positive. */
 const parseTipAmount = text => {
@@ -2137,7 +2145,7 @@ const parseTipAmount = text => {
 };
 /** The amount a balance chip selects: pct% of the balance
  *  (100 = MAX, the whole balance — a tip pays no separate fee
- *  in PHOENIX, so MAX needs no reserve). */
+ *  in HAWK, so MAX needs no reserve). */
 const tipChipAmount = (balance, pct) => pct >= 100 ? BigInt(balance) : (BigInt(balance) * BigInt(pct)) / 100n;
 /** True when the balance cannot cover the chosen tip. */
 const tipShortfall = (balance, amountRaw) => BigInt(balance) < BigInt(amountRaw);
@@ -2151,8 +2159,8 @@ function tipBlockReason(args) {
       String(args.authorOwner).toLowerCase() === String(args.myAddress).toLowerCase()) return 'self';
   return null;
 }
-/** A PHOENIX balance read on QL1 (throws on RPC failure). */
-const phoenixBalanceOf = async addr => readUint(PHOENIX_TOKEN, SEL.balanceOf + encAddr(addr));
+/** A HAWK balance read on QL1 (throws on RPC failure). */
+const hawkBalanceOf = async addr => readUint(HAWK_TOKEN, SEL.balanceOf + encAddr(addr));
 /* --- Composer parity (v32; the app's actionCosts.ts / linkify.ts /
    nameDirectory.ts / drafts.ts / myActions.ts) ---
    Ports of the Android app's composer-support modules, copied not
@@ -8902,7 +8910,7 @@ function onSuperTap(a, div) {
    100 + a Custom chip whose input carries the 25 / 50 / 75 /
    MAX balance chips; the recipient is shown shortened with
    the last four characters emphasised (a spot-check line —
-   the send never trusts it); the sender's PHOENIX balance
+   the send never trusts it); the sender's HAWK balance
    line and the over-balance error gate the Send button. The
    send itself goes through the shared confirm panel, and
    inside it the recipient is RE-RESOLVED (ownerOf of the
@@ -8912,7 +8920,7 @@ function onSuperTap(a, div) {
    this page can make. Self-tips are blocked twice — fast, at
    tap time, when the post is by one of my names (the app's
    instant feedback), and again inside the send from the
-   fresh resolution. The transfer is a plain PHOENIX transfer
+   fresh resolution. The transfer is a plain HAWK transfer
    through sendLocalTx, the one broadcast site. */
 let tipState = null;   // {a, preset (number | null = custom), balance, to}
 function tipAmountRaw() {
@@ -8948,7 +8956,7 @@ function openTipSheet(a) {
   $('tipBalLine').textContent = T.tipBalance.replace('{balance}', '—');
   $('tipErr').innerHTML = '';
   $('tipPresets').innerHTML = TIP_PRESETS.map(p =>
-    '<button type="button" class="tokchip" data-tippreset="' + p + '">' + p + ' PHOENIX</button>').join('') +
+    '<button type="button" class="tokchip" data-tippreset="' + p + '">' + p.toLocaleString('en-US') + ' HAWK</button>').join('') +
     '<button type="button" class="tokchip" data-tippreset="custom">' + esc(T.tipCustom) + '</button>';
   $('tipPctChips').innerHTML = pctChipsHtml('tipchip');
   const inp = $('tipAmount');
@@ -8983,7 +8991,7 @@ function openTipSheet(a) {
   paintTipSheet();
   /* Display reads (the send re-resolves and re-checks all of
      this — nothing here is trusted): the author's name, the
-     recipient spot-check line, and my PHOENIX balance. */
+     recipient spot-check line, and my HAWK balance. */
   resolveName(a.senderId).then(nm => {
     if (!tipState || tipState.a !== a) return;
     $('tipBody').textContent = T.tipBody.replace('{name}', nm ? '@' + nm : T.unknownName + a.senderId);
@@ -8994,7 +9002,7 @@ function openTipSheet(a) {
     $('tipToLine').innerHTML = esc(T.tipTo) + ': ' + esc(to.slice(0, 6)) + '…' +
       '<b>' + esc(to.slice(-4)) + '</b>';
   }).catch(() => {});
-  phoenixBalanceOf(pwSession.address).then(bal => {
+  hawkBalanceOf(pwSession.address).then(bal => {
     if (!tipState || tipState.a !== a) return;
     tipState.balance = bal;
     $('tipBalLine').textContent = T.tipBalance.replace('{balance}', fmtAmt(bal, 18));
@@ -9015,7 +9023,7 @@ async function openTipConfirm(a, amountRaw) {
     lines: [
       [T.slTarget, targetLabel],
       [T.tipTo, shortAddr(to)],
-      [T.confirmAmountLbl, fmtAmt(amountRaw, 18) + ' PHOENIX'],
+      [T.confirmAmountLbl, fmtAmt(amountRaw, 18) + ' HAWK'],
     ],
     signLabel: T.tipSend, doneText: T.tipDone,
     onSign: async () => {
@@ -9023,9 +9031,9 @@ async function openTipConfirm(a, amountRaw) {
       const fresh = await nameOwnerOf(a.senderId);
       if (!fresh || fresh.toLowerCase() !== to.toLowerCase()) throw new Error('tip-mismatch');
       if (tipBlockReason({ senderId: a.senderId, myTokenIds: pwNames.map(t => t.id), authorOwner: fresh, myAddress: pwSession.address })) throw new Error('self-tip');
-      const bal = await phoenixBalanceOf(pwSession.address);
+      const bal = await hawkBalanceOf(pwSession.address);
       if (tipShortfall(bal, amountRaw)) throw new Error('shortfall-tip');
-      await sendLocalTx(pwSession.keyBytes, { to: PHOENIX_TOKEN, data: buildTransferData(fresh, amountRaw), gasFallback: 60000 });
+      await sendLocalTx(pwSession.keyBytes, { to: HAWK_TOKEN, data: buildTransferData(fresh, amountRaw), gasFallback: 60000 });
     },
   });
 }
@@ -10361,7 +10369,7 @@ if (typeof module !== 'undefined' && module.exports) {
     buildFollowIndex, followListsOf, refinedFollowListsOf,
     FOLLOW_CHUNK_PAGES, followBuildState, folFeedItem,
     TIP_PRESETS, tipPresetRaw, parseTipAmount, tipChipAmount,
-    tipShortfall, tipBlockReason, phoenixBalanceOf,
+    tipShortfall, tipBlockReason, hawkBalanceOf,
     ACTION_COST_CAW, POST_COST_RAW, LIKE_COST_RAW, RECAW_COST_RAW, FOLLOW_COST_RAW, composeCostRaw,
     mentionFragmentAt, trimUrlCandidate, extractUrls, shortenUrlsInText,
     NAME_DIR_KEY, ensureNameDirectory, searchNameDirectory, nameDirSetForTest, nameDirStatus,
