@@ -411,8 +411,8 @@ console.log('— v9: linkify + relative time —');
 }
 
 console.log('— v25: version guards (v10 checks, updated values) —');
-ok(enHtml.includes('?v=39') && jaHtml.includes('?v=39'), 'shells reference ?v=39 assets');
-ok(swSrc.includes("caw-view-v39"), 'sw.js cache name is caw-view-v39');
+ok(enHtml.includes('?v=40') && jaHtml.includes('?v=40'), 'shells reference ?v=40 assets');
+ok(swSrc.includes("caw-view-v40"), 'sw.js cache name is caw-view-v40');
 ok(enHtml.includes('rel="preconnect"') && jaHtml.includes('rel="preconnect"'), 'shells preconnect to the RPC + explorer API hosts');
 ok(enHtml.includes('og:title') && jaHtml.includes('og:title'), 'shells carry OGP meta tags');
 
@@ -1344,7 +1344,7 @@ console.log('— v22: BurnHawk + HuntersDEX + the full wallet set —');
   ok((VS.match(/hydrateAttachmentsIn\(/g) || []).length >= 4, 'attachments hydrate in timeline, profile bucket and post detail');
   ok(VS.includes('const filesAtPost = compFiles') && VS.includes('mediaAttach(filesCaw, filesTx, f)'), 'composer snapshots files and uploads after the post lands');
   ok(VS.includes("MEDIA_API + '/v1/profile-media'") && VS.includes("MEDIA_API + '/v1/attach'") && VS.includes("MEDIA_API + '/v1/clear'"), 'uploads go to the signed endpoints');
-  ok(swJs.includes('caw-view-v39'), 'sw cache is caw-view-v39');
+  ok(swJs.includes('caw-view-v40'), 'sw cache is caw-view-v40');
 }
 
 /* ---- v28: plain send out of the posting wallet ----
@@ -3077,8 +3077,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     const rtl = B.RTL_LANGS.includes(code);
     ok(html.includes('<html lang="' + code + '" dir="' + (rtl ? 'rtl' : 'ltr') + '">'),
       'v36 M14: ' + code + '.html declares lang=' + code + ' dir=' + (rtl ? 'rtl' : 'ltr'));
-    ok(html.includes('viewer.js?v=39') && html.includes('style.css?v=39') && html.includes('__cawViewerBooted'),
-      'v36 M14: ' + code + '.html loads the v39 assets + watchdog');
+    ok(html.includes('viewer.js?v=40') && html.includes('style.css?v=40') && html.includes('__cawViewerBooted'),
+      'v36 M14: ' + code + '.html loads the v40 assets + watchdog');
     ok([...html.matchAll(/data-nav="([^"]+)"/g)].map(m => m[1]).join(',') === enNavSeq,
       'v36 M14: ' + code + '.html nav rows match the en shell, row for row');
     ok((html.match(/class="lang-slot"/g) || []).length === 2,
@@ -3088,8 +3088,8 @@ console.log('— v36: twenty languages + RTL (M14) —');
     if (rtl) ok(html.includes('>→<') && !html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point forward (RTL)');
     else ok(html.includes('>←<'), 'v36 M14: ' + code + '.html back arrows point back');
     if (code !== 'en' && code !== 'ja') {
-      const at = html.indexOf('dict-' + code + '.js?v=39');
-      ok(at >= 0 && at < html.indexOf('viewer.js?v=39'),
+      const at = html.indexOf('dict-' + code + '.js?v=40');
+      ok(at >= 0 && at < html.indexOf('viewer.js?v=40'),
         'v36 M14: ' + code + '.html loads its dict before viewer.js');
       ok(!html.includes('var ja ='), 'v36 M14: ' + code + '.html theme script has its labels baked in');
     }
@@ -3147,7 +3147,7 @@ console.log('— v36: twenty languages + RTL (M14) —');
      viewerSrc.includes("return h + 'h'") && viewerSrc.includes("return d + 'd'") &&
      !viewerSrc.includes('m + T.relMin'),
     'v37: relTime uses the app\u2019s compact literals, not the localised suffixes');
-  ok((viewerSrc.match(/CAW Social — web v39/g) || []).length === 2, 'v39: the version label reads web v39 in both embedded languages');
+  ok((viewerSrc.match(/CAW Social — web v40/g) || []).length === 2, 'v40: the version label reads web v40 in both embedded languages');
 
   /* stub-DOM boots: es and ar render from their dicts */
   const headSrc = viewerSrc.slice(0, viewerSrc.indexOf('/* ---------- minimal ABI helpers'));
@@ -3541,8 +3541,133 @@ console.log('— v39: persistent hidden-media list (list-hidden) —');
     'v39: the hidden-media list strings exist in EN + JA');
   const appDicts39 = B39.loadAppDicts(fs.readFileSync(new URL('../../caw-social-app/src/i18n.ts', import.meta.url), 'utf8'));
   const map39 = B39.buildMapping(web39, appDicts39);
-  ok(B39.buildDict('es', web39, appDicts39, map39).fallbacks.length === 203,
-    'v39: fallback count is 203 per dict (200 + the 3 web-only list keys), honestly counted');
+  ok(B39.buildDict('es', web39, appDicts39, map39).fallbacks.length === 169,
+    'v39+v40: fallback count per dict — 203 at v39; the v40 regeneration maps 34 more keys because the app i18n gained the media/moderation translations with app v0.7.6, honestly counted at 169');
+}
+
+console.log('— v40: attachment images never rendered (nested .pfoot insertBefore) —');
+{
+  /* Root cause, reproduced in a real browser before the fix:
+     postCard nests .pfoot inside .pbody, so it is NOT a direct
+     child of the card element. hydrateAttachmentsIn did
+     el.insertBefore(div, foot) — a NotFoundError in any real
+     DOM — and every call site's .catch(() => {}) swallowed it,
+     so no attachment image ever rendered on any surface.
+     This block runs the REAL hydrateAttachmentsIn against a
+     stub DOM that (a) mirrors the card's nesting and (b)
+     implements insertBefore with real DOM semantics (throws
+     when the reference node is not a direct child). On the
+     pre-fix code the hydrate call rejects and no .post-media
+     exists; on the fixed code the media lands inside .pbody,
+     immediately before .pfoot. */
+  const slice40 = (a, b) => {
+    const i = viewerSrc.indexOf(a); if (i < 0) throw new Error('v40 slice start missing: ' + a);
+    const j = viewerSrc.indexOf(b, i); if (j < 0) throw new Error('v40 slice end missing: ' + b);
+    return viewerSrc.slice(i, j);
+  };
+  class El40 {
+    constructor(tag) {
+      this.tagName = String(tag).toUpperCase();
+      this.children = []; this.dataset = {}; this.className = '';
+      this.parentNode = null; this._html = ''; this._text = null;
+    }
+    set textContent(v) { this._text = String(v); this.children = []; }
+    get textContent() { return this._text || ''; }
+    set innerHTML(v) { this._html = String(v); this._text = null; this.children = []; }
+    get innerHTML() {
+      if (this._text != null) return this._text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      return this._html;
+    }
+    appendChild(n) { n.parentNode = this; this.children.push(n); return n; }
+    insertBefore(n, ref) {
+      const i = this.children.indexOf(ref);
+      if (i < 0) {
+        const e = new Error("Failed to execute 'insertBefore' on 'Node': The node before which the new node is to be inserted is not a child of this node.");
+        e.name = 'NotFoundError'; throw e;
+      }
+      n.parentNode = this; this.children.splice(i, 0, n); return n;
+    }
+    _walk(out) { for (const c of this.children) { out.push(c); c._walk(out); } return out; }
+    _hasClass(c) { return String(this.className || '').split(/\s+/).includes(c); }
+    querySelector(sel) {
+      if (sel.startsWith('.')) return this._walk([]).find(e => e._hasClass(sel.slice(1))) || null;
+      return null;
+    }
+    querySelectorAll(sel) {
+      if (sel === '[data-cawid]') return this._walk([]).filter(e => 'cawid' in e.dataset);
+      return [];
+    }
+  }
+  const CAW40 = '0x' + 'ab'.repeat(32);
+  const URL40 = 'https://media.example/media/' + 'cd'.repeat(32) + '.jpg';
+  const doc40 = { createElement: tag => new El40(tag) };
+  const fetch40 = async () => ({ ok: true, json: async () => ({ media: { [CAW40]: [{ url: URL40, size: 3 }] } }) });
+  const hydrate40 = new Function('document', 'fetch', 'T',
+    'let modRole = null;\nconst modHiddenMedia = new Map();\n' +
+    slice40('async function fetchTimeout', '\nlet rpcSeq') + '\n' +
+    viewerSrc.match(/const MEDIA_API = '[^']*';/)[0] + '\n' +
+    viewerSrc.match(/const esc = s => \{[^\n]*\n/)[0] + '\n' +
+    slice40('function modHashFromMediaUrl', '\n/* The one visibility rule') + '\n' +
+    slice40('function modIsAdmin()', 'function modIsRoot()') + '\n' +
+    slice40('function modSwapAttachCtl', '\nfunction modDecorateAttach') + '\n' +
+    slice40('function modDecorateAttach', '\nfunction modConfirmAttach') + '\n' +
+    slice40('async function hydrateAttachmentsIn', '\nfunction mediaSettingRow') +
+    '\nreturn { hydrateAttachmentsIn };')(doc40, fetch40, {});
+  /* the card exactly as postCard builds it: .pfoot nested in .pbody */
+  const root40 = new El40('div');
+  const row40 = new El40('div'); row40.className = 'post'; row40.dataset.cawid = CAW40;
+  const body40 = new El40('div'); body40.className = 'pbody';
+  const text40 = new El40('div'); text40.className = 'ptext';
+  const foot40 = new El40('div'); foot40.className = 'pfoot';
+  body40.appendChild(text40); body40.appendChild(foot40);
+  row40.appendChild(body40); root40.appendChild(row40);
+  let err40 = null;
+  try { await hydrate40.hydrateAttachmentsIn(root40); } catch (e) { err40 = e; }
+  const pm40 = row40.querySelector('.post-media');
+  ok(!err40 && !!pm40,
+    'v40: hydrateAttachmentsIn inserts .post-media into a real-shaped card (nested .pfoot) without throwing');
+  ok(!!pm40 && pm40.parentNode === body40 &&
+     body40.children.indexOf(pm40) === body40.children.indexOf(foot40) - 1 &&
+     pm40.innerHTML.includes('<img') && pm40.innerHTML.includes(URL40),
+    'v40: the media sits inside .pbody immediately before .pfoot, with the image URL');
+  ok(viewerSrc.includes('if (foot && foot.parentNode) foot.parentNode.insertBefore(div, foot)') &&
+     viewerSrc.includes('if (foot && foot.parentNode) foot.parentNode.insertBefore(pm, foot)') &&
+     !viewerSrc.includes('if (foot) el.insertBefore(div, foot)') &&
+     !viewerSrc.includes('if (foot) row.insertBefore(pm, foot)'),
+    'v40: both insertion sites (hydrate + admin placeholder tiles) insert within the foot parent; the throwing forms are gone');
+
+  /* The profile media editor's enable/disable state machine
+     (the second 2026-11-19 report), run with the REAL
+     mediaSettingRow + wireMediaSettings: Save starts disabled
+     (the markup's disabled attribute), picking a file enables
+     it and shows the filename, clearing the pick disables it
+     again. No state leaves it stuck. */
+  const rowHtml40 = new Function('esc', 'T',
+    slice40('function mediaSettingRow', '\nfunction wireMediaSettings') +
+    '\nreturn { mediaSettingRow };')(s => String(s), { mediaPick: 'Pick', mediaSet: 'Save', mediaClear: 'Clear' })
+    .mediaSettingRow('header', 'Header', false, 'image/jpeg');
+  ok(rowHtml40.includes('id="msetFile-header"') && rowHtml40.includes('id="msetSet-header" disabled') &&
+     rowHtml40.includes('id="msetName-header"'),
+    'v40: the editor row markup carries the file input, a disabled-at-start Save, and the filename slot');
+  const els40 = {};
+  for (const kind of ['icon', 'header', 'audio']) {
+    els40['msetFile-' + kind] = { files: [], onchange: null };
+    els40['msetSet-' + kind] = { disabled: true, onclick: null };
+    els40['msetName-' + kind] = { textContent: '' };
+  }
+  els40.msetStatus = { textContent: '', innerHTML: '' };
+  new Function('$', 'document', 'T',
+    slice40('function wireMediaSettings', '\n/* Profile header image, audio player') +
+    '\nwireMediaSettings();')(id => els40[id] || null, doc40, {});
+  const fi40 = els40['msetFile-header'], sb40 = els40['msetSet-header'], nm40 = els40['msetName-header'];
+  ok(typeof fi40.onchange === 'function' && sb40.disabled === true,
+    'v40: the editor wiring attaches onchange and Save starts disabled');
+  fi40.files = [{ name: 'photo.jpg' }]; fi40.onchange();
+  ok(sb40.disabled === false && nm40.textContent === 'photo.jpg',
+    'v40: picking a file enables Save and shows the filename');
+  fi40.files = []; fi40.onchange();
+  ok(sb40.disabled === true && nm40.textContent === '',
+    'v40: clearing the pick disables Save again (no stuck state)');
 }
 
 console.log('\n' + pass + ' passed, ' + fail + ' failed');

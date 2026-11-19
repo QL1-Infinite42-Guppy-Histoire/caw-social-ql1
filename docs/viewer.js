@@ -204,7 +204,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'About',
     setAboutBody: 'CAW is a social app on QL1, a chain that runs without a central operator. Posts and follows are written to the public record — nobody can quietly rewrite them. Names are NFTs: yours stays yours.',
     setViewsNote: 'View counts are not public. Nobody — not the app, not this page — can see how many people looked at a post. Only on-chain actions (posts, likes, follows) are public.',
-    setVersionLbl: 'CAW Social — web v39',
+    setVersionLbl: 'CAW Social — web v40',
     setDangerTitle: 'Danger zone',
     setNoWallet: 'No posting wallet in this browser yet.',
     setSetupBtn: 'Set up the posting wallet',
@@ -600,7 +600,7 @@ const T_EMBEDDED = {
     setAboutTitle: 'このアプリについて',
     setAboutBody: 'CAW は QL1 上のソーシャルアプリです。QL1 は中央の運営者なしに動くチェーンで、投稿やフォローは公開記録に書かれ、誰もこっそり書き換えられません。名前は NFT で、あなたの名前はあなたのものです。',
     setViewsNote: '閲覧数は公開されません。アプリにもこのページにも、投稿が何回見られたかを知る方法はありません。公開されるのはオンチェーンの操作（投稿・いいね・フォロー）だけです。',
-    setVersionLbl: 'CAW Social — web v39',
+    setVersionLbl: 'CAW Social — web v40',
     setDangerTitle: '危険ゾーン',
     setNoWallet: 'このブラウザには、まだ投稿用ウォレットがありません。',
     setSetupBtn: '投稿用ウォレットを作る',
@@ -4082,8 +4082,13 @@ async function hydrateAttachmentsIn(root) {
     const div = document.createElement('div');
     div.className = 'post-media n' + Math.min(list.length, 4);
     div.innerHTML = list.map(m => '<a href="' + esc(m.url) + '" target="_blank" rel="noopener"><img loading="lazy" src="' + esc(m.url) + '" alt=""></a>').join('');
+    /* v40 fix: .pfoot is nested inside .pbody, NOT a direct child
+       of the card — el.insertBefore(div, foot) threw NotFoundError
+       on every card, the callers' .catch(() => {}) swallowed it,
+       and no attachment image ever rendered (broken since v26).
+       Insert within the foot's own parent instead. */
     const foot = el.querySelector('.pfoot');
-    if (foot) el.insertBefore(div, foot); else el.appendChild(div);
+    if (foot && foot.parentNode) foot.parentNode.insertBefore(div, foot); else el.appendChild(div);
   }
   modDecorateAttach(root); /* v38: admin per-image controls + session-hidden tiles */
 }
@@ -4507,8 +4512,10 @@ function modDecorateAttach(root) {
       if (!pm) {
         pm = document.createElement('div');
         pm.className = 'post-media n1';
+        /* v40 fix: same nested-.pfoot insertBefore bug as
+           hydrateAttachmentsIn — insert within the foot's parent. */
         const foot = row.querySelector('.pfoot');
-        if (foot) row.insertBefore(pm, foot); else row.appendChild(pm);
+        if (foot && foot.parentNode) foot.parentNode.insertBefore(pm, foot); else row.appendChild(pm);
       }
       const ph = document.createElement('span');
       ph.className = 'mod-att-ph';
